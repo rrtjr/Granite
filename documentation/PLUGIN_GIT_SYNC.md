@@ -300,6 +300,52 @@ curl http://localhost:8000/api/plugins/git/status
 }
 ```
 
+### SSH Key Management (API)
+
+The Git Sync plugin provides API endpoints for SSH key management:
+
+#### Generate SSH Key
+```bash
+curl -X POST http://localhost:8000/api/plugins/git/ssh/generate \
+  -H "Content-Type: application/json" \
+  -d '{"email": "your.email@example.com"}'
+```
+
+Generates a new Ed25519 SSH key pair for Git authentication.
+
+#### Get Public Key
+```bash
+curl http://localhost:8000/api/plugins/git/ssh/public-key
+```
+
+Returns the public SSH key to add to your Git provider (GitHub, GitLab, etc.).
+
+**Response:**
+```json
+{
+  "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... your.email@example.com"
+}
+```
+
+#### Test SSH Connection
+```bash
+curl -X POST http://localhost:8000/api/plugins/git/ssh/test \
+  -H "Content-Type: application/json" \
+  -d '{"host": "github.com"}'
+```
+
+Tests SSH connection to the specified Git host.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Successfully authenticated with github.com"
+}
+```
+
+For complete SSH authentication setup instructions, see [GIT_AUTHENTICATION.md](GIT_AUTHENTICATION.md).
+
 ## Common Scenarios
 
 ### Scenario 1: Local-Only Commits (No Push)

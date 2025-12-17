@@ -1,12 +1,12 @@
 # Granite Authentication Guide
 
-## IMPORTANT: Default Password Warning
+## IMPORTANT: Authentication Default State
 
-> **The default `config.yaml` includes authentication disabled by default, with password: `admin`**
+> **The default `config.yaml` has authentication DISABLED by default for local development.**
 >
-> **CHANGE THIS if you're exposing Granite to a network!**
+> **ENABLE authentication and change the password if you're exposing Granite to a network!**
 >
-> The default configuration is provided for **quick testing only**. Follow the setup guide below to set your own secure password and secret key.
+> The default configuration is provided for **local testing only**. Follow the setup guide below to enable authentication and set your own secure password and secret key.
 
 ---
 
@@ -25,23 +25,23 @@ Granite includes a simple, secure authentication system for single-user deployme
 ## Quick Setup
 
 **Default Configuration:**
-- Authentication is **enabled by default**
-- Default password is `admin`
-- Default secret key is insecure
+- Authentication is **DISABLED by default** for local development
+- Default password hash is `admin` (when enabled)
+- Default secret key is insecure (must be changed)
 
-**IMPORTANT:** For production or network-exposed deployments, **change both the password and secret key immediately**.
+**IMPORTANT:** For production or network-exposed deployments, **enable authentication and change both the password and secret key immediately**.
 
 ---
 
-### Quick Test (Use Default Password)
+### Local Development (No Authentication)
 
-For **local testing only**, you can use the default configuration:
+For **local testing only**, the default configuration has authentication disabled:
 
 1. Start Granite (Docker or locally)
 2. Navigate to `http://localhost:8000`
-3. Log in with password: `admin`
+3. Access the application directly (no login required)
 
-**Only use this for local testing on your own machine!**
+**Only use this for local development on your own machine!**
 
 ---
 

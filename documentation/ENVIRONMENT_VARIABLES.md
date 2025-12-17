@@ -84,7 +84,7 @@ When `debug: false` (recommended):
 ## Related Documentation
 
 - **Authentication**: [AUTHENTICATION.md](AUTHENTICATION.md)
-- **API Rate Limiting**: [API.md](API.md#rate-limiting)
+- **API Reference**: [API.md](API.md)
 
 ---
 

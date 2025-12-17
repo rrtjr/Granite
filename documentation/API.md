@@ -265,6 +265,121 @@ curl.exe -X POST http://localhost:8000/api/plugins/note_stats/toggle -H "Content
 GET /api/plugins/note_stats/calculate?content={markdown_content}
 ```
 
+### PDF Export Plugin
+
+#### Export Note to PDF
+```http
+POST /api/plugins/pdf_export/export
+Content-Type: application/json
+
+{
+  "note_path": "folder/note.md",
+  "content": "# My Note\n\nContent here...",
+  "output_filename": "custom-name.pdf"  // Optional
+}
+```
+
+Returns a binary PDF file download.
+
+#### Get PDF Export Settings
+```http
+GET /api/plugins/pdf_export/settings
+```
+
+#### Update PDF Export Settings
+```http
+POST /api/plugins/pdf_export/settings
+Content-Type: application/json
+
+{
+  "page_size": "A4",
+  "orientation": "portrait",
+  "margin_top": "1.5cm",
+  "margin_bottom": "1.5cm",
+  "margin_left": "2cm",
+  "margin_right": "2cm",
+  "font_family": "Arial",
+  "font_size": "11pt",
+  "include_metadata": true
+}
+```
+
+#### Get Available PDF Options
+```http
+GET /api/plugins/pdf_export/options
+```
+
+Returns available page sizes, orientations, and fonts.
+
+See [PLUGIN_PDF_EXPORT.md](PLUGIN_PDF_EXPORT.md) for complete documentation.
+
+### Git Sync Plugin
+
+#### Get Git Sync Settings
+```http
+GET /api/plugins/git/settings
+```
+
+#### Update Git Sync Settings
+```http
+POST /api/plugins/git/settings
+Content-Type: application/json
+
+{
+  "auto_push_enabled": true,
+  "push_interval_minutes": 10,
+  "commit_message_template": "Auto-sync: {timestamp}",
+  "pull_on_startup": true
+}
+```
+
+#### Manual Backup
+```http
+POST /api/plugins/git/manual-backup
+```
+
+Triggers an immediate Git commit and push.
+
+#### Manual Pull
+```http
+POST /api/plugins/git/manual-pull
+```
+
+Pulls latest changes from the remote repository.
+
+#### Generate SSH Key
+```http
+POST /api/plugins/git/ssh/generate
+Content-Type: application/json
+
+{
+  "email": "your.email@example.com"
+}
+```
+
+Generates a new SSH key pair for Git authentication.
+
+#### Get SSH Public Key
+```http
+GET /api/plugins/git/ssh/public-key
+```
+
+Returns the public SSH key to add to your Git provider (GitHub, GitLab, etc.).
+
+#### Test SSH Connection
+```http
+POST /api/plugins/git/ssh/test
+Content-Type: application/json
+
+{
+  "host": "github.com"
+}
+```
+
+Tests SSH connection to the specified Git host.
+
+See [PLUGIN_GIT_SYNC.md](PLUGIN_GIT_SYNC.md) and [GIT_AUTHENTICATION.md](GIT_AUTHENTICATION.md) for complete documentation.
+
 ## 🔗 Graph
 
 ### Get Note Graph

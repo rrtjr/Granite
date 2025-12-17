@@ -74,6 +74,66 @@ success, message, pdf_path = plugin.export_note(
 )
 ```
 
+## Plugin Methods
+
+The PDF Export plugin provides several methods for programmatic access:
+
+### `export_note(note_path, content, output_filename=None)`
+Exports a note to PDF with the specified content.
+
+**Parameters:**
+- `note_path` (str): Path to the source note file
+- `content` (str): Markdown content to convert
+- `output_filename` (str, optional): Custom filename for the PDF
+
+**Returns:** `(success: bool, message: str, pdf_path: str)`
+
+### `export_to_pdf(content, output_path, title=None, note_path=None)`
+Lower-level export method with direct control over output path.
+
+**Parameters:**
+- `content` (str): Markdown content to convert
+- `output_path` (str): Full path where PDF should be saved
+- `title` (str, optional): Document title
+- `note_path` (str, optional): Source note path for metadata
+
+**Returns:** `(success: bool, message: str)`
+
+### `update_settings(new_settings)`
+Updates plugin configuration settings.
+
+**Parameters:**
+- `new_settings` (dict): Dictionary of settings to update
+
+**Example:**
+```python
+plugin.update_settings({
+    'page_size': 'Letter',
+    'font_family': 'sans-serif',
+    'include_page_numbers': False
+})
+```
+
+### `get_settings()`
+Returns the current plugin settings.
+
+**Returns:** `dict` - Current settings dictionary
+
+### `get_supported_page_sizes()`
+Returns list of supported page sizes.
+
+**Returns:** `list` - `['A4', 'Letter', 'Legal', 'A5', 'A3']`
+
+### `get_supported_orientations()`
+Returns list of supported page orientations.
+
+**Returns:** `list` - `['portrait', 'landscape']`
+
+### `get_supported_fonts()`
+Returns list of supported font families.
+
+**Returns:** `list` - `['serif', 'sans-serif', 'monospace']`
+
 ## Configuration
 
 ### Available Settings
@@ -95,17 +155,24 @@ The plugin provides extensive configuration options:
     'include_date': True,
     'include_author': False,
     'author_name': '',
+    'include_page_numbers': True,  # Show page numbers in footer
 
     # Style settings
     'font_family': 'serif',     # serif, sans-serif, monospace
     'font_size': '11pt',
     'line_height': '1.6',
     'code_background': '#f5f5f5',
+    'table_text_size': '10pt',  # Font size for table text
+    'heading_color': '#333',    # Color for headings
 
     # Markdown extensions
     'enable_tables': True,
     'enable_code_highlighting': True,
-    'enable_toc': False         # Table of contents
+    'enable_toc': False,        # Table of contents
+
+    # Advanced settings
+    'break_tables_across_pages': False,  # Allow tables to span multiple pages
+    'compress_tables': True     # Use smaller font in tables for better fit
 }
 ```
 
@@ -195,8 +262,6 @@ Export a note to PDF.
 ```
 
 **Response:** Binary PDF file download
-
-**Rate Limit:** 20 requests per minute
 
 #### GET `/api/plugins/pdf_export/options`
 Get available export options (page sizes, orientations, fonts).
@@ -375,7 +440,6 @@ async function exportToPDF(notePath, content) {
 - The plugin uses temporary directories for PDF generation
 - Temporary files are automatically cleaned up by the OS
 - No sensitive data is logged
-- Rate limiting prevents abuse (20 exports per minute)
 - Input validation prevents path traversal attacks
 
 ## Performance
