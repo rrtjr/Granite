@@ -53,9 +53,9 @@ Granite Release Script
 
 Usage:
   ./scripts/release.sh start <version>   - Start a new release
-  ./scripts/release.sh finish             - Finish current release
+  ./scripts/release.sh finish             - Finish current release (prints instructions)
   ./scripts/release.sh hotfix <version>   - Start a hotfix
-  ./scripts/release.sh hotfix-finish      - Finish hotfix
+  ./scripts/release.sh hotfix-finish      - Finish hotfix (prints instructions)
 
 Examples:
   ./scripts/release.sh start 0.8.0
@@ -125,38 +125,17 @@ finish_release() {
     # Extract version from branch name
     local version=${current_branch#release/}
 
-    print_info "Finishing release $version"
+    print_info "Finishing release $version - manual steps required to respect branch protections:"
 
-    # Merge to main
-    print_info "Merging to main..."
-    git checkout main
-    git pull origin main
-    git merge --no-ff "$current_branch" -m "Release v$version"
+    echo "1. Create PR from $current_branch to main on GitHub."
+    echo "2. Review, approve, and merge the PR (runs checks; may trigger builds)."
+    echo "3. After merge: git checkout main; git pull origin main."
+    echo "4. Create tag: git tag -a v$version -m \"Release version $version\""
+    echo "5. Push tag: git push origin v$version (triggers Docker build if configured)."
+    echo "6. Merge back: Create PR from main to develop, merge it."
+    echo "7. Delete branch: git branch -d $current_branch; git push origin --delete $current_branch"
 
-    # Create tag
-    print_info "Creating tag v$version..."
-    git tag -a "v$version" -m "Release version $version"
-
-    # Push main and tags
-    print_info "Pushing to main..."
-    git push origin main
-    git push origin "v$version"
-
-    # Merge back to develop
-    print_info "Merging back to develop..."
-    git checkout develop
-    git pull origin develop
-    git merge --no-ff "$current_branch" -m "Merge release/$version back to develop"
-    git push origin develop
-
-    # Delete release branch
-    print_info "Deleting release branch..."
-    git branch -d "$current_branch"
-    git push origin --delete "$current_branch"
-
-    print_success "Release $version completed!"
-    print_info "GitHub Actions will now build and publish Docker images"
-    print_info "Check: https://github.com/rrtjr/Granite/actions"
+    print_success "Follow steps to complete release $version."
 }
 
 start_hotfix() {
@@ -181,7 +160,7 @@ start_hotfix() {
     git checkout -b "$branch_name"
 
     print_success "Hotfix branch $branch_name created"
-    print_info "Fix the bug, then update VERSION and run: ./scripts/release.sh hotfix-finish"
+    print_info "Fix the bug, update VERSION to $version, commit, push, then run: ./scripts/release.sh hotfix-finish"
 }
 
 finish_hotfix() {
@@ -204,27 +183,18 @@ finish_hotfix() {
         exit 1
     fi
 
-    print_info "Finishing hotfix $version"
+    print_info "Finishing hotfix $version - manual steps required:"
 
-    # Merge to main
-    git checkout main
-    git pull origin main
-    git merge --no-ff "$current_branch" -m "Hotfix v$version"
-    git tag -a "v$version" -m "Hotfix version $version"
-    git push origin main
-    git push origin "v$version"
+    echo "1. Push changes: git push origin $current_branch"
+    echo "2. Create PR from $current_branch to main on GitHub."
+    echo "3. Review, approve, and merge the PR."
+    echo "4. After merge: git checkout main; git pull origin main."
+    echo "5. Create tag: git tag -a v$version -m \"Hotfix version $version\""
+    echo "6. Push tag: git push origin v$version"
+    echo "7. Merge to develop: Create PR from main to develop, merge it."
+    echo "8. Delete branch: git branch -d $current_branch; git push origin --delete $current_branch"
 
-    # Merge to develop
-    git checkout develop
-    git pull origin develop
-    git merge --no-ff "$current_branch" -m "Merge hotfix/$version to develop"
-    git push origin develop
-
-    # Delete hotfix branch
-    git branch -d "$current_branch"
-    git push origin --delete "$current_branch"
-
-    print_success "Hotfix $version completed!"
+    print_success "Follow steps to complete hotfix $version."
 }
 
 # Main command router
