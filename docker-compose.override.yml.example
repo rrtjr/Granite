@@ -1,0 +1,14 @@
+# Development overrides - mount source code for live editing and linting
+# Copy this file to docker-compose.override.yml to enable development mode:
+#   cp docker-compose.override.yml.example docker-compose.override.yml
+
+services:
+  granite:
+    volumes:
+      # Development: mount source code for live editing and linting
+      - ./backend:/app/backend
+      - ./tests:/app/tests
+      - ./frontend:/app/frontend
+      - ./scripts:/app/scripts
+      - ./pyproject.toml:/app/pyproject.toml
+      - ./.pre-commit-config.yaml:/app/.pre-commit-config.yaml

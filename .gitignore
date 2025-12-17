@@ -59,3 +59,7 @@ node_modules/
 
 # Docker development overrides
 docker-compose.override.yml
+
+# Frontend built files
+docs/@eaDir/
+frontend/@eaDir/

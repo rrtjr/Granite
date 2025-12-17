@@ -470,6 +470,23 @@ Granite prioritizes:
 3. **Privacy** - Self-hosted and secure
 4. **Extensibility** - Plugin system for custom features
 
+### Release Workflow
+
+We use a Git Flow-style branching strategy:
+- **main** - Production-ready code
+- **develop** - Integration branch for features
+- **release/*** - Release preparation branches
+- **feature/*** - Feature development branches
+- **hotfix/*** - Emergency production fixes
+
+Use the release script for easy releases:
+```bash
+./scripts/release.sh start 0.8.0   # Start new release
+./scripts/release.sh finish         # Finish and publish
+```
+
+See [RELEASE_WORKFLOW.md](documentation/RELEASE_WORKFLOW.md) and [SETUP_RELEASE_WORKFLOW.md](documentation/SETUP_RELEASE_WORKFLOW.md) for complete documentation.
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines and expectations.
 
 ## Community & Support
