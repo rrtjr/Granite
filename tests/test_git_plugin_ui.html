@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git Plugin UI Tests</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case {
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #ddd;
+            background: #f9f9f9;
+        }
+        .test-case.pass {
+            border-left-color: #4caf50;
+            background: #f1f8f4;
+        }
+        .test-case.fail {
+            border-left-color: #f44336;
+            background: #fef1f0;
+        }
+        .test-case.running {
+            border-left-color: #2196f3;
+            background: #e3f2fd;
+        }
+        .test-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .test-result {
+            font-size: 14px;
+            color: #666;
+        }
+        .summary {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .summary-item {
+            padding: 15px;
+            border-radius: 8px;
+            flex: 1;
+            text-align: center;
+        }
+        .summary-item.total {
+            background: #e3f2fd;
+        }
+        .summary-item.passed {
+            background: #f1f8f4;
+        }
+        .summary-item.failed {
+            background: #fef1f0;
+        }
+        .summary-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .summary-label {
+            font-size: 14px;
+            color: #666;
+        }
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #1976d2;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Git Plugin UI Tests</h1>
+    <p>Automated tests for the Git plugin UI functionality</p>
+
+    <div class="summary" id="summary">
+        <div class="summary-item total">
+            <div class="summary-label">Total Tests</div>
+            <div class="summary-value" id="total-tests">0</div>
+        </div>
+        <div class="summary-item passed">
+            <div class="summary-label">Passed</div>
+            <div class="summary-value" id="passed-tests">0</div>
+        </div>
+        <div class="summary-item failed">
+            <div class="summary-label">Failed</div>
+            <div class="summary-value" id="failed-tests">0</div>
+        </div>
+    </div>
+
+    <button onclick="runAllTests()" id="run-button">Run All Tests</button>
+
+    <div id="test-results"></div>
+
+    <script>
+        const BASE_URL = window.location.origin;
+        let testResults = [];
+        let passed = 0;
+        let failed = 0;
+
+        function updateSummary() {
+            document.getElementById('total-tests').textContent = testResults.length;
+            document.getElementById('passed-tests').textContent = passed;
+            document.getElementById('failed-tests').textContent = failed;
+        }
+
+        function addTestResult(name, success, message = '', data = null) {
+            testResults.push({ name, success, message, data });
+
+            if (success) {
+                passed++;
+            } else {
+                failed++;
+            }
+
+            const resultsDiv = document.getElementById('test-results');
+            const testCase = document.createElement('div');
+            testCase.className = `test-case ${success ? 'pass' : 'fail'}`;
+
+            let html = `
+                <div class="test-name">${success ? '✅' : '❌'} ${name}</div>
+                <div class="test-result">${message}</div>
+            `;
+
+            if (data) {
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            }
+
+            testCase.innerHTML = html;
+            resultsDiv.appendChild(testCase);
+
+            updateSummary();
+        }
+
+        function setTestRunning(name) {
+            const resultsDiv = document.getElementById('test-results');
+            const testCase = document.createElement('div');
+            testCase.className = 'test-case running';
+            testCase.id = `test-${testResults.length}`;
+            testCase.innerHTML = `
+                <div class="test-name">⏳ ${name}</div>
+                <div class="test-result">Running...</div>
+            `;
+            resultsDiv.appendChild(testCase);
+        }
+
+        async function runAllTests() {
+            const button = document.getElementById('run-button');
+            button.disabled = true;
+
+            testResults = [];
+            passed = 0;
+            failed = 0;
+            document.getElementById('test-results').innerHTML = '';
+
+            try {
+                // Test 1: Get git settings
+                setTestRunning('GET /api/plugins/git/settings');
+                try {
+                    const response = await fetch(`${BASE_URL}/api/plugins/git/settings`);
+                    if (response.status === 404) {
+                        addTestResult(
+                            'GET /api/plugins/git/settings',
+                            false,
+                            'Git plugin not found (404)'
+                        );
+                    } else if (response.ok) {
+                        const data = await response.json();
+                        const hasSettings = data.settings && typeof data.settings === 'object';
+                        const hasRequiredKeys = hasSettings &&
+                            'backup_interval' in data.settings &&
+                            'pull_on_startup' in data.settings &&
+                            'auto_push' in data.settings &&
+                            'remote_branch' in data.settings;
+
+                        addTestResult(
+                            'GET /api/plugins/git/settings',
+                            hasRequiredKeys,
+                            hasRequiredKeys ? 'Settings structure is correct' : 'Missing required settings keys',
+                            data
+                        );
+                    } else {
+                        addTestResult(
+                            'GET /api/plugins/git/settings',
+                            false,
+                            `Request failed with status ${response.status}`
+                        );
+                    }
+                } catch (error) {
+                    addTestResult('GET /api/plugins/git/settings', false, error.message);
+                }
+
+                // Test 2: Update git settings
+                setTestRunning('POST /api/plugins/git/settings');
+                try {
+                    const newSettings = {
+                        backup_interval: 300,
+                        pull_on_startup: false,
+                        auto_push: true,
+                        remote_branch: 'test-branch'
+                    };
+
+                    const response = await fetch(`${BASE_URL}/api/plugins/git/settings`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newSettings)
+                    });
+
+                    if (response.status === 404) {
+                        addTestResult(
+                            'POST /api/plugins/git/settings',
+                            false,
+                            'Git plugin not found (404)'
+                        );
+                    } else if (response.ok) {
+                        const data = await response.json();
+                        const success = data.success === true &&
+                            data.settings.backup_interval === 300 &&
+                            data.settings.pull_on_startup === false &&
+                            data.settings.auto_push === true &&
+                            data.settings.remote_branch === 'test-branch';
+
+                        addTestResult(
+                            'POST /api/plugins/git/settings',
+                            success,
+                            success ? 'Settings updated successfully' : 'Settings not updated correctly',
+                            data
+                        );
+
+                        // Restore default settings
+                        await fetch(`${BASE_URL}/api/plugins/git/settings`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                backup_interval: 600,
+                                pull_on_startup: true,
+                                auto_push: true,
+                                remote_branch: 'main'
+                            })
+                        });
+                    } else {
+                        addTestResult(
+                            'POST /api/plugins/git/settings',
+                            false,
+                            `Request failed with status ${response.status}`
+                        );
+                    }
+                } catch (error) {
+                    addTestResult('POST /api/plugins/git/settings', false, error.message);
+                }
+
+                // Test 3: Get git status
+                setTestRunning('GET /api/plugins/git/status');
+                try {
+                    const response = await fetch(`${BASE_URL}/api/plugins/git/status`);
+
+                    if (response.status === 404) {
+                        addTestResult(
+                            'GET /api/plugins/git/status',
+                            false,
+                            'Git plugin not found (404)'
+                        );
+                    } else if (response.ok) {
+                        const data = await response.json();
+                        const hasEnabled = 'enabled' in data;
+                        const hasExtendedStatus = 'backup_count' in data &&
+                            'last_backup_time' in data &&
+                            'timer_running' in data;
+
+                        addTestResult(
+                            'GET /api/plugins/git/status',
+                            hasEnabled,
+                            hasExtendedStatus ? 'Status includes extended information' : 'Status includes basic information',
+                            data
+                        );
+                    } else {
+                        addTestResult(
+                            'GET /api/plugins/git/status',
+                            false,
+                            `Request failed with status ${response.status}`
+                        );
+                    }
+                } catch (error) {
+                    addTestResult('GET /api/plugins/git/status', false, error.message);
+                }
+
+                // Test 4: Enable git plugin
+                setTestRunning('POST /api/plugins/git/toggle (enable)');
+                try {
+                    const response = await fetch(`${BASE_URL}/api/plugins/git/toggle`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ enabled: true })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        const success = data.success === true &&
+                            data.plugin === 'git' &&
+                            data.enabled === true;
+
+                        addTestResult(
+                            'POST /api/plugins/git/toggle (enable)',
+                            success,
+                            success ? 'Plugin enabled successfully' : 'Plugin toggle failed',
+                            data
+                        );
+                    } else {
+                        addTestResult(
+                            'POST /api/plugins/git/toggle (enable)',
+                            false,
+                            `Request failed with status ${response.status}`
+                        );
+                    }
+                } catch (error) {
+                    addTestResult('POST /api/plugins/git/toggle (enable)', false, error.message);
+                }
+
+                // Test 5: Manual backup (may fail if not in git repo)
+                setTestRunning('POST /api/plugins/git/manual-backup');
+                try {
+                    const response = await fetch(`${BASE_URL}/api/plugins/git/manual-backup`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+
+                    if (response.status === 404) {
+                        addTestResult(
+                            'POST /api/plugins/git/manual-backup',
+                            false,
+                            'Git plugin not found (404)'
+                        );
+                    } else if (response.status === 400) {
+                        // 400 is acceptable if plugin is disabled or not a git repo
+                        addTestResult(
+                            'POST /api/plugins/git/manual-backup',
+                            true,
+                            'Endpoint exists (returned 400 - plugin disabled or not git repo)'
+                        );
+                    } else if (response.ok) {
+                        const data = await response.json();
+                        addTestResult(
+                            'POST /api/plugins/git/manual-backup',
+                            data.success === true,
+                            data.success ? 'Manual backup triggered' : 'Backup failed',
+                            data
+                        );
+                    } else {
+                        addTestResult(
+                            'POST /api/plugins/git/manual-backup',
+                            false,
+                            `Unexpected status: ${response.status}`
+                        );
+                    }
+                } catch (error) {
+                    addTestResult('POST /api/plugins/git/manual-backup', false, error.message);
+                }
+
+                // Test 6: Manual pull (may fail if not in git repo)
+                setTestRunning('POST /api/plugins/git/manual-pull');
+                try {
+                    const response = await fetch(`${BASE_URL}/api/plugins/git/manual-pull`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+
+                    if (response.status === 404) {
+                        addTestResult(
+                            'POST /api/plugins/git/manual-pull',
+                            false,
+                            'Git plugin not found (404)'
+                        );
+                    } else if (response.status === 400) {
+                        // 400 is acceptable if plugin is disabled or not a git repo
+                        addTestResult(
+                            'POST /api/plugins/git/manual-pull',
+                            true,
+                            'Endpoint exists (returned 400 - plugin disabled or not git repo)'
+                        );
+                    } else if (response.ok) {
+                        const data = await response.json();
+                        addTestResult(
+                            'POST /api/plugins/git/manual-pull',
+                            data.success === true,
+                            data.success ? 'Manual pull triggered' : 'Pull failed',
+                            data
+                        );
+                    } else {
+                        addTestResult(
+                            'POST /api/plugins/git/manual-pull',
+                            false,
+                            `Unexpected status: ${response.status}`
+                        );
+                    }
+                } catch (error) {
+                    addTestResult('POST /api/plugins/git/manual-pull', false, error.message);
+                }
+
+                // Test 7: Settings persistence
+                setTestRunning('Settings persistence test');
+                try {
+                    // Set custom settings
+                    const customSettings = {
+                        backup_interval: 999,
+                        commit_message_template: 'Test: {timestamp}'
+                    };
+
+                    await fetch(`${BASE_URL}/api/plugins/git/settings`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(customSettings)
+                    });
+
+                    // Fetch settings again
+                    const response = await fetch(`${BASE_URL}/api/plugins/git/settings`);
+                    const data = await response.json();
+
+                    const persisted = data.settings.backup_interval === 999 &&
+                        data.settings.commit_message_template === 'Test: {timestamp}';
+
+                    addTestResult(
+                        'Settings persistence test',
+                        persisted,
+                        persisted ? 'Settings persisted correctly' : 'Settings did not persist',
+                        data.settings
+                    );
+
+                    // Restore defaults
+                    await fetch(`${BASE_URL}/api/plugins/git/settings`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            backup_interval: 600,
+                            commit_message_template: 'Auto-backup: {timestamp}'
+                        })
+                    });
+                } catch (error) {
+                    addTestResult('Settings persistence test', false, error.message);
+                }
+
+                // Test 8: SSH key generation with valid email
+                setTestRunning('POST /api/plugins/git/ssh/generate (with email)');
+                try {
+                    const response = await fetch(`${BASE_URL}/api/plugins/git/ssh/generate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: 'test@example.com' })
+                    });
+
+                    if (response.status === 404) {
+                        addTestResult(
+                            'POST /api/plugins/git/ssh/generate (with email)',
+                            false,
+                            'Git plugin not found (404)'
+                        );
+                    } else if (response.status === 400) {
+                        const data = await response.json();
+                        // 400 is acceptable if key already exists or plugin is disabled
+                        const isExpectedError = data.detail && (
+                            data.detail.includes('already exists') ||
+                            data.detail.includes('not enabled')
+                        );
+                        addTestResult(
+                            'POST /api/plugins/git/ssh/generate (with email)',
+                            isExpectedError,
+                            isExpectedError ? `Expected error: ${data.detail}` : `Unexpected error: ${data.detail}`,
+                            data
+                        );
+                    } else if (response.ok) {
+                        const data = await response.json();
+                        addTestResult(
+                            'POST /api/plugins/git/ssh/generate (with email)',
+                            data.success === true,
+                            data.success ? 'SSH key generated with provided email' : 'Generation failed',
+                            data
+                        );
+                    } else {
+                        addTestResult(
+                            'POST /api/plugins/git/ssh/generate (with email)',
+                            false,
+                            `Unexpected status: ${response.status}`
+                        );
+                    }
+                } catch (error) {
+                    addTestResult('POST /api/plugins/git/ssh/generate (with email)', false, error.message);
+                }
+
+                // Test 9: SSH key generation with null/empty email (should use default)
+                setTestRunning('POST /api/plugins/git/ssh/generate (null email)');
+                try {
+                    const response = await fetch(`${BASE_URL}/api/plugins/git/ssh/generate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: null })
+                    });
+
+                    if (response.status === 400) {
+                        const data = await response.json();
+                        // Should still work with default email or report key exists
+                        const isExpectedError = data.detail && (
+                            data.detail.includes('already exists') ||
+                            data.detail.includes('not enabled')
+                        );
+                        addTestResult(
+                            'POST /api/plugins/git/ssh/generate (null email)',
+                            isExpectedError,
+                            `Expected behavior: ${data.detail}`,
+                            data
+                        );
+                    } else if (response.ok) {
+                        const data = await response.json();
+                        addTestResult(
+                            'POST /api/plugins/git/ssh/generate (null email)',
+                            data.success === true,
+                            'SSH key generated with default email',
+                            data
+                        );
+                    } else {
+                        const data = await response.json().catch(() => ({}));
+                        addTestResult(
+                            'POST /api/plugins/git/ssh/generate (null email)',
+                            false,
+                            `Status ${response.status}: ${data.detail || 'Unknown error'}`
+                        );
+                    }
+                } catch (error) {
+                    addTestResult('POST /api/plugins/git/ssh/generate (null email)', false, error.message);
+                }
+
+                // Test 10: SSH key generation with invalid email
+                setTestRunning('POST /api/plugins/git/ssh/generate (invalid email)');
+                try {
+                    const response = await fetch(`${BASE_URL}/api/plugins/git/ssh/generate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: 'invalid-email' })
+                    });
+
+                    if (response.status === 400) {
+                        const data = await response.json();
+                        const isValidationError = data.detail && data.detail.includes('Invalid email format');
+                        addTestResult(
+                            'POST /api/plugins/git/ssh/generate (invalid email)',
+                            isValidationError || data.detail.includes('already exists'),
+                            isValidationError ? 'Email validation working correctly' : `Other error: ${data.detail}`,
+                            data
+                        );
+                    } else {
+                        addTestResult(
+                            'POST /api/plugins/git/ssh/generate (invalid email)',
+                            false,
+                            `Expected 400 validation error, got ${response.status}`
+                        );
+                    }
+                } catch (error) {
+                    addTestResult('POST /api/plugins/git/ssh/generate (invalid email)', false, error.message);
+                }
+
+                // Test 11: Get SSH public key
+                setTestRunning('GET /api/plugins/git/ssh/public-key');
+                try {
+                    const response = await fetch(`${BASE_URL}/api/plugins/git/ssh/public-key`);
+
+                    if (response.status === 404) {
+                        const data = await response.json();
+                        addTestResult(
+                            'GET /api/plugins/git/ssh/public-key',
+                            true,
+                            'No SSH key found (expected if not generated yet)',
+                            data
+                        );
+                    } else if (response.ok) {
+                        const data = await response.json();
+                        const hasValidKey = data.success &&
+                            data.public_key &&
+                            typeof data.public_key === 'string' &&
+                            data.public_key.length > 0;
+                        addTestResult(
+                            'GET /api/plugins/git/ssh/public-key',
+                            hasValidKey,
+                            hasValidKey ? 'SSH public key retrieved successfully' : 'Invalid public key format',
+                            { keyLength: data.public_key?.length, preview: data.public_key?.substring(0, 50) + '...' }
+                        );
+                    } else {
+                        addTestResult(
+                            'GET /api/plugins/git/ssh/public-key',
+                            false,
+                            `Unexpected status: ${response.status}`
+                        );
+                    }
+                } catch (error) {
+                    addTestResult('GET /api/plugins/git/ssh/public-key', false, error.message);
+                }
+
+                // Test 12: Test SSH connection (GitHub)
+                setTestRunning('POST /api/plugins/git/ssh/test (GitHub)');
+                try {
+                    const response = await fetch(`${BASE_URL}/api/plugins/git/ssh/test`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ host: 'github.com' })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        addTestResult(
+                            'POST /api/plugins/git/ssh/test (GitHub)',
+                            true,
+                            `SSH test completed: ${data.message}`,
+                            data
+                        );
+                    } else {
+                        const data = await response.json().catch(() => ({}));
+                        addTestResult(
+                            'POST /api/plugins/git/ssh/test (GitHub)',
+                            false,
+                            `Status ${response.status}: ${data.detail || 'Unknown error'}`
+                        );
+                    }
+                } catch (error) {
+                    addTestResult('POST /api/plugins/git/ssh/test (GitHub)', false, error.message);
+                }
+
+                // Test 13: Test SSH connection with null host (should use default)
+                setTestRunning('POST /api/plugins/git/ssh/test (null host)');
+                try {
+                    const response = await fetch(`${BASE_URL}/api/plugins/git/ssh/test`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ host: null })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        addTestResult(
+                            'POST /api/plugins/git/ssh/test (null host)',
+                            true,
+                            `Default host used: ${data.message}`,
+                            data
+                        );
+                    } else {
+                        const data = await response.json().catch(() => ({}));
+                        addTestResult(
+                            'POST /api/plugins/git/ssh/test (null host)',
+                            false,
+                            `Status ${response.status}: ${data.detail || 'Unknown error'}`
+                        );
+                    }
+                } catch (error) {
+                    addTestResult('POST /api/plugins/git/ssh/test (null host)', false, error.message);
+                }
+
+                // Test 14: Test SSH connection with invalid host
+                setTestRunning('POST /api/plugins/git/ssh/test (invalid host)');
+                try {
+                    const response = await fetch(`${BASE_URL}/api/plugins/git/ssh/test`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ host: 'invalid host with spaces' })
+                    });
+
+                    if (response.status === 400) {
+                        const data = await response.json();
+                        const isValidationError = data.detail && data.detail.includes('Invalid host format');
+                        addTestResult(
+                            'POST /api/plugins/git/ssh/test (invalid host)',
+                            isValidationError,
+                            isValidationError ? 'Host validation working correctly' : `Other error: ${data.detail}`,
+                            data
+                        );
+                    } else {
+                        addTestResult(
+                            'POST /api/plugins/git/ssh/test (invalid host)',
+                            false,
+                            `Expected 400 validation error, got ${response.status}`
+                        );
+                    }
+                } catch (error) {
+                    addTestResult('POST /api/plugins/git/ssh/test (invalid host)', false, error.message);
+                }
+
+                // Test 15: Test SSH connection with empty body
+                setTestRunning('POST /api/plugins/git/ssh/test (empty body)');
+                try {
+                    const response = await fetch(`${BASE_URL}/api/plugins/git/ssh/test`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        addTestResult(
+                            'POST /api/plugins/git/ssh/test (empty body)',
+                            true,
+                            `Default host used: ${data.message}`,
+                            data
+                        );
+                    } else {
+                        const data = await response.json().catch(() => ({}));
+                        addTestResult(
+                            'POST /api/plugins/git/ssh/test (empty body)',
+                            false,
+                            `Status ${response.status}: ${data.detail || 'Unknown error'}`
+                        );
+                    }
+                } catch (error) {
+                    addTestResult('POST /api/plugins/git/ssh/test (empty body)', false, error.message);
+                }
+
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 500);
+        });
+    </script>
+</body>
+</html>

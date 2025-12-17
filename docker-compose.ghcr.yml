@@ -1,0 +1,30 @@
+# This file is for GitHub Container Registry deployment
+# Currently not in use - use docker-compose.yml to build locally
+
+services:
+  granite:
+    # Uncomment when you publish to GHCR:
+    # image: ghcr.io/rrtjr/granite:latest
+    build: .
+    container_name: granite
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist notes and data
+      - ./data:/app/data
+      # Custom plugins
+      - ./plugins:/app/plugins
+      # Custom themes (REQUIRED - must contain theme .css files)
+      - ./themes:/app/themes
+      # Config file (REQUIRED - must exist as a file, not directory!)
+      - ./config.yaml:/app/config.yaml
+    restart: unless-stopped
+    environment:
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 60s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
