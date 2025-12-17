@@ -5,11 +5,6 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
-  # Also run on release branches
-  push:
-    branches:
-      - 'release/**'
-      - 'hotfix/**'
 
 jobs:
   test:
