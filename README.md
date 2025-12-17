@@ -111,11 +111,6 @@ Granite can be deployed in multiple ways to suit your needs:
 - **Pros**: Direct access to code, no Docker required
 - **Setup time**: ~10 minutes
 
-### Render (Cloud)
-- **Best for**: Remote access, sharing with team, no server management
-- **Pros**: Free tier available, automatic HTTPS, managed hosting
-- **Setup time**: ~5 minutes (one-click deploy)
-
 ### Manual Production
 - **Best for**: Advanced users with existing infrastructure
 - **Requires**: Reverse proxy (nginx/Caddy), HTTPS, firewall configuration
@@ -172,22 +167,7 @@ docker-compose -f docker-compose.ghcr.yml up -d
 - Multi-stage build for minimal image size (~200MB)
 - Multi-architecture support (AMD64, ARM64)
 
-### Option 2: Render (Cloud Deployment)
-
-Deploy Granite to the cloud with one click:
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/rrtjr/Granite)
-
-**What you get:**
-- Free tier available (512MB RAM, sleeps after inactivity)
-- Automatic HTTPS with custom domain support
-- Auto-deploys from `render.yaml` configuration
-- Uses pre-built images from GHCR for fast deployment
-- Perfect for demos and shared team access
-
-**Note**: Demo mode is enabled by default with authentication. See [render.yaml](render.yaml) for configuration.
-
-### Option 3: Local Python (Development)
+### Option 2: Local Python (Development)
 
 For development or if you prefer running directly:
 
@@ -533,7 +513,6 @@ Include:
 - Mermaid diagram support
 - Combined tag and search filtering
 - Pre-commit hooks and CI/CD
-- Render deployment support
 
 To contribute to the roadmap, please open an issue for discussion.
 
