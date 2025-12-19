@@ -171,8 +171,9 @@ plugin_manager = PluginManager(config["storage"]["plugins_dir"])
 
 # Load plugin settings from user-settings.json and apply them
 user_settings = load_user_settings(user_settings_path)
-if "plugins" in user_settings and user_settings["plugins"]:
-    for plugin_name, plugin_settings in user_settings["plugins"].items():
+plugins = user_settings.get("plugins")
+if plugins:
+    for plugin_name, plugin_settings in plugins.items():
         plugin = plugin_manager.plugins.get(plugin_name)
         if plugin and hasattr(plugin, "update_settings"):
             plugin.update_settings(plugin_settings)
@@ -557,7 +558,7 @@ async def update_templates_dir(request: Request, data: dict):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update templates directory: {str(e)}") from e
+        raise HTTPException(status_code=500, detail=f"Failed to update templates directory: {e!r}") from e
 
 
 @api_router.get("/settings/user")
@@ -568,10 +569,9 @@ async def get_user_settings(request: Request):
     Settings are stored in user-settings.json at root level.
     """
     try:
-        settings = load_user_settings(user_settings_path)
-        return settings
+        return load_user_settings(user_settings_path)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to load user settings: {str(e)}") from e
+        raise HTTPException(status_code=500, detail=f"Failed to load user settings: {e!r}") from e
 
 
 @api_router.post("/settings/user")
@@ -618,7 +618,7 @@ async def update_user_settings_endpoint(request: Request, data: dict):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update user settings: {str(e)}") from e
+        raise HTTPException(status_code=500, detail=f"Failed to update user settings: {e!r}") from e
 
 
 @api_router.get("/themes")
@@ -1286,7 +1286,7 @@ async def update_git_plugin_settings(request: Request, settings: dict):
             plugin.update_settings(settings)
 
             # Persist to user-settings.json
-            success, user_settings = update_user_setting(user_settings_path, "plugins", "git", plugin.get_settings())
+            success, _ = update_user_setting(user_settings_path, "plugins", "git", plugin.get_settings())
 
             if not success:
                 print("Warning: Failed to persist git plugin settings to user-settings.json")
@@ -1502,7 +1502,7 @@ async def update_pdf_export_settings(request: Request, settings: dict):
             plugin.update_settings(settings)
 
             # Persist to user-settings.json
-            success, user_settings = update_user_setting(user_settings_path, "plugins", "pdf_export", plugin.get_settings())
+            success, _ = update_user_setting(user_settings_path, "plugins", "pdf_export", plugin.get_settings())
 
             if not success:
                 print("Warning: Failed to persist PDF export plugin settings to user-settings.json")

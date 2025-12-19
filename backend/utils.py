@@ -5,9 +5,10 @@ Utility functions for file operations, search, and markdown processing
 import json
 import re
 import shutil
-import yaml
 from datetime import datetime, timezone
 from pathlib import Path
+
+import yaml
 
 # In-memory cache for parsed tags
 # Format: {file_path: (mtime, tags)}
@@ -659,7 +660,7 @@ def get_notes_by_tag(notes_dir: str, tag: str) -> list[dict]:
 # ============================================================================
 
 
-def get_templates(notes_dir: str, templates_dir: str = None) -> list[dict]:
+def get_templates(notes_dir: str, templates_dir: str | None = None) -> list[dict]:
     """
     Get all templates from the templates folder.
 
@@ -714,7 +715,7 @@ def get_templates(notes_dir: str, templates_dir: str = None) -> list[dict]:
     return sorted(templates, key=lambda x: x["name"])
 
 
-def get_template_content(notes_dir: str, template_name: str, templates_dir: str = None) -> str | None:
+def get_template_content(notes_dir: str, template_name: str, templates_dir: str | None = None) -> str | None:
     """
     Get the content of a specific template.
 
