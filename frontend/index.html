@@ -433,6 +433,90 @@
             height: auto;
         }
 
+        /* Reading Preferences - Content Width */
+        .markdown-preview.reading-width-narrow {
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .markdown-preview.reading-width-medium {
+            max-width: 850px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .markdown-preview.reading-width-wide {
+            max-width: 1100px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .markdown-preview.reading-width-full {
+            max-width: none;
+        }
+
+        /* Reading Preferences - Text Alignment */
+        .markdown-preview.align-left {
+            text-align: left;
+        }
+
+        .markdown-preview.align-center {
+            text-align: center;
+        }
+
+        .markdown-preview.align-center h1,
+        .markdown-preview.align-center h2,
+        .markdown-preview.align-center h3,
+        .markdown-preview.align-center h4,
+        .markdown-preview.align-center h5,
+        .markdown-preview.align-center h6 {
+            text-align: center;
+        }
+
+        .markdown-preview.align-justified {
+            text-align: justify;
+        }
+
+        .markdown-preview.align-justified h1,
+        .markdown-preview.align-justified h2,
+        .markdown-preview.align-justified h3,
+        .markdown-preview.align-justified h4,
+        .markdown-preview.align-justified h5,
+        .markdown-preview.align-justified h6 {
+            text-align: left;
+        }
+
+        /* Reading Preferences - Content Spacing */
+        .markdown-preview.margins-compact {
+            padding: 1rem 1.5rem !important;
+        }
+
+        .markdown-preview.margins-normal {
+            padding: 1.5rem !important;
+        }
+
+        .markdown-preview.margins-relaxed {
+            padding: 2rem 3rem !important;
+        }
+
+        .markdown-preview.margins-extra-relaxed {
+            padding: 3rem 4rem !important;
+        }
+
+        /* Adjust line-height for different margin settings */
+        .markdown-preview.margins-compact {
+            line-height: 1.6;
+        }
+
+        .markdown-preview.margins-relaxed {
+            line-height: 2;
+        }
+
+        .markdown-preview.margins-extra-relaxed {
+            line-height: 2.2;
+        }
+
         /* CodeMirror Editor styling */
         #note-editor {
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
@@ -1547,6 +1631,58 @@
                                     </template>
                                 </div>
 
+                                <!-- Reading Preferences -->
+                                <div class="mb-4">
+                                    <label class="block text-xs font-medium mb-2" style="color: var(--text-secondary);">Reading Preferences</label>
+
+                                    <!-- Read Width -->
+                                    <div class="mb-3">
+                                        <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Content Width</label>
+                                        <select
+                                            x-model="readingWidth"
+                                            @change="saveReadingPreferences()"
+                                            class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                            style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
+                                        >
+                                            <option value="narrow">Narrow (650px)</option>
+                                            <option value="medium">Medium (850px)</option>
+                                            <option value="wide">Wide (1100px)</option>
+                                            <option value="full">Full Width</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Text Alignment -->
+                                    <div class="mb-3">
+                                        <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Text Alignment</label>
+                                        <select
+                                            x-model="contentAlign"
+                                            @change="saveReadingPreferences()"
+                                            class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                            style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
+                                        >
+                                            <option value="left">Left Aligned</option>
+                                            <option value="center">Centered</option>
+                                            <option value="justified">Justified</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Content Margins -->
+                                    <div class="mb-3">
+                                        <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Content Spacing</label>
+                                        <select
+                                            x-model="contentMargins"
+                                            @change="saveReadingPreferences()"
+                                            class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                            style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
+                                        >
+                                            <option value="compact">Compact</option>
+                                            <option value="normal">Normal</option>
+                                            <option value="relaxed">Relaxed</option>
+                                            <option value="extra-relaxed">Extra Relaxed</option>
+                                        </select>
+                                    </div>
+                                </div>
+
                                 <!-- Logout (if auth enabled) - uses authEnabled from main app state -->
                                 <div x-show="authEnabled" class="mb-4">
                                     <label class="block text-xs font-medium mb-2" style="color: var(--text-secondary);">Account</label>
@@ -2185,9 +2321,22 @@
                                 </div>
                             </div>
                             
-                            <div 
-                                class="p-6 markdown-preview"
-                                :class="{ 'pt-2': getHasMetadata() && currentNote }"
+                            <div
+                                class="markdown-preview"
+                                :class="{
+                                    'pt-2': getHasMetadata() && currentNote,
+                                    'reading-width-narrow': readingWidth === 'narrow',
+                                    'reading-width-medium': readingWidth === 'medium',
+                                    'reading-width-wide': readingWidth === 'wide',
+                                    'reading-width-full': readingWidth === 'full',
+                                    'align-left': contentAlign === 'left',
+                                    'align-center': contentAlign === 'center',
+                                    'align-justified': contentAlign === 'justified',
+                                    'margins-compact': contentMargins === 'compact',
+                                    'margins-normal': contentMargins === 'normal',
+                                    'margins-relaxed': contentMargins === 'relaxed',
+                                    'margins-extra-relaxed': contentMargins === 'extra-relaxed'
+                                }"
                                 x-html="renderedMarkdown"
                                 @click="handleInternalLink($event)"
                             ></div>

@@ -43,7 +43,12 @@ function noteApp() {
         noteContent: '',
         viewMode: 'split', // 'edit', 'split', 'preview'
         searchQuery: '',
-        
+
+        // Reading preferences
+        readingWidth: 'full', // 'narrow', 'medium', 'wide', 'full'
+        contentAlign: 'left', // 'left', 'center', 'justified'
+        contentMargins: 'normal', // 'compact', 'normal', 'relaxed', 'extra-relaxed'
+
         // Graph state (separate overlay, doesn't affect viewMode)
         showGraph: false,
         graphInstance: null,
@@ -346,6 +351,7 @@ function noteApp() {
             this.loadEditorWidth();
             this.loadViewMode();
             this.loadTagsExpanded();
+            this.loadReadingPreferences();
             
             // Parse URL and load specific note if provided
             this.loadNoteFromURL();
@@ -3990,7 +3996,40 @@ function noteApp() {
                 console.error('Error saving tags expanded state:', error);
             }
         },
-        
+
+        // Load reading preferences from localStorage
+        loadReadingPreferences() {
+            try {
+                const savedWidth = localStorage.getItem('readingWidth');
+                if (savedWidth && ['narrow', 'medium', 'wide', 'full'].includes(savedWidth)) {
+                    this.readingWidth = savedWidth;
+                }
+
+                const savedAlign = localStorage.getItem('contentAlign');
+                if (savedAlign && ['left', 'center', 'justified'].includes(savedAlign)) {
+                    this.contentAlign = savedAlign;
+                }
+
+                const savedMargins = localStorage.getItem('contentMargins');
+                if (savedMargins && ['compact', 'normal', 'relaxed', 'extra-relaxed'].includes(savedMargins)) {
+                    this.contentMargins = savedMargins;
+                }
+            } catch (error) {
+                console.error('Error loading reading preferences:', error);
+            }
+        },
+
+        // Save reading preferences to localStorage
+        saveReadingPreferences() {
+            try {
+                localStorage.setItem('readingWidth', this.readingWidth);
+                localStorage.setItem('contentAlign', this.contentAlign);
+                localStorage.setItem('contentMargins', this.contentMargins);
+            } catch (error) {
+                console.error('Error saving reading preferences:', error);
+            }
+        },
+
         // Start resizing sidebar
         startResize(event) {
             this.isResizing = true;
