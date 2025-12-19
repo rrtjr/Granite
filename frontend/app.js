@@ -1662,9 +1662,10 @@ function noteApp() {
         
         // Insert image markdown at cursor position
         insertImageMarkdown(imagePath, altText, cursorPos) {
-            const filename = altText.replace(/\.[^/.]+$/, ''); // Remove extension
-            // Use relative path (not /api/images/) for portability
-            const markdown = `![${filename}](${imagePath})\n`;
+            // Extract just the filename from the path for Obsidian-style wiki links
+            const filename = imagePath.split('/').pop() || imagePath;
+            // Use Obsidian format: ![[filename]]
+            const markdown = `![[${filename}]]\n`;
 
             if (this.editorView) {
                 this.editorView.dispatch({

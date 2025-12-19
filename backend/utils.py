@@ -375,21 +375,10 @@ def sanitize_filename(filename: str) -> str:
 def get_attachment_dir(notes_dir: str, note_path: str) -> Path:
     """
     Get the attachments directory for a given note.
-    If note is in root, returns /data/_attachments/
-    If note is in folder, returns /data/folder/_attachments/
+    Returns the root notes directory.
     """
-    if not note_path:
-        # Root level
-        return Path(notes_dir) / "_attachments"
-
-    note_path_obj = Path(note_path)
-    folder = note_path_obj.parent
-
-    if str(folder) == ".":
-        # Note is in root
-        return Path(notes_dir) / "_attachments"
-    # Note is in a folder
-    return Path(notes_dir) / folder / "_attachments"
+    # Save all images to root folder
+    return Path(notes_dir)
 
 
 def save_uploaded_image(notes_dir: str, note_path: str, filename: str, file_data: bytes) -> str | None:
