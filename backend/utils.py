@@ -850,18 +850,16 @@ def get_default_user_settings() -> dict:
         "reading": {
             "width": "full",  # 'narrow', 'medium', 'wide', 'full'
             "align": "left",  # 'left', 'center', 'justified'
-            "margins": "normal"  # 'compact', 'normal', 'relaxed', 'extra-relaxed'
+            "margins": "normal",  # 'compact', 'normal', 'relaxed', 'extra-relaxed'
         },
         "performance": {
             "updateDelay": 100,
             "statsDelay": 300,
             "metadataDelay": 300,
             "historyDelay": 500,
-            "autosaveDelay": 1000
+            "autosaveDelay": 1000,
         },
-        "paths": {
-            "templatesDir": "_templates"
-        }
+        "paths": {"templatesDir": "_templates"},
     }
 
 

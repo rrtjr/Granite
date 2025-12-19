@@ -1,3 +1,40 @@
+[project]
+name = "granite"
+version = "0.1.0"
+description = "A modern note-taking application built with FastAPI"
+requires-python = ">=3.10"
+dependencies = [
+    # Core FastAPI dependencies
+    "fastapi==0.115.0",
+    "uvicorn[standard]==0.32.0",
+    "python-multipart==0.0.18",
+    # Content processing
+    "markdown==3.7",
+    "pyyaml==6.0.1",
+    # Async file operations
+    "aiofiles==24.1.0",
+    # Security
+    "cryptography==44.0.1",
+    "bcrypt==4.2.1",
+    "itsdangerous==2.2.0",
+    # Logging
+    "loguru==0.7.2",
+    # Rate limiting
+    "slowapi==0.1.9",
+    # Testing
+    "pytest==8.3.3",
+    "httpx==0.28.0",
+    "pytest-cov==6.0.0",
+    # PDF Export Plugin dependencies
+    "weasyprint==63.1",
+    "pydyf==0.11.0",
+    "Pygments==2.18.0",
+    # Code quality tools (development)
+    "ruff==0.14.9",
+    # Security scanning
+    "safety==3.2.8",
+]
+
 # Ruff configuration - replaces black, flake8, isort, and more
 [tool.ruff]
 line-length = 120

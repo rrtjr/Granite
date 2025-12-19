@@ -19,15 +19,17 @@ RUN npm install && \
     ls -lh frontend/static/codemirror6.bundle.js && \
     echo "CodeMirror 6 bundle built successfully!"
 
-# Install Python packages
-COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir --prefix=/install -r requirements.txt && \
+# Install uv for fast Python package management
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Install Python packages using uv
+COPY pyproject.toml .
+RUN uv pip install --system --no-cache . && \
     # Clean up unnecessary files to reduce image size
-    find /install -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true && \
-    find /install -type f -name "*.pyc" -delete && \
-    find /install -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true && \
-    find /install -type d -name "*.dist-info" -exec rm -rf {}/RECORD {} + 2>/dev/null || true
+    find /usr/local -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true && \
+    find /usr/local -type f -name "*.pyc" -delete && \
+    find /usr/local -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true && \
+    find /usr/local -type d -name "*.dist-info" -exec rm -rf {}/RECORD {} + 2>/dev/null || true
 
 # Stage 2: Final minimal image
 FROM python:3.11-slim
@@ -52,8 +54,8 @@ RUN apt-get update && \
     # Configure git to trust the data directory (fixes ownership issues)
     git config --global --add safe.directory /app/data
 
-# Copy only installed packages (no pip cache, no build artifacts)
-COPY --from=builder /install /usr/local
+# Copy only installed packages (no cache, no build artifacts)
+COPY --from=builder /usr/local /usr/local
 
 # Copy frontend with built CodeMirror bundle
 COPY --from=builder /app/frontend ./frontend

@@ -550,11 +550,7 @@ async def update_templates_dir(request: Request, data: dict):
         if not success:
             raise HTTPException(status_code=500, detail="Failed to update config file")
 
-        return {
-            "success": True,
-            "templatesDir": templates_dir,
-            "message": "Templates directory updated successfully"
-        }
+        return {"success": True, "templatesDir": templates_dir, "message": "Templates directory updated successfully"}
     except HTTPException:
         raise
     except Exception as e:
@@ -610,11 +606,7 @@ async def update_user_settings_endpoint(request: Request, data: dict):
             # Also update config.yaml for persistence
             update_config_value(config_path, "storage.templates_dir", data["paths"]["templatesDir"])
 
-        return {
-            "success": True,
-            "settings": current_settings,
-            "message": "User settings updated successfully"
-        }
+        return {"success": True, "settings": current_settings, "message": "User settings updated successfully"}
     except HTTPException:
         raise
     except Exception as e:
@@ -903,7 +895,9 @@ async def get_template(request: Request, template_name: str):
         Template name and content
     """
     try:
-        content = get_template_content(config["storage"]["notes_dir"], template_name, config["storage"].get("templates_dir"))
+        content = get_template_content(
+            config["storage"]["notes_dir"], template_name, config["storage"].get("templates_dir")
+        )
 
         if content is None:
             raise HTTPException(status_code=404, detail="Template not found")
@@ -935,7 +929,9 @@ async def create_note_from_template(request: Request, data: dict):
             raise HTTPException(status_code=400, detail="Template name and note path required")
 
         # Get template content
-        template_content = get_template_content(config["storage"]["notes_dir"], template_name, config["storage"].get("templates_dir"))
+        template_content = get_template_content(
+            config["storage"]["notes_dir"], template_name, config["storage"].get("templates_dir")
+        )
 
         if template_content is None:
             raise HTTPException(status_code=404, detail="Template not found")
