@@ -43,7 +43,21 @@ function noteApp() {
         noteContent: '',
         viewMode: 'split', // 'edit', 'split', 'preview'
         searchQuery: '',
-        
+
+        // Reading preferences
+        readingWidth: 'full', // 'narrow', 'medium', 'wide', 'full'
+        contentAlign: 'left', // 'left', 'center', 'justified'
+        contentMargins: 'normal', // 'compact', 'normal', 'relaxed', 'extra-relaxed'
+
+        // Advanced performance settings (ms)
+        performanceSettings: {
+            updateDelay: 100,      // Delay before updating content on keystroke
+            statsDelay: 300,       // Delay before recalculating statistics
+            metadataDelay: 300,    // Delay before parsing metadata
+            historyDelay: 500,     // Delay before updating undo history
+            autosaveDelay: 1000    // Delay before triggering autosave
+        },
+
         // Graph state (separate overlay, doesn't affect viewMode)
         showGraph: false,
         graphInstance: null,
@@ -57,6 +71,11 @@ function noteApp() {
         lastSaved: false,
         linkCopied: false,
         saveTimeout: null,
+        statsTimeout: null,
+        metadataTimeout: null,
+        historyTimeout: null,
+        updateTimeout: null,
+        pendingUpdate: null,
         isExportingPDF: false,
 
         // PDF Export Settings state
@@ -148,7 +167,10 @@ function noteApp() {
         
         // Mobile sidebar state
         mobileSidebarOpen: false,
-        
+
+        // Desktop sidebar collapse state
+        sidebarCollapsed: false,
+
         // Split view resize state
         editorWidth: 50, // percentage
         isResizingSplit: false,
@@ -339,9 +361,12 @@ function noteApp() {
             await this.loadTemplates();
             await this.loadPlugins(); // Loads all plugins and sets their states (including stats plugin)
             this.loadSidebarWidth();
+            this.loadSidebarCollapsed();
             this.loadEditorWidth();
             this.loadViewMode();
             this.loadTagsExpanded();
+            this.loadReadingPreferences();
+            this.loadPerformanceSettings();
             
             // Parse URL and load specific note if provided
             this.loadNoteFromURL();
@@ -556,17 +581,36 @@ function noteApp() {
             // Create custom extension for handling updates
             const updateListener = EditorView.updateListener.of((update) => {
                 if (update.docChanged) {
-                    // Update noteContent when document changes
-                    self.noteContent = update.state.doc.toString();
-                    // Trigger autosave
-                    self.autoSave();
+                    // Debounce content updates to avoid hanging on rapid typing
+                    if (self.updateTimeout) {
+                        clearTimeout(self.updateTimeout);
+                    }
+
+                    // Store the latest update
+                    self.pendingUpdate = update.state;
+
+                    // Only update noteContent and trigger autosave after delay
+                    self.updateTimeout = setTimeout(() => {
+                        if (self.pendingUpdate) {
+                            self.noteContent = self.pendingUpdate.doc.toString();
+                            self.pendingUpdate = null;
+                            // Trigger autosave
+                            self.autoSave();
+                        }
+                    }, self.performanceSettings.updateDelay);
                 }
             });
 
             // Paste handler for images
             const pasteHandler = EditorView.domEventHandlers({
                 paste: (event) => {
-                    return self.handlePaste(event);
+                    // Synchronously check if we should handle this paste
+                    const shouldHandle = self.shouldHandleImagePaste(event);
+                    if (shouldHandle) {
+                        self.handleImagePasteAsync(event);
+                        return true; // We're handling it
+                    }
+                    return false; // Let CodeMirror handle text paste
                 },
                 drop: (event, view) => {
                     return self.onEditorDrop(event, view);
@@ -1637,17 +1681,47 @@ function noteApp() {
             this.loadNotes();
         },
         
-        // Handle paste event for clipboard images
-        async handlePaste(event) {
+        // Synchronously check if we should handle image paste
+        shouldHandleImagePaste(event) {
             if (!this.currentNote) return false;
 
             const items = event.clipboardData?.items;
             if (!items) return false;
 
+            // Check if clipboard has images
+            let hasImage = false;
             for (const item of items) {
                 if (item.type.startsWith('image/')) {
-                    event.preventDefault();
+                    hasImage = true;
+                    break;
+                }
+            }
 
+            if (!hasImage) return false;
+
+            // If there's an image, check if there's meaningful text content
+            // (not just a filename or empty string)
+            const text = event.clipboardData?.getData('text/plain') || '';
+            const trimmedText = text.trim();
+
+            // If text is empty or very short (likely just a filename), treat as image paste
+            // If text is substantial (>100 chars), treat as text paste with embedded image
+            if (trimmedText.length === 0 || trimmedText.length < 100) {
+                return true; // Handle as image paste
+            }
+
+            return false; // Has substantial text, let CodeMirror handle it
+        },
+
+        // Handle image paste asynchronously
+        async handleImagePasteAsync(event) {
+            event.preventDefault();
+
+            const items = event.clipboardData?.items;
+            if (!items) return;
+
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
                     const blob = item.getAsFile();
                     if (blob) {
                         try {
@@ -1669,10 +1743,9 @@ function noteApp() {
                             ErrorHandler.handle('paste image', error);
                         }
                     }
-                    return true; // Handled
+                    break;
                 }
             }
-            return false; // Not handled, let CodeMirror handle it
         },
         
         // Open a note or image (unified handler for sidebar/homepage clicks)
@@ -2505,25 +2578,41 @@ function noteApp() {
             if (this.saveTimeout) {
                 clearTimeout(this.saveTimeout);
             }
-            
+
             this.lastSaved = false;
-            
-            // Push to undo history (but not during undo/redo operations)
+
+            // Debounce undo history updates
             if (!this.isUndoRedo) {
-                this.pushToHistory();
+                if (this.historyTimeout) {
+                    clearTimeout(this.historyTimeout);
+                }
+                this.historyTimeout = setTimeout(() => {
+                    this.pushToHistory();
+                }, this.performanceSettings.historyDelay);
             }
-            
-            // Calculate stats in real-time if plugin enabled
+
+            // Debounce stats calculation
             if (this.statsPluginEnabled) {
-                this.calculateStats();
+                if (this.statsTimeout) {
+                    clearTimeout(this.statsTimeout);
+                }
+                this.statsTimeout = setTimeout(() => {
+                    this.calculateStats();
+                }, this.performanceSettings.statsDelay);
             }
-            
-            // Parse metadata in real-time
-            this.parseMetadata();
-            
+
+            // Debounce metadata parsing
+            if (this.metadataTimeout) {
+                clearTimeout(this.metadataTimeout);
+            }
+            this.metadataTimeout = setTimeout(() => {
+                this.parseMetadata();
+            }, this.performanceSettings.metadataDelay);
+
+            // Keep the actual save debounced
             this.saveTimeout = setTimeout(() => {
                 this.saveNote();
-            }, CONFIG.AUTOSAVE_DELAY);
+            }, this.performanceSettings.autosaveDelay);
         },
         
         // Push current content to undo history
@@ -3404,7 +3493,7 @@ function noteApp() {
         async openGitSettings() {
             console.log('[Git Settings] Opening modal...');
             try {
-                this.showGitSettingsModal = true;
+                // Reset state first
                 this.gitSettings = null;
                 this.gitStatus = null;
 
@@ -3421,6 +3510,9 @@ function noteApp() {
                     const statusData = await statusResponse.json();
                     this.gitStatus = statusData;
                 }
+
+                // Show modal only after settings are loaded
+                this.showGitSettingsModal = true;
             } catch (error) {
                 ErrorHandler.handle('load git settings', error, true);
                 this.gitSettings = {};
@@ -3518,8 +3610,6 @@ function noteApp() {
         async openPdfExportSettings() {
             console.log('[PDF Export Settings] Opening modal...');
             try {
-                this.showPdfExportSettingsModal = true;
-
                 // Load PDF export settings
                 const response = await fetch('/api/plugins/pdf_export/settings');
                 if (response.ok) {
@@ -3529,6 +3619,9 @@ function noteApp() {
                 } else {
                     console.warn('[PDF Export Settings] Failed to load settings');
                 }
+
+                // Show modal only after settings are loaded
+                this.showPdfExportSettingsModal = true;
             } catch (error) {
                 ErrorHandler.handle('load PDF export settings', error, true);
             }
@@ -3923,7 +4016,26 @@ function noteApp() {
         saveSidebarWidth() {
             localStorage.setItem('sidebarWidth', this.sidebarWidth.toString());
         },
-        
+
+        // Load sidebar collapsed state from localStorage
+        loadSidebarCollapsed() {
+            const saved = localStorage.getItem('sidebarCollapsed');
+            if (saved !== null) {
+                this.sidebarCollapsed = saved === 'true';
+            }
+        },
+
+        // Save sidebar collapsed state to localStorage
+        saveSidebarCollapsed() {
+            localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed.toString());
+        },
+
+        // Toggle sidebar collapsed state
+        toggleSidebar() {
+            this.sidebarCollapsed = !this.sidebarCollapsed;
+            this.saveSidebarCollapsed();
+        },
+
         // Load view mode from localStorage
         loadViewMode() {
             try {
@@ -3963,7 +4075,81 @@ function noteApp() {
                 console.error('Error saving tags expanded state:', error);
             }
         },
-        
+
+        // Load reading preferences from localStorage
+        loadReadingPreferences() {
+            try {
+                const savedWidth = localStorage.getItem('readingWidth');
+                if (savedWidth && ['narrow', 'medium', 'wide', 'full'].includes(savedWidth)) {
+                    this.readingWidth = savedWidth;
+                }
+
+                const savedAlign = localStorage.getItem('contentAlign');
+                if (savedAlign && ['left', 'center', 'justified'].includes(savedAlign)) {
+                    this.contentAlign = savedAlign;
+                }
+
+                const savedMargins = localStorage.getItem('contentMargins');
+                if (savedMargins && ['compact', 'normal', 'relaxed', 'extra-relaxed'].includes(savedMargins)) {
+                    this.contentMargins = savedMargins;
+                }
+            } catch (error) {
+                console.error('Error loading reading preferences:', error);
+            }
+        },
+
+        // Save reading preferences to localStorage
+        saveReadingPreferences() {
+            try {
+                localStorage.setItem('readingWidth', this.readingWidth);
+                localStorage.setItem('contentAlign', this.contentAlign);
+                localStorage.setItem('contentMargins', this.contentMargins);
+            } catch (error) {
+                console.error('Error saving reading preferences:', error);
+            }
+        },
+
+        // Load performance settings from localStorage
+        loadPerformanceSettings() {
+            try {
+                const saved = localStorage.getItem('performanceSettings');
+                if (saved) {
+                    const settings = JSON.parse(saved);
+                    // Validate and merge with defaults
+                    this.performanceSettings = {
+                        updateDelay: Math.max(0, Math.min(1000, settings.updateDelay || 100)),
+                        statsDelay: Math.max(0, Math.min(2000, settings.statsDelay || 300)),
+                        metadataDelay: Math.max(0, Math.min(2000, settings.metadataDelay || 300)),
+                        historyDelay: Math.max(0, Math.min(2000, settings.historyDelay || 500)),
+                        autosaveDelay: Math.max(500, Math.min(10000, settings.autosaveDelay || 1000))
+                    };
+                }
+            } catch (error) {
+                console.error('Error loading performance settings:', error);
+            }
+        },
+
+        // Save performance settings to localStorage
+        savePerformanceSettings() {
+            try {
+                localStorage.setItem('performanceSettings', JSON.stringify(this.performanceSettings));
+            } catch (error) {
+                console.error('Error saving performance settings:', error);
+            }
+        },
+
+        // Reset performance settings to defaults
+        resetPerformanceSettings() {
+            this.performanceSettings = {
+                updateDelay: 100,
+                statsDelay: 300,
+                metadataDelay: 300,
+                historyDelay: 500,
+                autosaveDelay: 1000
+            };
+            this.savePerformanceSettings();
+        },
+
         // Start resizing sidebar
         startResize(event) {
             this.isResizing = true;

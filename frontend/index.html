@@ -433,6 +433,90 @@
             height: auto;
         }
 
+        /* Reading Preferences - Content Width */
+        .markdown-preview.reading-width-narrow {
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .markdown-preview.reading-width-medium {
+            max-width: 850px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .markdown-preview.reading-width-wide {
+            max-width: 1100px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .markdown-preview.reading-width-full {
+            max-width: none;
+        }
+
+        /* Reading Preferences - Text Alignment */
+        .markdown-preview.align-left {
+            text-align: left;
+        }
+
+        .markdown-preview.align-center {
+            text-align: center;
+        }
+
+        .markdown-preview.align-center h1,
+        .markdown-preview.align-center h2,
+        .markdown-preview.align-center h3,
+        .markdown-preview.align-center h4,
+        .markdown-preview.align-center h5,
+        .markdown-preview.align-center h6 {
+            text-align: center;
+        }
+
+        .markdown-preview.align-justified {
+            text-align: justify;
+        }
+
+        .markdown-preview.align-justified h1,
+        .markdown-preview.align-justified h2,
+        .markdown-preview.align-justified h3,
+        .markdown-preview.align-justified h4,
+        .markdown-preview.align-justified h5,
+        .markdown-preview.align-justified h6 {
+            text-align: left;
+        }
+
+        /* Reading Preferences - Content Spacing */
+        .markdown-preview.margins-compact {
+            padding: 1rem 1.5rem !important;
+        }
+
+        .markdown-preview.margins-normal {
+            padding: 1.5rem !important;
+        }
+
+        .markdown-preview.margins-relaxed {
+            padding: 2rem 3rem !important;
+        }
+
+        .markdown-preview.margins-extra-relaxed {
+            padding: 3rem 4rem !important;
+        }
+
+        /* Adjust line-height for different margin settings */
+        .markdown-preview.margins-compact {
+            line-height: 1.6;
+        }
+
+        .markdown-preview.margins-relaxed {
+            line-height: 2;
+        }
+
+        .markdown-preview.margins-extra-relaxed {
+            line-height: 2.2;
+        }
+
         /* CodeMirror Editor styling */
         #note-editor {
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
@@ -656,9 +740,57 @@
             overflow-y: auto;
             overflow-x: hidden;
         }
-        
+
+        /* Sidebar collapsed state (desktop only) */
+        @media (min-width: 769px) {
+            .sidebar-container {
+                transition: width 0.3s ease, margin-left 0.3s ease;
+            }
+
+            .sidebar-container.collapsed {
+                width: 0 !important;
+                min-width: 0 !important;
+                margin-left: 0 !important;
+                overflow: hidden;
+            }
+        }
+
+        /* Sidebar toggle button */
+        .sidebar-toggle-btn {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 100;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.15s ease, left 0.3s ease;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            color: var(--text-secondary);
+        }
+
+        .sidebar-toggle-btn:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .sidebar-toggle-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
         /* Mobile bottom tabs */
         @media (max-width: 768px) {
+            /* Hide desktop sidebar toggle on mobile */
+            .sidebar-toggle-btn {
+                display: none !important;
+            }
+
             .icon-rail {
                 display: none;
             }
@@ -1016,9 +1148,9 @@
     <div class="flex h-screen overflow-hidden">
         
         <!-- Sidebar with Icon Rail -->
-        <div 
-            class="flex mobile-sidebar" 
-            :class="{'mobile-sidebar-open': mobileSidebarOpen}"
+        <div
+            class="flex mobile-sidebar sidebar-container"
+            :class="{'mobile-sidebar-open': mobileSidebarOpen, 'collapsed': sidebarCollapsed}"
             :style="'width: ' + sidebarWidth + 'px; background-color: var(--bg-secondary); min-width: 200px; max-width: 600px;'"
         >
             <!-- Icon Rail -->
@@ -1499,6 +1631,171 @@
                                     </template>
                                 </div>
 
+                                <!-- Reading Preferences -->
+                                <div class="mb-4">
+                                    <label class="block text-xs font-medium mb-2" style="color: var(--text-secondary);">Reading Preferences</label>
+
+                                    <!-- Read Width -->
+                                    <div class="mb-3">
+                                        <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Content Width</label>
+                                        <select
+                                            x-model="readingWidth"
+                                            @change="saveReadingPreferences()"
+                                            class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                            style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
+                                        >
+                                            <option value="narrow">Narrow (650px)</option>
+                                            <option value="medium">Medium (850px)</option>
+                                            <option value="wide">Wide (1100px)</option>
+                                            <option value="full">Full Width</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Text Alignment -->
+                                    <div class="mb-3">
+                                        <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Text Alignment</label>
+                                        <select
+                                            x-model="contentAlign"
+                                            @change="saveReadingPreferences()"
+                                            class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                            style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
+                                        >
+                                            <option value="left">Left Aligned</option>
+                                            <option value="center">Centered</option>
+                                            <option value="justified">Justified</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Content Margins -->
+                                    <div class="mb-3">
+                                        <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Content Spacing</label>
+                                        <select
+                                            x-model="contentMargins"
+                                            @change="saveReadingPreferences()"
+                                            class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                            style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
+                                        >
+                                            <option value="compact">Compact</option>
+                                            <option value="normal">Normal</option>
+                                            <option value="relaxed">Relaxed</option>
+                                            <option value="extra-relaxed">Extra Relaxed</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Advanced Performance Settings -->
+                                <div class="mb-4" x-data="{ advancedExpanded: false }">
+                                    <label class="block text-xs font-medium mb-2" style="color: var(--text-secondary);">Advanced Settings</label>
+
+                                    <!-- Toggle button -->
+                                    <button
+                                        @click="advancedExpanded = !advancedExpanded"
+                                        class="w-full px-3 py-2 text-sm rounded flex items-center justify-between transition-colors"
+                                        style="background-color: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-primary);"
+                                        onmouseover="this.style.backgroundColor='var(--bg-hover)'"
+                                        onmouseout="this.style.backgroundColor='var(--bg-secondary)'"
+                                    >
+                                        <span>Performance Tuning</span>
+                                        <span x-text="advancedExpanded ? '▲' : '▼'" class="text-xs"></span>
+                                    </button>
+
+                                    <!-- Collapsible content -->
+                                    <div x-show="advancedExpanded" x-cloak class="mt-3 p-3 rounded" style="background-color: var(--bg-secondary); border: 1px solid var(--border-primary);">
+                                        <p class="text-xs mb-3" style="color: var(--text-tertiary);">Adjust delays (in milliseconds) for better performance. Lower values = more responsive but may lag on slower devices.</p>
+
+                                        <!-- Update Delay -->
+                                        <div class="mb-3">
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Editor Update Delay</label>
+                                            <input
+                                                x-model.number="performanceSettings.updateDelay"
+                                                @change="savePerformanceSettings()"
+                                                type="number"
+                                                min="0"
+                                                max="1000"
+                                                step="50"
+                                                class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                                style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary);"
+                                            />
+                                            <p class="text-xs mt-1" style="color: var(--text-tertiary);">Default: 100ms</p>
+                                        </div>
+
+                                        <!-- Stats Delay -->
+                                        <div class="mb-3">
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Statistics Update Delay</label>
+                                            <input
+                                                x-model.number="performanceSettings.statsDelay"
+                                                @change="savePerformanceSettings()"
+                                                type="number"
+                                                min="0"
+                                                max="2000"
+                                                step="100"
+                                                class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                                style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary);"
+                                            />
+                                            <p class="text-xs mt-1" style="color: var(--text-tertiary);">Default: 300ms</p>
+                                        </div>
+
+                                        <!-- Metadata Delay -->
+                                        <div class="mb-3">
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Metadata Parse Delay</label>
+                                            <input
+                                                x-model.number="performanceSettings.metadataDelay"
+                                                @change="savePerformanceSettings()"
+                                                type="number"
+                                                min="0"
+                                                max="2000"
+                                                step="100"
+                                                class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                                style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary);"
+                                            />
+                                            <p class="text-xs mt-1" style="color: var(--text-tertiary);">Default: 300ms</p>
+                                        </div>
+
+                                        <!-- History Delay -->
+                                        <div class="mb-3">
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Undo History Delay</label>
+                                            <input
+                                                x-model.number="performanceSettings.historyDelay"
+                                                @change="savePerformanceSettings()"
+                                                type="number"
+                                                min="0"
+                                                max="2000"
+                                                step="100"
+                                                class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                                style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary);"
+                                            />
+                                            <p class="text-xs mt-1" style="color: var(--text-tertiary);">Default: 500ms</p>
+                                        </div>
+
+                                        <!-- Autosave Delay -->
+                                        <div class="mb-3">
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Autosave Delay</label>
+                                            <input
+                                                x-model.number="performanceSettings.autosaveDelay"
+                                                @change="savePerformanceSettings()"
+                                                type="number"
+                                                min="500"
+                                                max="10000"
+                                                step="500"
+                                                class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                                style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary);"
+                                            />
+                                            <p class="text-xs mt-1" style="color: var(--text-tertiary);">Default: 1000ms (1 second)</p>
+                                        </div>
+
+                                        <!-- Reset button -->
+                                        <button
+                                            @click="resetPerformanceSettings()"
+                                            class="w-full px-3 py-2 text-xs rounded transition-colors"
+                                            style="background-color: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border-primary);"
+                                            onmouseover="this.style.backgroundColor='var(--bg-hover)'"
+                                            onmouseout="this.style.backgroundColor='var(--bg-tertiary)'"
+                                        >
+                                            Reset to Defaults
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <!-- Logout (if auth enabled) - uses authEnabled from main app state -->
                                 <div x-show="authEnabled" class="mb-4">
                                     <label class="block text-xs font-medium mb-2" style="color: var(--text-secondary);">Account</label>
@@ -1551,7 +1848,24 @@
         
         <!-- Main Content Area -->
         <div class="flex-1 flex flex-col overflow-hidden relative">
-            
+
+            <!-- Sidebar Toggle Button (Desktop only, hidden on mobile and when graph is shown) -->
+            <button
+                x-show="!showGraph"
+                @click="toggleSidebar()"
+                class="sidebar-toggle-btn"
+                :style="sidebarCollapsed ? 'left: 12px;' : 'left: ' + (sidebarWidth + 16) + 'px;'"
+                title="Toggle sidebar"
+                aria-label="Toggle sidebar"
+            >
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" x-show="!sidebarCollapsed">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                </svg>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" x-show="sidebarCollapsed" x-cloak>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+                </svg>
+            </button>
+
             <!-- Graph View Overlay (works from homepage or editor) -->
             <div 
                 x-show="showGraph"
@@ -1797,7 +2111,9 @@
                 <!-- Editor Area -->
                 <div class="flex-1 flex flex-col overflow-hidden" style="background-color: var(--bg-primary);">
                     <!-- Toolbar -->
-                    <div class="px-4 py-3 flex items-center justify-between mobile-toolbar" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-primary);">
+                    <div class="py-3 flex items-center justify-between mobile-toolbar"
+                         :class="sidebarCollapsed ? 'pl-14 pr-4' : 'pl-16 pr-4'"
+                         style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-primary); transition: padding-left 0.3s ease;">
                         <div class="flex items-center space-x-2">
                             <!-- Mobile Menu Button -->
                             <button 
@@ -2118,9 +2434,22 @@
                                 </div>
                             </div>
                             
-                            <div 
-                                class="p-6 markdown-preview"
-                                :class="{ 'pt-2': getHasMetadata() && currentNote }"
+                            <div
+                                class="markdown-preview"
+                                :class="{
+                                    'pt-2': getHasMetadata() && currentNote,
+                                    'reading-width-narrow': readingWidth === 'narrow',
+                                    'reading-width-medium': readingWidth === 'medium',
+                                    'reading-width-wide': readingWidth === 'wide',
+                                    'reading-width-full': readingWidth === 'full',
+                                    'align-left': contentAlign === 'left',
+                                    'align-center': contentAlign === 'center',
+                                    'align-justified': contentAlign === 'justified',
+                                    'margins-compact': contentMargins === 'compact',
+                                    'margins-normal': contentMargins === 'normal',
+                                    'margins-relaxed': contentMargins === 'relaxed',
+                                    'margins-extra-relaxed': contentMargins === 'extra-relaxed'
+                                }"
                                 x-html="renderedMarkdown"
                                 @click="handleInternalLink($event)"
                             ></div>
