@@ -3404,7 +3404,7 @@ function noteApp() {
         async openGitSettings() {
             console.log('[Git Settings] Opening modal...');
             try {
-                this.showGitSettingsModal = true;
+                // Reset state first
                 this.gitSettings = null;
                 this.gitStatus = null;
 
@@ -3421,6 +3421,9 @@ function noteApp() {
                     const statusData = await statusResponse.json();
                     this.gitStatus = statusData;
                 }
+
+                // Show modal only after settings are loaded
+                this.showGitSettingsModal = true;
             } catch (error) {
                 ErrorHandler.handle('load git settings', error, true);
                 this.gitSettings = {};
@@ -3518,8 +3521,6 @@ function noteApp() {
         async openPdfExportSettings() {
             console.log('[PDF Export Settings] Opening modal...');
             try {
-                this.showPdfExportSettingsModal = true;
-
                 // Load PDF export settings
                 const response = await fetch('/api/plugins/pdf_export/settings');
                 if (response.ok) {
@@ -3529,6 +3530,9 @@ function noteApp() {
                 } else {
                     console.warn('[PDF Export Settings] Failed to load settings');
                 }
+
+                // Show modal only after settings are loaded
+                this.showPdfExportSettingsModal = true;
             } catch (error) {
                 ErrorHandler.handle('load PDF export settings', error, true);
             }
