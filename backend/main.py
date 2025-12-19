@@ -34,12 +34,16 @@ from .utils import (
     get_notes_by_tag,
     get_template_content,
     get_templates,
+    load_user_settings,
     move_folder,
     move_note,
     rename_folder,
     save_note,
     save_uploaded_image,
+    save_user_settings,
     search_notes,
+    update_config_value,
+    update_user_setting,
     validate_path_security,
 )
 
@@ -47,6 +51,9 @@ from .utils import (
 config_path = Path(__file__).parent.parent / "config.yaml"
 with config_path.open("r", encoding="utf-8") as f:
     config = yaml.safe_load(f)
+
+# User settings path (outside data folder, at root level)
+user_settings_path = Path(__file__).parent.parent / "user-settings.json"
 
 # Load version from VERSION file (single source of truth)
 version_path = Path(__file__).parent.parent / "VERSION"
@@ -498,6 +505,113 @@ async def get_config():
     }
 
 
+@api_router.get("/settings/templates-dir")
+@limiter.limit("60/minute")
+async def get_templates_dir(request: Request):
+    """Get the current templates directory path (relative to notes_dir)"""
+    return {"templatesDir": config["storage"].get("templates_dir", "_templates")}
+
+
+@api_router.post("/settings/templates-dir")
+@limiter.limit("30/minute")
+async def update_templates_dir(request: Request, data: dict):
+    """
+    Update the templates directory path.
+    Updates both in-memory config and config.yaml file.
+
+    Args:
+        data: Dictionary containing templatesDir
+
+    Returns:
+        Success status and new path
+    """
+    try:
+        templates_dir = data.get("templatesDir", "")
+
+        if not templates_dir:
+            raise HTTPException(status_code=400, detail="Templates directory path is required")
+
+        # Update in-memory config (hot-swap - no restart needed)
+        config["storage"]["templates_dir"] = templates_dir
+
+        # Update config.yaml for persistence
+        success = update_config_value(config_path, "storage.templates_dir", templates_dir)
+
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to update config file")
+
+        return {
+            "success": True,
+            "templatesDir": templates_dir,
+            "message": "Templates directory updated successfully"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update templates directory: {str(e)}") from e
+
+
+@api_router.get("/settings/user")
+@limiter.limit("120/minute")
+async def get_user_settings(request: Request):
+    """
+    Get all user settings (reading preferences, performance settings, paths).
+    Settings are stored in user-settings.json at root level.
+    """
+    try:
+        settings = load_user_settings(user_settings_path)
+        return settings
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load user settings: {str(e)}") from e
+
+
+@api_router.post("/settings/user")
+@limiter.limit("60/minute")
+async def update_user_settings_endpoint(request: Request, data: dict):
+    """
+    Update user settings. Accepts partial updates.
+
+    Request body example:
+    {
+      "reading": {"width": "medium"},
+      "performance": {"autosaveDelay": 2000},
+      "paths": {"templatesDir": "my_templates"}
+    }
+    """
+    try:
+        # Load current settings
+        current_settings = load_user_settings(user_settings_path)
+
+        # Update with provided values (merge)
+        for section, values in data.items():
+            if section not in current_settings:
+                current_settings[section] = {}
+            if isinstance(values, dict):
+                current_settings[section].update(values)
+
+        # Save updated settings
+        success = save_user_settings(user_settings_path, current_settings)
+
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to save user settings")
+
+        # Update in-memory config for templates_dir if changed
+        if "paths" in data and "templatesDir" in data["paths"]:
+            config["storage"]["templates_dir"] = data["paths"]["templatesDir"]
+            # Also update config.yaml for persistence
+            update_config_value(config_path, "storage.templates_dir", data["paths"]["templatesDir"])
+
+        return {
+            "success": True,
+            "settings": current_settings,
+            "message": "User settings updated successfully"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update user settings: {str(e)}") from e
+
+
 @api_router.get("/themes")
 async def list_themes():
     """Get all available themes"""
@@ -761,7 +875,7 @@ async def list_templates(request: Request):
         List of template metadata
     """
     try:
-        templates = get_templates(config["storage"]["notes_dir"])
+        templates = get_templates(config["storage"]["notes_dir"], config["storage"].get("templates_dir"))
         return {"templates": templates}
     except Exception as e:
         raise HTTPException(status_code=500, detail=safe_error_message(e, "Failed to list templates")) from e
@@ -780,7 +894,7 @@ async def get_template(request: Request, template_name: str):
         Template name and content
     """
     try:
-        content = get_template_content(config["storage"]["notes_dir"], template_name)
+        content = get_template_content(config["storage"]["notes_dir"], template_name, config["storage"].get("templates_dir"))
 
         if content is None:
             raise HTTPException(status_code=404, detail="Template not found")
@@ -812,7 +926,7 @@ async def create_note_from_template(request: Request, data: dict):
             raise HTTPException(status_code=400, detail="Template name and note path required")
 
         # Get template content
-        template_content = get_template_content(config["storage"]["notes_dir"], template_name)
+        template_content = get_template_content(config["storage"]["notes_dir"], template_name, config["storage"].get("templates_dir"))
 
         if template_content is None:
             raise HTTPException(status_code=404, detail="Template not found")

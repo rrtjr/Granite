@@ -49,6 +49,9 @@ function noteApp() {
         contentAlign: 'left', // 'left', 'center', 'justified'
         contentMargins: 'normal', // 'compact', 'normal', 'relaxed', 'extra-relaxed'
 
+        // Folders & Paths
+        templatesDir: '_templates', // Templates folder path (relative to notes_dir)
+
         // Advanced performance settings (ms)
         performanceSettings: {
             updateDelay: 100,      // Delay before updating content on keystroke
@@ -365,9 +368,10 @@ function noteApp() {
             this.loadEditorWidth();
             this.loadViewMode();
             this.loadTagsExpanded();
-            this.loadReadingPreferences();
-            this.loadPerformanceSettings();
-            
+
+            // Load all user settings from server (or migrate from localStorage)
+            await this.loadUserSettings();
+
             // Parse URL and load specific note if provided
             this.loadNoteFromURL();
             
@@ -4077,66 +4081,158 @@ function noteApp() {
             }
         },
 
-        // Load reading preferences from localStorage
-        loadReadingPreferences() {
+        // Load all user settings from server (with localStorage migration)
+        async loadUserSettings() {
             try {
+                const response = await fetch('/api/settings/user');
+
+                if (response.ok) {
+                    const settings = await response.json();
+
+                    // Apply reading preferences
+                    if (settings.reading) {
+                        this.readingWidth = settings.reading.width || 'full';
+                        this.contentAlign = settings.reading.align || 'left';
+                        this.contentMargins = settings.reading.margins || 'normal';
+                    }
+
+                    // Apply performance settings
+                    if (settings.performance) {
+                        this.performanceSettings = {
+                            updateDelay: settings.performance.updateDelay || 100,
+                            statsDelay: settings.performance.statsDelay || 300,
+                            metadataDelay: settings.performance.metadataDelay || 300,
+                            historyDelay: settings.performance.historyDelay || 500,
+                            autosaveDelay: settings.performance.autosaveDelay || 1000
+                        };
+                    }
+
+                    // Apply paths
+                    if (settings.paths) {
+                        this.templatesDir = settings.paths.templatesDir || '_templates';
+                    }
+                } else {
+                    // Migrate from localStorage if server settings don't exist
+                    await this.migrateFromLocalStorage();
+                }
+            } catch (error) {
+                console.error('Error loading user settings:', error);
+                // Attempt migration from localStorage as fallback
+                await this.migrateFromLocalStorage();
+            }
+        },
+
+        // Migrate settings from localStorage to server (one-time migration)
+        async migrateFromLocalStorage() {
+            try {
+                const localSettings = {
+                    reading: {},
+                    performance: {},
+                    paths: {}
+                };
+
+                let hasLocalSettings = false;
+
+                // Migrate reading preferences
                 const savedWidth = localStorage.getItem('readingWidth');
-                if (savedWidth && ['narrow', 'medium', 'wide', 'full'].includes(savedWidth)) {
+                if (savedWidth) {
+                    localSettings.reading.width = savedWidth;
                     this.readingWidth = savedWidth;
+                    hasLocalSettings = true;
                 }
 
                 const savedAlign = localStorage.getItem('contentAlign');
-                if (savedAlign && ['left', 'center', 'justified'].includes(savedAlign)) {
+                if (savedAlign) {
+                    localSettings.reading.align = savedAlign;
                     this.contentAlign = savedAlign;
+                    hasLocalSettings = true;
                 }
 
                 const savedMargins = localStorage.getItem('contentMargins');
-                if (savedMargins && ['compact', 'normal', 'relaxed', 'extra-relaxed'].includes(savedMargins)) {
+                if (savedMargins) {
+                    localSettings.reading.margins = savedMargins;
                     this.contentMargins = savedMargins;
+                    hasLocalSettings = true;
+                }
+
+                // Migrate performance settings
+                const savedPerformance = localStorage.getItem('performanceSettings');
+                if (savedPerformance) {
+                    const perfSettings = JSON.parse(savedPerformance);
+                    localSettings.performance = perfSettings;
+                    this.performanceSettings = perfSettings;
+                    hasLocalSettings = true;
+                }
+
+                // Migrate templates dir
+                const savedTemplatesDir = localStorage.getItem('templatesDir');
+                if (savedTemplatesDir) {
+                    localSettings.paths.templatesDir = savedTemplatesDir;
+                    this.templatesDir = savedTemplatesDir;
+                    hasLocalSettings = true;
+                }
+
+                // Save to server if we found local settings
+                if (hasLocalSettings) {
+                    await this.saveUserSettings(localSettings);
+                    console.log('Migrated settings from localStorage to server');
                 }
             } catch (error) {
-                console.error('Error loading reading preferences:', error);
+                console.error('Error migrating from localStorage:', error);
             }
         },
 
-        // Save reading preferences to localStorage
+        // Save all user settings to server
+        async saveUserSettings(settingsData = null) {
+            try {
+                // If no data provided, build from current state
+                const data = settingsData || {
+                    reading: {
+                        width: this.readingWidth,
+                        align: this.contentAlign,
+                        margins: this.contentMargins
+                    },
+                    performance: this.performanceSettings,
+                    paths: {
+                        templatesDir: this.templatesDir
+                    }
+                };
+
+                const response = await fetch('/api/settings/user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('User settings saved successfully');
+                    return true;
+                } else {
+                    console.error('Failed to save user settings');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error saving user settings:', error);
+                return false;
+            }
+        },
+
+        // Save reading preferences (called from UI)
         saveReadingPreferences() {
-            try {
-                localStorage.setItem('readingWidth', this.readingWidth);
-                localStorage.setItem('contentAlign', this.contentAlign);
-                localStorage.setItem('contentMargins', this.contentMargins);
-            } catch (error) {
-                console.error('Error saving reading preferences:', error);
-            }
+            this.saveUserSettings();
         },
 
-        // Load performance settings from localStorage
-        loadPerformanceSettings() {
-            try {
-                const saved = localStorage.getItem('performanceSettings');
-                if (saved) {
-                    const settings = JSON.parse(saved);
-                    // Validate and merge with defaults
-                    this.performanceSettings = {
-                        updateDelay: Math.max(0, Math.min(1000, settings.updateDelay || 100)),
-                        statsDelay: Math.max(0, Math.min(2000, settings.statsDelay || 300)),
-                        metadataDelay: Math.max(0, Math.min(2000, settings.metadataDelay || 300)),
-                        historyDelay: Math.max(0, Math.min(2000, settings.historyDelay || 500)),
-                        autosaveDelay: Math.max(500, Math.min(10000, settings.autosaveDelay || 1000))
-                    };
-                }
-            } catch (error) {
-                console.error('Error loading performance settings:', error);
-            }
+        // Save templates path (called from UI)
+        saveTemplatesPath() {
+            this.saveUserSettings();
         },
 
-        // Save performance settings to localStorage
+        // Save performance settings (called from UI)
         savePerformanceSettings() {
-            try {
-                localStorage.setItem('performanceSettings', JSON.stringify(this.performanceSettings));
-            } catch (error) {
-                console.error('Error saving performance settings:', error);
-            }
+            this.saveUserSettings();
         },
 
         // Reset performance settings to defaults

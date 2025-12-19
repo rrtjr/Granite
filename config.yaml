@@ -21,6 +21,7 @@ server:
 storage:
   notes_dir: "./data"
   plugins_dir: "./plugins"
+  templates_dir: "_templates"  # Relative to notes_dir
   
 search:
   enabled: true

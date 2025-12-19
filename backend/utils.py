@@ -2,8 +2,10 @@
 Utility functions for file operations, search, and markdown processing
 """
 
+import json
 import re
 import shutil
+import yaml
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -657,23 +659,32 @@ def get_notes_by_tag(notes_dir: str, tag: str) -> list[dict]:
 # ============================================================================
 
 
-def get_templates(notes_dir: str) -> list[dict]:
+def get_templates(notes_dir: str, templates_dir: str = None) -> list[dict]:
     """
-    Get all templates from the _templates folder.
+    Get all templates from the templates folder.
 
     Args:
         notes_dir: Base notes directory
+        templates_dir: Templates directory path relative to notes_dir, or absolute path (defaults to _templates)
 
     Returns:
         List of template metadata (name, path, modified)
     """
     templates = []
-    templates_path = Path(notes_dir) / "_templates"
+
+    # Resolve templates_dir relative to notes_dir if not absolute
+    if templates_dir:
+        templates_path = Path(templates_dir)
+        # If not absolute, resolve relative to notes_dir
+        if not templates_path.is_absolute():
+            templates_path = Path(notes_dir) / templates_dir
+    else:
+        templates_path = Path(notes_dir) / "_templates"
 
     if not templates_path.exists():
         return templates
 
-    # Security check: ensure _templates folder is within notes directory
+    # Security check: ensure templates folder is within notes directory
     if not validate_path_security(notes_dir, templates_path):
         print(f"Security: Templates directory is outside notes directory: {templates_path}")
         return templates
@@ -703,18 +714,27 @@ def get_templates(notes_dir: str) -> list[dict]:
     return sorted(templates, key=lambda x: x["name"])
 
 
-def get_template_content(notes_dir: str, template_name: str) -> str | None:
+def get_template_content(notes_dir: str, template_name: str, templates_dir: str = None) -> str | None:
     """
     Get the content of a specific template.
 
     Args:
         notes_dir: Base notes directory
         template_name: Name of the template (without .md extension)
+        templates_dir: Templates directory path relative to notes_dir, or absolute path (defaults to _templates)
 
     Returns:
         Template content or None if not found
     """
-    template_path = Path(notes_dir) / "_templates" / f"{template_name}.md"
+    # Resolve templates_dir relative to notes_dir if not absolute
+    if templates_dir:
+        templates_path = Path(templates_dir)
+        # If not absolute, resolve relative to notes_dir
+        if not templates_path.is_absolute():
+            templates_path = Path(notes_dir) / templates_dir
+        template_path = templates_path / f"{template_name}.md"
+    else:
+        template_path = Path(notes_dir) / "_templates" / f"{template_name}.md"
 
     if not template_path.exists():
         return None
@@ -768,3 +788,164 @@ def apply_template_placeholders(content: str, note_path: str) -> str:
         result = result.replace(placeholder, value)
 
     return result
+
+
+# ============================================================================
+# Config Management Functions
+# ============================================================================
+
+
+def update_config_value(config_path: Path, key_path: str, value: str) -> bool:
+    """
+    Update a configuration value in config.yaml.
+
+    Args:
+        config_path: Path to config.yaml file
+        key_path: Dot-separated path to the config key (e.g., "storage.templates_dir")
+        value: New value to set
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # Read current config
+        with config_path.open("r", encoding="utf-8") as f:
+            config = yaml.safe_load(f)
+
+        # Navigate to the correct nested location and update
+        keys = key_path.split(".")
+        current = config
+        for key in keys[:-1]:
+            if key not in current:
+                current[key] = {}
+            current = current[key]
+
+        # Set the value
+        current[keys[-1]] = value
+
+        # Write back to file
+        with config_path.open("w", encoding="utf-8") as f:
+            yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+
+        return True
+    except Exception as e:
+        print(f"Error updating config: {e}")
+        return False
+
+
+# ============================================================================
+# User Settings Management Functions
+# ============================================================================
+
+
+def get_default_user_settings() -> dict:
+    """
+    Get default user settings structure.
+
+    Returns:
+        Dictionary with default user settings
+    """
+    return {
+        "reading": {
+            "width": "full",  # 'narrow', 'medium', 'wide', 'full'
+            "align": "left",  # 'left', 'center', 'justified'
+            "margins": "normal"  # 'compact', 'normal', 'relaxed', 'extra-relaxed'
+        },
+        "performance": {
+            "updateDelay": 100,
+            "statsDelay": 300,
+            "metadataDelay": 300,
+            "historyDelay": 500,
+            "autosaveDelay": 1000
+        },
+        "paths": {
+            "templatesDir": "_templates"
+        }
+    }
+
+
+def load_user_settings(settings_path: Path) -> dict:
+    """
+    Load user settings from user-settings.json.
+    Creates file with defaults if it doesn't exist.
+
+    Args:
+        settings_path: Path to user-settings.json file
+
+    Returns:
+        Dictionary with user settings
+    """
+    try:
+        if settings_path.exists():
+            with settings_path.open("r", encoding="utf-8") as f:
+                settings = json.load(f)
+                # Merge with defaults to ensure all keys exist
+                defaults = get_default_user_settings()
+                for section in defaults:
+                    if section not in settings:
+                        settings[section] = defaults[section]
+                    else:
+                        # Merge section-level defaults
+                        for key in defaults[section]:
+                            if key not in settings[section]:
+                                settings[section][key] = defaults[section][key]
+                return settings
+        else:
+            # Create default settings file
+            defaults = get_default_user_settings()
+            save_user_settings(settings_path, defaults)
+            return defaults
+    except Exception as e:
+        print(f"Error loading user settings: {e}")
+        return get_default_user_settings()
+
+
+def save_user_settings(settings_path: Path, settings: dict) -> bool:
+    """
+    Save user settings to user-settings.json.
+
+    Args:
+        settings_path: Path to user-settings.json file
+        settings: Settings dictionary to save
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # Ensure parent directory exists
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with settings_path.open("w", encoding="utf-8") as f:
+            json.dump(settings, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception as e:
+        print(f"Error saving user settings: {e}")
+        return False
+
+
+def update_user_setting(settings_path: Path, section: str, key: str, value) -> tuple[bool, dict]:
+    """
+    Update a specific user setting.
+
+    Args:
+        settings_path: Path to user-settings.json file
+        section: Setting section ('reading', 'performance', 'paths')
+        key: Setting key within section
+        value: New value
+
+    Returns:
+        Tuple of (success, updated_settings)
+    """
+    try:
+        settings = load_user_settings(settings_path)
+
+        if section not in settings:
+            settings[section] = {}
+
+        settings[section][key] = value
+
+        success = save_user_settings(settings_path, settings)
+        return success, settings
+    except Exception as e:
+        print(f"Error updating user setting: {e}")
+        return False, get_default_user_settings()
