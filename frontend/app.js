@@ -148,7 +148,10 @@ function noteApp() {
         
         // Mobile sidebar state
         mobileSidebarOpen: false,
-        
+
+        // Desktop sidebar collapse state
+        sidebarCollapsed: false,
+
         // Split view resize state
         editorWidth: 50, // percentage
         isResizingSplit: false,
@@ -339,6 +342,7 @@ function noteApp() {
             await this.loadTemplates();
             await this.loadPlugins(); // Loads all plugins and sets their states (including stats plugin)
             this.loadSidebarWidth();
+            this.loadSidebarCollapsed();
             this.loadEditorWidth();
             this.loadViewMode();
             this.loadTagsExpanded();
@@ -3927,7 +3931,26 @@ function noteApp() {
         saveSidebarWidth() {
             localStorage.setItem('sidebarWidth', this.sidebarWidth.toString());
         },
-        
+
+        // Load sidebar collapsed state from localStorage
+        loadSidebarCollapsed() {
+            const saved = localStorage.getItem('sidebarCollapsed');
+            if (saved !== null) {
+                this.sidebarCollapsed = saved === 'true';
+            }
+        },
+
+        // Save sidebar collapsed state to localStorage
+        saveSidebarCollapsed() {
+            localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed.toString());
+        },
+
+        // Toggle sidebar collapsed state
+        toggleSidebar() {
+            this.sidebarCollapsed = !this.sidebarCollapsed;
+            this.saveSidebarCollapsed();
+        },
+
         // Load view mode from localStorage
         loadViewMode() {
             try {
