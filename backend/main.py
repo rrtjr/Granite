@@ -169,6 +169,15 @@ ensure_directories(config)
 # Initialize plugin manager
 plugin_manager = PluginManager(config["storage"]["plugins_dir"])
 
+# Load plugin settings from user-settings.json and apply them
+user_settings = load_user_settings(user_settings_path)
+if "plugins" in user_settings and user_settings["plugins"]:
+    for plugin_name, plugin_settings in user_settings["plugins"].items():
+        plugin = plugin_manager.plugins.get(plugin_name)
+        if plugin and hasattr(plugin, "update_settings"):
+            plugin.update_settings(plugin_settings)
+            print(f"Loaded settings for plugin: {plugin_name}")
+
 # Run app startup hooks
 plugin_manager.run_hook("on_app_startup")
 
@@ -1267,7 +1276,7 @@ async def get_git_plugin_settings():
 @api_router.post("/plugins/git/settings")
 @limiter.limit("10/minute")
 async def update_git_plugin_settings(request: Request, settings: dict):
-    """Update git plugin settings"""
+    """Update git plugin settings and persist to user-settings.json"""
     try:
         plugin = plugin_manager.plugins.get("git")
         if not plugin:
@@ -1275,6 +1284,13 @@ async def update_git_plugin_settings(request: Request, settings: dict):
 
         if hasattr(plugin, "update_settings"):
             plugin.update_settings(settings)
+
+            # Persist to user-settings.json
+            success, user_settings = update_user_setting(user_settings_path, "plugins", "git", plugin.get_settings())
+
+            if not success:
+                print("Warning: Failed to persist git plugin settings to user-settings.json")
+
             return {"success": True, "settings": plugin.get_settings()}
         raise HTTPException(status_code=400, detail="Git plugin does not support settings updates")
     except HTTPException:
@@ -1476,7 +1492,7 @@ async def get_pdf_export_settings():
 @api_router.post("/plugins/pdf_export/settings")
 @limiter.limit("10/minute")
 async def update_pdf_export_settings(request: Request, settings: dict):
-    """Update PDF export plugin settings"""
+    """Update PDF export plugin settings and persist to user-settings.json"""
     try:
         plugin = plugin_manager.plugins.get("pdf_export")
         if not plugin:
@@ -1484,6 +1500,13 @@ async def update_pdf_export_settings(request: Request, settings: dict):
 
         if hasattr(plugin, "update_settings"):
             plugin.update_settings(settings)
+
+            # Persist to user-settings.json
+            success, user_settings = update_user_setting(user_settings_path, "plugins", "pdf_export", plugin.get_settings())
+
+            if not success:
+                print("Warning: Failed to persist PDF export plugin settings to user-settings.json")
+
             return {
                 "success": True,
                 "message": "PDF export settings updated",

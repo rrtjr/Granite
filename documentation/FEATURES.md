@@ -1,6 +1,6 @@
-# ✨ Features
+# Features
 
-## 📝 Note Management
+## Note Management
 
 ### Create & Edit
 - **Rich markdown editor** with live preview
@@ -17,6 +17,8 @@
 - **Drag & drop upload** - Drop images from your file system directly into the editor
 - **Clipboard paste** - Paste images from clipboard with Ctrl+V
 - **Multiple formats** - Supports JPG, PNG, GIF, and WebP (max 10MB)
+- **Obsidian format** - Images use wiki-link format `![[image.png]]` for compatibility
+- **Root folder storage** - Images saved to notes root directory for easy access
 
 ### Organization
 - **Folder hierarchy** - Organize notes in nested folders
@@ -25,7 +27,7 @@
 - **Rename anything** - Files and folders, instantly
 - **Visual tree view** - Expandable/collapsible navigation
 
-## 🔗 Linking & Discovery
+## Linking & Discovery
 
 ### Graph View
 - **Interactive graph** - Visualize all your notes and their connections
@@ -50,7 +52,7 @@
 - **Refresh safe** - Page reload keeps you on the same note with search context
 - **Copy link button** - One-click copy of note URL to clipboard
 
-## 🎨 Customization
+## Customization
 
 ### Themes
 - **8 built-in themes** - Light, Dark, Dracula, Nord, Monokai, Vue High Contrast, Cobalt2, VS Blue
@@ -63,7 +65,47 @@
 - **View mode memory** - Remembers Edit/Split/Preview preference
 - **Responsive design** - Works on all screen sizes
 
-## 📊 Note Statistics
+## Settings
+
+### Server-Side Settings Persistence
+All user settings are stored server-side in `user-settings.json` at the root level. This means:
+- **Survives Docker restarts** - Settings persist even when containers are restarted
+- **Survives Docker rebuilds** - No need to reconfigure after rebuilds
+- **Shared across devices** - Access the same settings from any browser or device
+- **Version controllable** - Settings file can be backed up or version controlled
+- **Hot-swap updates** - Changes take effect immediately without restart
+
+### Reading Preferences
+Customize your reading experience in Settings → Reading Preferences:
+- **Content Width** - Narrow (650px), Medium (850px), Wide (1100px), or Full Width
+- **Text Alignment** - Left aligned, Centered, or Justified
+- **Content Spacing** - Compact, Normal, Relaxed, or Extra Relaxed
+
+### Performance Tuning
+Advanced settings for power users in Settings → Advanced Settings:
+- **Editor Update Delay** (0-1000ms) - Delay before updating content on keystroke
+- **Statistics Update Delay** (0-2000ms) - Delay before recalculating statistics
+- **Metadata Parse Delay** (0-2000ms) - Delay before parsing metadata
+- **Undo History Delay** (0-2000ms) - Delay before updating undo history
+- **Autosave Delay** (500-10000ms) - Delay before triggering autosave
+- **Reset to Defaults** - One-click restore of optimal settings
+
+### Folders & Paths
+Configure folder locations in Settings → Folders & Paths:
+- **Templates Folder** - Set custom location for note templates (relative to notes directory or absolute path)
+- **Hot-swap support** - Changes take effect immediately
+
+### Plugin Settings
+Plugin-specific settings are automatically persisted:
+- **Git Plugin Settings** - Backup interval, auto-push, remote branch, etc.
+- **PDF Export Settings** - Export configuration options
+- **Settings UI** - Configure plugins through Settings panel
+- **Automatic persistence** - Plugin settings saved to `user-settings.json`
+
+### Automatic Migration
+First-time setup automatically migrates any existing localStorage settings to the server-side system, ensuring a seamless transition.
+
+## Note Statistics
 
 ### Built-in Plugin
 - **Word count** - Track document length
@@ -75,7 +117,7 @@
 - **Wikilink count** - Separate count for `[[wikilinks]]`
 - **Expandable panel** - Toggle stats visibility
 
-## 🔌 Plugin System
+## Plugin System
 
 ### Extensibility
 - **Easy installation** - Drop Python files in `plugins/` folder
@@ -86,9 +128,9 @@
 - **Event hooks** - React to note saves, deletes, searches
 - **API access** - Full access to backend functionality
 
-📚 **See [PLUGINS.md](PLUGINS.md)** for complete plugin documentation including how to create your own plugins.
+See [PLUGINS.md](PLUGINS.md) for complete plugin documentation including how to create your own plugins.
 
-## 🏷️ Tags
+## Tags
 
 Organize notes with tags defined in YAML frontmatter. See **[TAGS.md](TAGS.md)** for complete guide.
 
@@ -108,7 +150,7 @@ tags: [python, tutorial, backend]
 - **Collapsible panel** - Saves state across sessions
 - **Auto-sync** - Updates after saving notes
 
-## ⚙️ Note Properties Panel
+## Note Properties Panel
 
 View and interact with YAML frontmatter metadata directly in the preview.
 
@@ -144,7 +186,7 @@ items:                         # YAML list format
 ---
 ```
 
-## 🔍 Search & Filtering
+## Search & Filtering
 
 ### Text Search
 - **Content-only** - Searches note contents (not file/folder names)
@@ -186,9 +228,9 @@ $$
 x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}
 $$
 
-📄 **See the [MATHJAX](MATHJAX.md) note for more examples and syntax reference.**
+**See the [MATHJAX](MATHJAX.md) note for more examples and syntax reference.**
 
-## 📊 Mermaid Diagrams
+## Mermaid Diagrams
 
 ### Visual Diagrams
 - **Flowcharts** - Process flows and decision trees
@@ -211,9 +253,9 @@ graph TD
 ```
 ````
 
-📄 **See the [MERMAID](MERMAID.md) note for diagram examples and syntax reference.**
+**See the [MERMAID](MERMAID.md) note for diagram examples and syntax reference.**
 
-## 📄 Note Templates
+## Note Templates
 
 Create notes from reusable templates with dynamic placeholder replacement.
 
@@ -281,7 +323,7 @@ date: {{date}}
 | `Ctrl+K` | `Cmd+K` | Insert link | `[text](url)` |
 | `Ctrl+Alt+T` | `Cmd+Option+T` | Insert table | 3x3 table placeholder |
 
-## 🚀 Performance
+## Performance
 
 - **Instant loading** - No lag, no loading spinners
 - **Efficient caching** - Smart local storage
