@@ -47,7 +47,7 @@ class Plugin:
             "git_user_name": "",
             "git_user_email": "",
             # Files/patterns to ignore in git status check
-            "ignore_patterns": ["plugin_config.json", "__pycache__", "*.pyc"],
+            "ignore_patterns": ["plugin_config.json", "user-settings.json", "__pycache__", "*.pyc"],
         }
 
         self.backup_thread: threading.Thread | None = None

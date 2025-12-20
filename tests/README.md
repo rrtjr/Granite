@@ -28,6 +28,15 @@ Tests include:
 - Integration tests with actual git operations
 - Plugin lifecycle hooks (on_app_startup)
 - Error handling for disabled plugin and non-git repos
+- Git repository path verification (ensures operations only in data/ directory)
+
+**`test_user_settings.py`** - Tests for the user settings system
+
+Tests include:
+- User settings utility functions (load, save, update, merge with defaults)
+- User settings API endpoints (get, update)
+- Templates directory settings persistence
+- Plugin settings persistence to user-settings.json (Git, PDF Export)
 
 ### Frontend Tests (HTML/JavaScript)
 
