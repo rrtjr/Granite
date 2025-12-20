@@ -1,18 +1,18 @@
 {
   "reading": {
-    "width": "full",
-    "align": "left",
+    "width": "narrow",
+    "align": "center",
     "margins": "normal"
   },
   "performance": {
-    "updateDelay": 100,
+    "updateDelay": 500,
     "statsDelay": 300,
     "metadataDelay": 300,
     "historyDelay": 500,
-    "autosaveDelay": 1000
+    "autosaveDelay": 2000
   },
   "paths": {
-    "templatesDir": "_templates"
+    "templatesDir": "custom_templates"
   },
   "plugins": {
     "git": {

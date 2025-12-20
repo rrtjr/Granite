@@ -11,7 +11,7 @@ server:
 storage:
   notes_dir: ./data
   plugins_dir: ./plugins
-  templates_dir: Resources/Templates
+  templates_dir: custom_templates
 search:
   enabled: true
 authentication:

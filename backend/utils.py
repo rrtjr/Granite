@@ -860,6 +860,7 @@ def get_default_user_settings() -> dict:
             "autosaveDelay": 1000,
         },
         "paths": {"templatesDir": "_templates"},
+        "plugins": {},  # Plugin-specific settings
     }
 
 

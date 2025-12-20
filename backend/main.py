@@ -527,7 +527,7 @@ async def get_templates_dir(request: Request):
 async def update_templates_dir(request: Request, data: dict):
     """
     Update the templates directory path.
-    Updates both in-memory config and config.yaml file.
+    Updates both in-memory config, config.yaml file, and user-settings.json.
 
     Args:
         data: Dictionary containing templatesDir
@@ -549,6 +549,13 @@ async def update_templates_dir(request: Request, data: dict):
 
         if not success:
             raise HTTPException(status_code=500, detail="Failed to update config file")
+
+        # Also update user-settings.json to keep them in sync
+        current_user_settings = load_user_settings(user_settings_path)
+        if "paths" not in current_user_settings:
+            current_user_settings["paths"] = {}
+        current_user_settings["paths"]["templatesDir"] = templates_dir
+        save_user_settings(user_settings_path, current_user_settings)
 
         return {"success": True, "templatesDir": templates_dir, "message": "Templates directory updated successfully"}
     except HTTPException:
