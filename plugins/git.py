@@ -71,14 +71,23 @@ class Plugin:
         if self.settings["git_repo_path"]:
             return Path(self.settings["git_repo_path"])
 
-        # Default: use /app/data for Docker, or parent directory for local dev
-        # Check if running in Docker
+        # Default: use /app/data for Docker environments
+        # This is where user notes are stored
         if Path("/app/data").exists():
             return Path("/app/data")
 
-        # Fallback: assume git repo is parent of plugins directory
-        # This works for typical structure: repo_root/plugins/
-        return Path(__file__).parent.parent.resolve()
+        # Fallback: use ./data relative to application root
+        # plugins are in /app/plugins/, so parent.parent is /app/
+        app_root = Path(__file__).parent.parent.resolve()
+        data_dir = app_root / "data"
+
+        # Safety check: prevent operating on application root
+        if not data_dir.exists():
+            print(f"[{self.name}] Warning: data directory not found at {data_dir}")
+            print(f"[{self.name}] Creating data directory for git repository")
+            data_dir.mkdir(parents=True, exist_ok=True)
+
+        return data_dir
 
     def _run_git_command(self, command: list, capture_output=True) -> tuple[bool, str]:
         """
