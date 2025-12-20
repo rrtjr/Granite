@@ -12,9 +12,11 @@ description = "A modern note-taking application built with FastAPI"
 requires-python = ">=3.10"
 dependencies = [
     # Core FastAPI dependencies
-    "fastapi==0.115.0",
-    "uvicorn[standard]==0.32.0",
-    "python-multipart==0.0.18",
+    "fastapi>=0.115.0",
+    "starlette>=0.47.2",
+    "uvicorn[standard]>=0.32.0",
+    "python-multipart>=0.0.18",
+    "filelock>=3.20.1",
     # Content processing
     "markdown==3.7",
     "pyyaml==6.0.1",
@@ -38,8 +40,6 @@ dependencies = [
     "Pygments==2.18.0",
     # Code quality tools (development)
     "ruff==0.14.9",
-    # Security scanning
-    "safety==3.2.8",
 ]
 
 # Ruff configuration - replaces black, flake8, isort, and more
