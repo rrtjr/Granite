@@ -375,7 +375,9 @@ Inline `code` example.
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "test.pdf"
 
-            success, _message = pdf_plugin.export_to_pdf(content=content, output_path=output_path, title="Table Example")
+            success, _message = pdf_plugin.export_to_pdf(
+                content=content, output_path=output_path, title="Table Example"
+            )
 
             assert success is True
             assert Path(output_path).exists()
@@ -402,7 +404,9 @@ Inline `code` example.
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "test.pdf"
 
-            success, _message = pdf_plugin.export_to_pdf(content=content, output_path=output_path, title="Lists Example")
+            success, _message = pdf_plugin.export_to_pdf(
+                content=content, output_path=output_path, title="Lists Example"
+            )
 
             assert success is True
             assert Path(output_path).exists()

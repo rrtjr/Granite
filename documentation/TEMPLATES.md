@@ -1,4 +1,4 @@
-# 📋 Note Templates
+# Note Templates
 
 Create notes from reusable templates with dynamic placeholder replacement.
 
@@ -10,7 +10,7 @@ Templates allow you to quickly create notes with predefined structures and conte
 
 ### 1. Create Template Files
 
-Templates are stored in the `data/_templates/` folder as markdown files. You will need to create such folder if it doesn't exist:
+By default, templates are stored in the `data/_templates/` folder as markdown files. You will need to create such folder if it doesn't exist:
 
 ```
 data/
@@ -19,6 +19,19 @@ data/
     ├── daily-journal.md
     └── project-plan.md
 ```
+
+**Custom Templates Location**
+
+You can configure a custom templates folder location through **Settings → Folders & Paths → Templates Folder**:
+
+- **Relative paths**: Specify relative to your notes directory (e.g., `my_templates` → `data/my_templates`)
+- **Absolute paths**: Use absolute path for templates outside the notes directory
+- **Hot-swap**: Changes take effect immediately without restart
+- **Examples**:
+  - `_templates` (default)
+  - `Resources/Templates`
+  - `templates/work`
+  - `/absolute/path/to/templates`
 
 ### 2. Access Templates
 

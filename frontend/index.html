@@ -1631,55 +1631,108 @@
                                     </template>
                                 </div>
 
+                                <!-- Folders & Paths Settings -->
+                                <div class="mb-4" x-data="{ pathsExpanded: false }">
+                                    <label class="block text-xs font-medium mb-2" style="color: var(--text-secondary);">Folders & Paths</label>
+
+                                    <!-- Toggle button -->
+                                    <button
+                                        @click="pathsExpanded = !pathsExpanded"
+                                        class="w-full px-3 py-2 text-sm rounded flex items-center justify-between transition-colors"
+                                        style="background-color: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-primary);"
+                                        onmouseover="this.style.backgroundColor='var(--bg-hover)'"
+                                        onmouseout="this.style.backgroundColor='var(--bg-secondary)'"
+                                    >
+                                        <span>Directory Settings</span>
+                                        <span x-text="pathsExpanded ? '▲' : '▼'" class="text-xs"></span>
+                                    </button>
+
+                                    <!-- Collapsible content -->
+                                    <div x-show="pathsExpanded" x-cloak class="mt-3 p-3 rounded"
+                                         style="background-color: var(--bg-secondary); border: 1px solid var(--border-primary);">
+
+                                        <!-- Templates Directory -->
+                                        <div class="mb-3">
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Templates Folder</label>
+                                            <input
+                                                type="text"
+                                                x-model="templatesDir"
+                                                @change="saveTemplatesPath()"
+                                                placeholder="_templates"
+                                                class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                                style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary);"
+                                            />
+                                            <p class="text-xs mt-1" style="color: var(--text-tertiary);">Path relative to notes folder (or absolute path)</p>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Reading Preferences -->
-                                <div class="mb-4">
+                                <div class="mb-4" x-data="{ readingExpanded: false }">
                                     <label class="block text-xs font-medium mb-2" style="color: var(--text-secondary);">Reading Preferences</label>
 
-                                    <!-- Read Width -->
-                                    <div class="mb-3">
-                                        <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Content Width</label>
-                                        <select
-                                            x-model="readingWidth"
-                                            @change="saveReadingPreferences()"
-                                            class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
-                                            style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
-                                        >
-                                            <option value="narrow">Narrow (650px)</option>
-                                            <option value="medium">Medium (850px)</option>
-                                            <option value="wide">Wide (1100px)</option>
-                                            <option value="full">Full Width</option>
-                                        </select>
-                                    </div>
+                                    <!-- Toggle button -->
+                                    <button
+                                        @click="readingExpanded = !readingExpanded"
+                                        class="w-full px-3 py-2 text-sm rounded flex items-center justify-between transition-colors"
+                                        style="background-color: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-primary);"
+                                        onmouseover="this.style.backgroundColor='var(--bg-hover)'"
+                                        onmouseout="this.style.backgroundColor='var(--bg-secondary)'"
+                                    >
+                                        <span>Display Settings</span>
+                                        <span x-text="readingExpanded ? '▲' : '▼'" class="text-xs"></span>
+                                    </button>
 
-                                    <!-- Text Alignment -->
-                                    <div class="mb-3">
-                                        <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Text Alignment</label>
-                                        <select
-                                            x-model="contentAlign"
-                                            @change="saveReadingPreferences()"
-                                            class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
-                                            style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
-                                        >
-                                            <option value="left">Left Aligned</option>
-                                            <option value="center">Centered</option>
-                                            <option value="justified">Justified</option>
-                                        </select>
-                                    </div>
+                                    <!-- Collapsible content -->
+                                    <div x-show="readingExpanded" x-cloak class="mt-3 p-3 rounded"
+                                         style="background-color: var(--bg-secondary); border: 1px solid var(--border-primary);">
 
-                                    <!-- Content Margins -->
-                                    <div class="mb-3">
-                                        <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Content Spacing</label>
-                                        <select
-                                            x-model="contentMargins"
-                                            @change="saveReadingPreferences()"
-                                            class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
-                                            style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
-                                        >
-                                            <option value="compact">Compact</option>
-                                            <option value="normal">Normal</option>
-                                            <option value="relaxed">Relaxed</option>
-                                            <option value="extra-relaxed">Extra Relaxed</option>
-                                        </select>
+                                        <!-- Read Width -->
+                                        <div class="mb-3">
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Content Width</label>
+                                            <select
+                                                x-model="readingWidth"
+                                                @change="saveReadingPreferences()"
+                                                class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                                style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
+                                            >
+                                                <option value="narrow">Narrow (650px)</option>
+                                                <option value="medium">Medium (850px)</option>
+                                                <option value="wide">Wide (1100px)</option>
+                                                <option value="full">Full Width</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Text Alignment -->
+                                        <div class="mb-3">
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Text Alignment</label>
+                                            <select
+                                                x-model="contentAlign"
+                                                @change="saveReadingPreferences()"
+                                                class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                                style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
+                                            >
+                                                <option value="left">Left Aligned</option>
+                                                <option value="center">Centered</option>
+                                                <option value="justified">Justified</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Content Margins -->
+                                        <div class="mb-3">
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Content Spacing</label>
+                                            <select
+                                                x-model="contentMargins"
+                                                @change="saveReadingPreferences()"
+                                                class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                                style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
+                                            >
+                                                <option value="compact">Compact</option>
+                                                <option value="normal">Normal</option>
+                                                <option value="relaxed">Relaxed</option>
+                                                <option value="extra-relaxed">Extra Relaxed</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
 

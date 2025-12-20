@@ -9,99 +9,106 @@ This directory contains tests for the Granite application, specifically for the 
 **`test_plugin_api.py`** - Tests for the plugin management API endpoints
 
 Tests include:
-- ✅ Listing all available plugins
-- ✅ Plugin data structure validation
-- ✅ Enabling plugins via API
-- ✅ Disabling plugins via API
-- ✅ Plugin state persistence
-- ✅ Error handling for nonexistent plugins
-- ✅ PluginManager class functionality
+- Listing all available plugins
+- Plugin data structure validation
+- Enabling plugins via API
+- Disabling plugins via API
+- Plugin state persistence
+- Error handling for nonexistent plugins
+- PluginManager class functionality
 
 **`test_git_plugin.py`** - Tests for the Git Sync plugin
 
 Tests include:
-- ✅ Git plugin API endpoints (settings, status, manual backup/pull, SSH management)
-- ✅ Settings management (get, update, persistence, git user config)
-- ✅ Plugin unit tests (default settings, update settings, status)
-- ✅ Git command execution (version check, repo detection, change detection)
-- ✅ SSH key management (generate, retrieve public key, test connection)
-- ✅ Integration tests with actual git operations
-- ✅ Plugin lifecycle hooks (on_app_startup)
-- ✅ Error handling for disabled plugin and non-git repos
+- Git plugin API endpoints (settings, status, manual backup/pull, SSH management)
+- Settings management (get, update, persistence, git user config)
+- Plugin unit tests (default settings, update settings, status)
+- Git command execution (version check, repo detection, change detection)
+- SSH key management (generate, retrieve public key, test connection)
+- Integration tests with actual git operations
+- Plugin lifecycle hooks (on_app_startup)
+- Error handling for disabled plugin and non-git repos
 
 ### Frontend Tests (HTML/JavaScript)
 
 **`test_plugin_ui.html`** - Interactive tests for the plugin UI
 
 Tests include:
-- ✅ API endpoint connectivity
-- ✅ Plugin list retrieval
-- ✅ Plugin structure validation
-- ✅ Toggle plugin ON/OFF functionality
-- ✅ State persistence across toggles
-- ✅ Invalid plugin error handling
+- API endpoint connectivity
+- Plugin list retrieval
+- Plugin structure validation
+- Toggle plugin ON/OFF functionality
+- State persistence across toggles
+- Invalid plugin error handling
 
 **`test_git_plugin_ui.html`** - Interactive tests for the Git plugin UI
 
 Tests include:
-- ✅ Get git plugin settings
-- ✅ Update git plugin settings
-- ✅ Get git plugin status
-- ✅ Enable/disable git plugin
-- ✅ Manual backup trigger
-- ✅ Manual pull trigger
-- ✅ Settings persistence
+- Get git plugin settings
+- Update git plugin settings
+- Get git plugin status
+- Enable/disable git plugin
+- Manual backup trigger
+- Manual pull trigger
+- Settings persistence
 
 ## Running the Tests
 
-### Quick Start (Recommended)
+### Quick Start (Recommended - Docker)
 
-**The easiest way to run tests is using the provided scripts:**
+**The easiest way to run tests is inside Docker where all dependencies are installed:**
 
-**Linux/Mac:**
 ```bash
-./scripts/run_tests.sh
+# Make sure your container is running
+docker-compose up -d
+
+# Run all tests
+docker-compose exec granite .venv/bin/pytest tests/ -v
+
+# Run with coverage
+docker-compose exec granite .venv/bin/pytest tests/ --cov=backend --cov=plugins --cov-report=term-missing
+
+# Run linting
+docker-compose exec granite .venv/bin/ruff check backend/ plugins/ tests/
+docker-compose exec granite .venv/bin/ruff format --check backend/ plugins/ tests/
 ```
 
-**Windows:**
-```batch
-scripts\run_tests.bat
-```
+### Local Development (with uv)
 
-These scripts will:
-1. Check if the Granite container is running
-2. Run all backend tests inside the container
-3. Show you the URL for frontend tests
+**Prerequisites:**
+1. Install uv: `curl -LsSf https://astral.sh/uv/install.sh | sh` (Linux/Mac) or see [uv docs](https://github.com/astral-sh/uv)
+2. Set up environment: `uv sync`
+3. Activate: `source .venv/bin/activate` (Linux/Mac) or `.venv\Scripts\activate` (Windows)
 
-**Note:** On Linux/Mac, ensure the script has Unix (LF) line endings. If edited on Windows, convert with: `sed -i 's/\r$//' scripts/run_tests.sh && chmod +x scripts/run_tests.sh`
-
-### Backend Tests (pytest)
-
-**Prerequisites (if running outside Docker):**
-```bash
-pip install pytest fastapi httpx
-```
-
-**Run all backend tests:**
+**Run tests locally:**
 ```bash
 # From the granite root directory
 pytest tests/ -v
 
-# Or run specific test files
+# With coverage
+pytest tests/ --cov=backend --cov=plugins --cov-report=term-missing --cov-report=html
+
+# Run linting
+ruff check backend/ plugins/ tests/
+ruff format --check backend/ plugins/ tests/
+
+# Auto-fix linting issues
+ruff check --fix backend/ plugins/ tests/
+ruff format backend/ plugins/ tests/
+```
+
+**Run specific tests:**
+```bash
+# Run specific test files
 pytest tests/test_plugin_api.py -v
 pytest tests/test_git_plugin.py -v
-```
+pytest tests/test_pdf_export_plugin.py -v
 
-**Run specific test class:**
-```bash
+# Run specific test class
 pytest tests/test_plugin_api.py::TestPluginAPI -v
-pytest tests/test_git_plugin.py::TestGitPluginAPI -v
-```
 
-**Run specific test:**
-```bash
+# Run specific test
 pytest tests/test_plugin_api.py::TestPluginAPI::test_list_plugins -v
-pytest tests/test_git_plugin.py::TestGitPluginAPI::test_get_git_settings -v
 ```
 
 ### Frontend Tests (Browser)
@@ -137,41 +144,63 @@ Tests are disabled by default for security. To enable them:
 3. Tests will run automatically on page load, or click **"Run All Tests"** to re-run
 
 4. View test results in real-time:
-   - ✅ Green = Passed
-   - ❌ Red = Failed
-   - ℹ️ Blue = Running
-   - ⊘ Gray = Skipped
+   - Green = Passed
+   - Red = Failed
+   - Blue = Running
+   - Gray = Skipped
 
-**⚠️ Security Note:** Always set `ENABLE_TESTS=false` in production to prevent exposing test files!
+**Security Note:** Always set `ENABLE_TESTS=false` in production to prevent exposing test files!
 
-### Running Tests in Docker
+### Running Tests in Docker (Detailed)
 
-The backend tests are automatically available inside the Docker container.
+All test dependencies (pytest, ruff, coverage tools, etc.) are included in the Docker image via the `.venv`.
 
-**Option 1: Use the provided script (recommended)**
+**Run all tests:**
 ```bash
-# Linux/Mac
-./scripts/run_tests.sh
+# Using docker-compose (recommended)
+docker-compose exec granite .venv/bin/pytest tests/ -v
 
-# Windows
-scripts\run_tests.bat
+# Or using docker directly
+docker exec granite .venv/bin/pytest /app/tests/ -v
 ```
 
-**Option 2: Run directly in the container**
+**Run specific test files:**
 ```bash
-# Run all tests without entering the container
-docker exec granite pytest /app/tests/ -v
-
-# Run specific test files
-docker exec granite pytest /app/tests/test_plugin_api.py -v
-docker exec granite pytest /app/tests/test_git_plugin.py -v
-
-# Or enter the container and run tests
-docker exec -it granite bash
-pytest /app/tests/ -v
+docker-compose exec granite .venv/bin/pytest tests/test_plugin_api.py -v
+docker-compose exec granite .venv/bin/pytest tests/test_pdf_export_plugin.py -v
 ```
 
-**Note:** pytest and httpx are now included in the Docker image, so no additional installation is needed!
+**Run with coverage:**
+```bash
+docker-compose exec granite .venv/bin/pytest tests/ \
+  --cov=backend \
+  --cov=plugins \
+  --cov-report=term-missing \
+  --cov-report=html \
+  --cov-report=xml
+```
+
+**Run linting:**
+```bash
+# Check for issues
+docker-compose exec granite .venv/bin/ruff check backend/ plugins/ tests/
+
+# Check formatting
+docker-compose exec granite .venv/bin/ruff format --check backend/ plugins/ tests/
+
+# Auto-fix issues
+docker-compose exec granite .venv/bin/ruff check --fix backend/ plugins/ tests/
+docker-compose exec granite .venv/bin/ruff format backend/ plugins/ tests/
+```
+
+**Enter container for interactive testing:**
+```bash
+docker exec -it granite sh
+cd /app
+.venv/bin/pytest tests/ -v
+```
+
+**Note:** All dependencies are installed in `.venv` inside the container, so use `.venv/bin/pytest` and `.venv/bin/ruff`.
 
 ## Test Coverage
 
@@ -179,59 +208,59 @@ pytest /app/tests/ -v
 
 | Endpoint | Method | Tested |
 |----------|--------|--------|
-| `/api/plugins` | GET | ✅ |
-| `/api/plugins/{plugin_name}/toggle` | POST | ✅ |
-| `/api/plugins/git/settings` | GET | ✅ |
-| `/api/plugins/git/settings` | POST | ✅ |
-| `/api/plugins/git/status` | GET | ✅ |
-| `/api/plugins/git/manual-backup` | POST | ✅ |
-| `/api/plugins/git/manual-pull` | POST | ✅ |
-| `/api/plugins/git/ssh/generate` | POST | ✅ |
-| `/api/plugins/git/ssh/public-key` | GET | ✅ |
-| `/api/plugins/git/ssh/test` | POST | ✅ |
+| `/api/plugins` | GET | Yes |
+| `/api/plugins/{plugin_name}/toggle` | POST | Yes |
+| `/api/plugins/git/settings` | GET | Yes |
+| `/api/plugins/git/settings` | POST | Yes |
+| `/api/plugins/git/status` | GET | Yes |
+| `/api/plugins/git/manual-backup` | POST | Yes |
+| `/api/plugins/git/manual-pull` | POST | Yes |
+| `/api/plugins/git/ssh/generate` | POST | Yes |
+| `/api/plugins/git/ssh/public-key` | GET | Yes |
+| `/api/plugins/git/ssh/test` | POST | Yes |
 
 ### Plugin Manager Functions
 
 | Function | Tested |
 |----------|--------|
-| `list_plugins()` | ✅ |
-| `enable_plugin(name)` | ✅ |
-| `disable_plugin(name)` | ✅ |
+| `list_plugins()` | Yes |
+| `enable_plugin(name)` | Yes |
+| `disable_plugin(name)` | Yes |
 
 ### Git Plugin Functions
 
 | Function | Tested |
 |----------|--------|
-| `get_settings()` | ✅ |
-| `update_settings()` | ✅ |
-| `get_status()` | ✅ |
-| `_check_git_installed()` | ✅ |
-| `_check_is_git_repo()` | ✅ |
-| `_has_changes()` | ✅ |
-| `_run_git_command()` | ✅ |
-| `_configure_git_user()` | ✅ |
-| `manual_backup()` | ✅ |
-| `manual_pull()` | ✅ |
-| `generate_ssh_key()` | ✅ |
-| `get_ssh_public_key()` | ✅ |
-| `test_ssh_connection()` | ✅ |
-| `on_app_startup()` | ✅ |
+| `get_settings()` | Yes |
+| `update_settings()` | Yes |
+| `get_status()` | Yes |
+| `_check_git_installed()` | Yes |
+| `_check_is_git_repo()` | Yes |
+| `_has_changes()` | Yes |
+| `_run_git_command()` | Yes |
+| `_configure_git_user()` | Yes |
+| `manual_backup()` | Yes |
+| `manual_pull()` | Yes |
+| `generate_ssh_key()` | Yes |
+| `get_ssh_public_key()` | Yes |
+| `test_ssh_connection()` | Yes |
+| `on_app_startup()` | Yes |
 
 ### Frontend Functionality
 
 | Feature | Tested |
 |---------|--------|
-| Load plugin list | ✅ |
-| Display plugin info (name, version, status) | ✅ |
-| Toggle plugin ON | ✅ |
-| Toggle plugin OFF | ✅ |
-| State persistence | ✅ |
-| Error handling | ✅ |
-| Git settings modal | ✅ |
-| Update git settings | ✅ |
-| Manual backup trigger | ✅ |
-| Manual pull trigger | ✅ |
-| Git status display | ✅ |
+| Load plugin list | Yes |
+| Display plugin info (name, version, status) | Yes |
+| Toggle plugin ON | Yes |
+| Toggle plugin OFF | Yes |
+| State persistence | Yes |
+| Error handling | Yes |
+| Git settings modal | Yes |
+| Update git settings | Yes |
+| Manual backup trigger | Yes |
+| Manual pull trigger | Yes |
+| Git status display | Yes |
 
 ## Continuous Integration
 
@@ -332,4 +361,4 @@ Consider adding tests for:
 
 ---
 
-💡 **Tip:** Run tests before committing changes to ensure everything works correctly!
+**Tip:** Run tests before committing changes to ensure everything works correctly!

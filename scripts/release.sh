@@ -132,7 +132,7 @@ finish_release() {
     echo "3. After merge: git checkout main; git pull origin main."
     echo "4. Create tag: git tag -a v$version -m \"Release version $version\""
     echo "5. Push tag: git push origin v$version (triggers Docker build if configured)."
-    echo "6. Merge back: Create PR from main to develop, merge it."
+    echo "6. Merge back: Create PR from $current_branch to develop, merge it."
     echo "7. Delete branch: git branch -d $current_branch; git push origin --delete $current_branch"
 
     print_success "Follow steps to complete release $version."

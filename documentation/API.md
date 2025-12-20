@@ -1,8 +1,8 @@
-# 📡 API Documentation
+# API Documentation
 
 Base URL: `http://localhost:8000`
 
-## 🗂️ Notes
+## Notes
 
 ### List All Notes
 ```http
@@ -81,7 +81,7 @@ Content-Type: application/json
 }
 ```
 
-## 🖼️ Images
+## Images
 
 ### Get Image
 ```http
@@ -406,13 +406,111 @@ Returns the relationship graph between notes with link detection.
 - **Markdown links** - `[text](note.md)` standard internal links
 - **Edge types** - `"wikilink"` or `"markdown"` to distinguish link source
 
-## ⚙️ System
+## System
 
 ### Get Config
 ```http
 GET /api/config
 ```
 Returns application configuration.
+
+### Get User Settings
+```http
+GET /api/settings/user
+```
+Returns all user settings (reading preferences, performance settings, paths, plugins).
+
+Settings are stored server-side in `user-settings.json` and persist across Docker restarts/rebuilds.
+
+**Response:**
+```json
+{
+  "reading": {
+    "width": "full",
+    "align": "left",
+    "margins": "normal"
+  },
+  "performance": {
+    "updateDelay": 100,
+    "statsDelay": 300,
+    "metadataDelay": 300,
+    "historyDelay": 500,
+    "autosaveDelay": 1000
+  },
+  "paths": {
+    "templatesDir": "_templates"
+  },
+  "plugins": {
+    "git": {
+      "backup_interval": 600,
+      "auto_push": true
+    }
+  }
+}
+```
+
+### Update User Settings
+```http
+POST /api/settings/user
+Content-Type: application/json
+
+{
+  "reading": {
+    "width": "medium"
+  },
+  "performance": {
+    "autosaveDelay": 2000
+  }
+}
+```
+Update user settings. Accepts partial updates (only specified sections/keys are updated).
+
+**Response:**
+```json
+{
+  "success": true,
+  "settings": { /* full updated settings */ },
+  "message": "User settings updated successfully"
+}
+```
+
+### Get Templates Directory
+```http
+GET /api/settings/templates-dir
+```
+Returns the current templates directory path (relative to notes directory).
+
+**Response:**
+```json
+{
+  "templatesDir": "_templates"
+}
+```
+
+### Update Templates Directory
+```http
+POST /api/settings/templates-dir
+Content-Type: application/json
+
+{
+  "templatesDir": "my_templates"
+}
+```
+Update the templates directory path. Changes take effect immediately (hot-swap, no restart needed).
+
+**Response:**
+```json
+{
+  "success": true,
+  "templatesDir": "my_templates",
+  "message": "Templates directory updated successfully"
+}
+```
+
+**Notes:**
+- Paths can be relative to `notes_dir` (e.g., `"_templates"` → `./data/_templates`) or absolute
+- Changes are persisted to both `user-settings.json` and `config.yaml`
+- No Docker restart required for changes to take effect
 
 ### Health Check
 ```http
@@ -428,7 +526,7 @@ Self-documenting endpoint listing all available API routes.
 
 ---
 
-## 🏷️ Tags
+## Tags
 
 ### List All Tags
 `GET /api/tags`

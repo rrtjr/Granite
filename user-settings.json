@@ -1,0 +1,36 @@
+{
+  "reading": {
+    "width": "narrow",
+    "align": "center",
+    "margins": "normal"
+  },
+  "performance": {
+    "updateDelay": 500,
+    "statsDelay": 300,
+    "metadataDelay": 300,
+    "historyDelay": 500,
+    "autosaveDelay": 2000
+  },
+  "paths": {
+    "templatesDir": "custom_templates"
+  },
+  "plugins": {
+    "git": {
+      "backup_interval": 300,
+      "pull_on_startup": false,
+      "auto_push": false,
+      "remote_branch": "develop",
+      "stage_all_files": true,
+      "commit_message_template": "Auto-backup: {timestamp}",
+      "skip_if_no_changes": true,
+      "git_repo_path": null,
+      "git_user_name": "",
+      "git_user_email": "",
+      "ignore_patterns": [
+        "plugin_config.json",
+        "__pycache__",
+        "*.pyc"
+      ]
+    }
+  }
+}
