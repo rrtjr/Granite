@@ -70,15 +70,42 @@ git checkout -b fix/your-bug-fix
 
 ### 4. Test Your Changes
 
+**Option 1: Using Docker (Recommended)**
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+# Build and run
+docker-compose up --build -d
 
-# Run the application
-python run.py
+# Run tests
+docker-compose exec granite .venv/bin/pytest tests/ -v
 
-# Or use Docker
-docker-compose up
+# Run linting
+docker-compose exec granite .venv/bin/ruff check backend/ plugins/ tests/
+docker-compose exec granite .venv/bin/ruff format --check backend/ plugins/ tests/
+```
+
+**Option 2: Local Development with uv**
+```bash
+# Install uv (one-time)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Set up environment
+uv sync
+
+# Activate virtual environment
+source .venv/bin/activate  # Linux/Mac
+# or
+.venv\Scripts\activate  # Windows
+
+# Run tests
+pytest tests/ -v
+
+# Run linting
+ruff check backend/ plugins/ tests/
+ruff format --check backend/ plugins/ tests/
+
+# Auto-fix issues
+ruff check --fix backend/ plugins/ tests/
+ruff format backend/ plugins/ tests/
 ```
 
 ### 5. Commit Your Changes
@@ -105,10 +132,12 @@ Then create a pull request on GitHub with:
 
 ### Python
 
-- Follow PEP 8 style guide
+- Follow PEP 8 style guide (enforced by ruff)
 - Use type hints where appropriate
 - Keep functions focused and small
 - Add docstrings for public functions/classes
+- Run `ruff check --fix` and `ruff format` before committing
+- All code must pass `ruff` linting and formatting checks
 
 ### JavaScript
 

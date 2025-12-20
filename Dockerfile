@@ -22,14 +22,21 @@ RUN npm install && \
 # Install uv for fast Python package management
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Install Python packages using uv
+# Set uv environment variables
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
+
+# Install dependencies (cached layer)
 COPY pyproject.toml .
-RUN uv pip install --system --no-cache . && \
+RUN uv sync --no-install-project
+
+# Copy source code and install project
+COPY backend ./backend
+COPY plugins ./plugins
+RUN uv sync && \
     # Clean up unnecessary files to reduce image size
-    find /usr/local -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true && \
-    find /usr/local -type f -name "*.pyc" -delete && \
-    find /usr/local -type d -name "tests" -exec rm -rf {} + 2>/dev/null || true && \
-    find /usr/local -type d -name "*.dist-info" -exec rm -rf {}/RECORD {} + 2>/dev/null || true
+    find .venv -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true && \
+    find .venv -type f -name "*.pyc" -delete
 
 # Stage 2: Final minimal image
 FROM python:3.11-slim
@@ -54,8 +61,8 @@ RUN apt-get update && \
     # Configure git to trust the data directory (fixes ownership issues)
     git config --global --add safe.directory /app/data
 
-# Copy only installed packages (no cache, no build artifacts)
-COPY --from=builder /usr/local /usr/local
+# Copy virtual environment from builder
+COPY --from=builder /app/.venv /app/.venv
 
 # Copy frontend with built CodeMirror bundle
 COPY --from=builder /app/frontend ./frontend
@@ -80,8 +87,8 @@ ENV PORT=8000
 
 # Health check (uses PORT env var)
 HEALTHCHECK --interval=60s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -c "import os, urllib.request; urllib.request.urlopen(f'http://localhost:{os.getenv(\"PORT\", \"8000\")}/health')"
+    CMD .venv/bin/python -c "import os, urllib.request; urllib.request.urlopen(f'http://localhost:{os.getenv(\"PORT\", \"8000\")}/health')"
 
 # Run the application (shell form to allow environment variable expansion)
-CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"]
+CMD ["sh", "-c", ".venv/bin/uvicorn backend.main:app --host 0.0.0.0 --port $PORT"]
 
