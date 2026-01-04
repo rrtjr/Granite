@@ -23,6 +23,25 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all history for release notes
 
+      - name: Update README version badge
+        run: |
+          # Extract version from VERSION file
+          VERSION=$(cat VERSION | tr -d '\n' | tr -d '\r')
+
+          # Update the version badge in README.md
+          sed -i "s/version-[0-9]*\.[0-9]*\.[0-9]*/version-${VERSION}/" README.md
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Commit and push if there are changes
+          if ! git diff --quiet README.md; then
+            git add README.md
+            git commit -m "chore: update README version badge to ${VERSION}"
+            git push origin HEAD:main
+          fi
+
       - name: Set up QEMU for multi-architecture builds
         uses: docker/setup-qemu-action@v3
 
