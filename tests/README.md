@@ -2,7 +2,7 @@
 
 This directory contains tests for the Granite application, specifically for the plugin management system.
 
-> **For comprehensive testing documentation, see [documentation/TESTING.md](../documentation/TESTING.md)**
+> **For comprehensive testing documentation, see [docs/TESTING.md](../docs/TESTING.md)**
 >
 > Includes:
 > - Complete test suite overview (70+ tests)
