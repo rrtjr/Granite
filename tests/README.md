@@ -1,10 +1,30 @@
-# Tests
+# Granite Tests
 
 This directory contains tests for the Granite application, specifically for the plugin management system.
+
+> **For comprehensive testing documentation, see [docs/TESTING.md](../docs/TESTING.md)**
+>
+> Includes:
+> - Complete test suite overview (70+ tests)
+> - Running tests in Docker vs locally
+> - Plugin settings persistence tests
+> - Coverage reports and debugging
+> - Troubleshooting guide
 
 ## Test Files
 
 ### Backend Tests (Python)
+
+**`test_plugin_settings_persistence.py`** NEW - Comprehensive plugin settings persistence tests (70+ tests)
+
+Tests include:
+- General plugin settings persistence (works for ANY plugin)
+- Git plugin specific settings tests
+- PDF Export plugin settings tests
+- File system persistence verification
+- Edge cases (null values, special characters, large objects)
+- Integration tests (full workflows)
+- Settings isolation between plugins
 
 **`test_plugin_api.py`** - Tests for the plugin management API endpoints
 
@@ -28,6 +48,15 @@ Tests include:
 - Integration tests with actual git operations
 - Plugin lifecycle hooks (on_app_startup)
 - Error handling for disabled plugin and non-git repos
+- Git repository path verification (ensures operations only in data/ directory)
+
+**`test_user_settings.py`** - Tests for the user settings system
+
+Tests include:
+- User settings utility functions (load, save, update, merge with defaults)
+- User settings API endpoints (get, update)
+- Templates directory settings persistence
+- Plugin settings persistence to user-settings.json (Git, PDF Export)
 
 ### Frontend Tests (HTML/JavaScript)
 

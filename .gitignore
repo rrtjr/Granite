@@ -34,6 +34,7 @@ data/
 
 # Plugin configuration (user-specific settings)
 plugins/plugin_config.json
+user-settings.json
 
 # IDE
 .vscode/

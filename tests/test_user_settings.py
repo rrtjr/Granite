@@ -200,7 +200,7 @@ class TestPluginSettingsPersistence:
         # Skip if git plugin not available
         plugins_response = client.get("/api/plugins")
         plugins = plugins_response.json()["plugins"]
-        git_plugin = next((p for p in plugins if p["name"] == "git"), None)
+        git_plugin = next((p for p in plugins if p["id"] == "git"), None)
 
         if not git_plugin:
             pytest.skip("Git plugin not available")
@@ -219,3 +219,35 @@ class TestPluginSettingsPersistence:
         assert "git" in user_settings["plugins"]
         assert user_settings["plugins"]["git"]["backup_interval"] == 1200
         assert user_settings["plugins"]["git"]["auto_push"] is False
+
+    def test_pdf_export_plugin_settings_persist(self, client):
+        """Test that PDF export plugin settings are saved to user-settings.json"""
+        # Skip if PDF export plugin not available
+        plugins_response = client.get("/api/plugins")
+        plugins = plugins_response.json()["plugins"]
+        pdf_plugin = next((p for p in plugins if p["id"] == "pdf_export"), None)
+
+        if not pdf_plugin:
+            pytest.skip("PDF Export plugin not available")
+
+        # Update PDF export plugin settings
+        new_settings = {
+            "page_size": "Letter",
+            "orientation": "landscape",
+            "include_author": True,
+            "author_name": "Test Author",
+        }
+
+        response = client.post("/api/plugins/pdf_export/settings", json=new_settings)
+        assert response.status_code == 200
+
+        # Verify settings in user-settings.json
+        user_settings_response = client.get("/api/settings/user")
+        user_settings = user_settings_response.json()
+
+        assert "plugins" in user_settings
+        assert "pdf_export" in user_settings["plugins"]
+        assert user_settings["plugins"]["pdf_export"]["page_size"] == "Letter"
+        assert user_settings["plugins"]["pdf_export"]["orientation"] == "landscape"
+        assert user_settings["plugins"]["pdf_export"]["include_author"] is True
+        assert user_settings["plugins"]["pdf_export"]["author_name"] == "Test Author"

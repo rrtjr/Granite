@@ -299,6 +299,27 @@ class TestGitPluginUnit:
         assert "timer_running" in status
         assert "settings" in status
 
+    def test_git_repo_path_is_data_directory(self, git_plugin):
+        """Test that git operations are confined to data/ directory, not app root"""
+        # Test with default settings (no custom git_repo_path)
+        git_plugin.settings["git_repo_path"] = None
+        repo_path = git_plugin._get_git_repo_path()
+
+        # Path should end with 'data' directory
+        assert repo_path.name == "data", f"Git repo path should be data/ directory, got: {repo_path}"
+
+        # Path should NOT be the application root
+        app_root = Path(__file__).parent.parent.resolve()
+        assert repo_path != app_root, "Git repo path should not be application root directory"
+
+        # In Docker, should be /app/data
+        # In local dev, should be <app_root>/data
+        if Path("/app/data").exists():
+            assert str(repo_path) == "/app/data", "In Docker, git repo should be /app/data"
+        else:
+            expected_path = app_root / "data"
+            assert repo_path == expected_path, f"Git repo should be {expected_path}, got {repo_path}"
+
     def test_check_git_installed(self, git_plugin):
         """Test checking if git is installed"""
         is_installed = git_plugin._check_git_installed()

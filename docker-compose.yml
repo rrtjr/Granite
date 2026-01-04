@@ -13,6 +13,8 @@ services:
       - ./themes:/app/themes
       # Config file (REQUIRED - must exist as a file, not directory!)
       - ./config.yaml:/app/config.yaml
+      # User settings file (for preferences and plugin settings)
+      - ./user-settings.json:/app/user-settings.json
     restart: unless-stopped
     environment:
       - TZ=${TZ}
