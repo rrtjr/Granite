@@ -2,14 +2,9 @@
 
 This directory contains tests for the Granite application, specifically for the plugin management system.
 
-> **For comprehensive testing documentation, see [docs/TESTING.md](../docs/TESTING.md)**
->
-> Includes:
-> - Complete test suite overview (70+ tests)
-> - Running tests in Docker vs locally
-> - Plugin settings persistence tests
-> - Coverage reports and debugging
-> - Troubleshooting guide
+> **For comprehensive testing documentation, see:**
+> - **[docs/TESTING.md](../docs/TESTING.md)** - Complete test suite overview (70+ tests), running tests in Docker vs locally, coverage reports, troubleshooting
+> - **[docs/TEST_ISOLATION.md](../docs/TEST_ISOLATION.md)** - How test isolation works, settings preservation, automatic backup/restore
 
 ## Test Files
 
