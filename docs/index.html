@@ -1,221 +1,356 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Granite | Documentation</title>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
-    
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: false, theme: 'neutral' });</script>
+
     <style>
+        /* --- Granite Palette Variables --- */
         :root {
-            --bg: #ffffff;
-            --text: #334155;
-            --heading: #0f172a;
-            --accent: #6366f1;
-            --sidebar-bg: #f8fafc;
-            --border: #e2e8f0;
-            --code-bg: #0f172a;
+            /* Day Mode (Stone/Quartz) */
+            --bg: #fdfdfd;
+            --text: #374151;
+            --heading: #111827;
+            --accent: #4b5563; /* Deep stone grey */
+            --sidebar-bg: #f9fafb;
+            --border: #e5e7eb;
+            --code-bg: #111827;
+            --mermaid-bg: #ffffff;
+            --tag-bg: #f3f4f6;
         }
 
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            line-height: 1.6; 
+        /* --- Night Mode (Obsidian/Granite) --- */
+        body.dark-mode {
+            --bg: #0a0a0a; /* Obsidian */
+            --text: #9ca3af;
+            --heading: #f3f4f6;
+            --accent: #d1d5db; /* Light grey quartz */
+            --sidebar-bg: #111827;
+            --border: #1f2937;
+            --code-bg: #000000;
+            --mermaid-bg: #111827;
+            --tag-bg: #1f2937;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            line-height: 1.7;
             color: var(--text);
             margin: 0;
             background: var(--bg);
+            transition: background 0.4s ease, color 0.4s ease;
+        }
+
+        /* --- Theme Toggle Button --- */
+        .theme-toggle {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 1000;
+            background: var(--sidebar-bg);
+            border: 1px solid var(--border);
+            color: var(--heading);
+            padding: 10px 20px;
+            border-radius: 8px; /* Sharper edges for a "cut stone" feel */
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         header {
-            padding: 80px 0 40px;
+            padding: 120px 0 60px;
             text-align: center;
             border-bottom: 1px solid var(--border);
         }
 
-        h1 { 
-            font-size: clamp(2.5rem, 8vw, 4rem); 
-            font-weight: 800; 
-            margin: 0; 
-            line-height: 1.1;
+        h1 {
+            font-size: clamp(3rem, 10vw, 5rem);
+            font-weight: 800;
+            margin: 0;
+            line-height: 1;
             color: var(--heading);
-            letter-spacing: -0.04em;
+            letter-spacing: -0.06em;
+            text-transform: lowercase; /* Stylized minimalist look */
         }
 
         .main-grid {
             display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 60px;
-            max-width: 1200px;
+            grid-template-columns: 260px 1fr;
+            gap: 80px;
+            max-width: 1100px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 60px 20px;
         }
 
-        /* --- Sidebar & Section Styling --- */
+        /* --- Sidebar --- */
         aside {
             position: sticky;
             top: 40px;
             height: fit-content;
         }
 
-        .sidebar-section {
-            margin-bottom: 2rem;
-        }
+        .sidebar-section { margin-bottom: 2.5rem; }
 
         .sidebar-label {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: #94a3b8;
-            font-weight: 700;
-            margin-bottom: 0.75rem;
+            letter-spacing: 0.15em;
+            color: var(--accent);
+            font-weight: 800;
+            margin-bottom: 1rem;
             padding-left: 12px;
+            opacity: 0.7;
         }
 
         #toc ul { list-style: none; padding: 0; margin: 0; }
-        
-        #toc a { 
-            text-decoration: none; 
-            color: var(--text); 
-            font-weight: 500;
-            font-size: 0.9rem;
+
+        #toc a {
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 0.95rem;
             display: block;
-            padding: 8px 12px;
-            border-radius: 8px;
+            padding: 10px 14px;
+            border-radius: 6px;
             transition: 0.2s;
         }
 
-        #toc a:hover { 
-            background: var(--sidebar-bg);
-            color: var(--accent);
+        #toc a:hover {
+            background: var(--tag-bg);
+            color: var(--heading);
         }
 
         /* --- Content Layout --- */
         #content { min-width: 0; }
-        
+
         #content section {
-            margin-bottom: 100px;
-            scroll-margin-top: 40px;
+            margin-bottom: 120px;
+            scroll-margin-top: 60px;
         }
 
-        h2 { 
-            font-size: 2.25rem; 
-            color: var(--heading); 
-            letter-spacing: -0.02em;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 12px;
+        h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--heading);
+            letter-spacing: -0.03em;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 15px;
+            margin-top: 60px;
         }
 
-        pre { 
-            background: var(--code-bg); 
-            color: #e2e8f0;
-            padding: 24px; 
+        /* --- Code & Copy Button --- */
+        .code-container {
+            position: relative;
+            margin: 32px 0;
             border-radius: 12px;
-            overflow-x: auto; 
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9rem;
+            overflow: hidden;
+            border: 1px solid var(--border);
         }
 
-        @media (max-width: 850px) {
-            .main-grid { grid-template-columns: 1fr; }
+        pre {
+            background: var(--code-bg);
+            color: #d1d5db;
+            padding: 28px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        .copy-button {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
+        }
+
+        .copy-button:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        /* --- Mermaid Styling --- */
+        .mermaid {
+            background: var(--mermaid-bg);
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin: 32px 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        @media (max-width: 900px) {
+            .main-grid { grid-template-columns: 1fr; gap: 40px; }
             aside { position: static; }
+            h1 { font-size: 3.5rem; }
         }
     </style>
 </head>
+
 <body>
 
+    <button class="theme-toggle" id="themeToggle">
+        <span id="themeIcon">🌑</span> <span id="themeText">Night</span>
+    </button>
+
     <header>
-        <h1>Granite<br>Documentation</h1>
+        <h1>granite.</h1>
     </header>
 
     <main class="main-grid">
-        <aside id="toc">
-            </aside>
-
-        <article id="content">
-            </article>
+        <aside id="toc"></aside>
+        <article id="content"></article>
     </main>
+
+    <footer style="padding: 100px 0 60px; text-align: center; border-top: 1px solid var(--border); font-size: 0.8rem; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; font-weight: 800;">
+        Built for Speed & Privacy
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
+        // --- Granite Theme Controller ---
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const themeText = document.getElementById('themeText');
+        const body = document.body;
+
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            body.classList.add('dark-mode');
+            updateToggleUI(true);
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateToggleUI(isDark);
+        });
+
+        function updateToggleUI(isDark) {
+            themeIcon.innerText = isDark ? '☀️' : '🌑';
+            themeText.innerText = isDark ? 'Day' : 'Night';
+        }
+
+        // --- Copy to Clipboard ---
+        window.copyToClipboard = (btn) => {
+            const container = btn.closest('.code-container');
+            const code = container.querySelector('code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = 'Copied';
+                setTimeout(() => { btn.innerText = originalText; }, 2000);
+            });
+        };
+
         async function loadAndRender() {
             const tocContainer = document.getElementById('toc');
             const contentContainer = document.getElementById('content');
+            const basePath = './';
+
+            const renderer = new marked.Renderer();
+            renderer.code = function(args) {
+                const { text, lang } = args;
+                if (lang === 'mermaid') {
+                    return `<div class="mermaid">${text}</div>`;
+                }
+                return `
+                    <div class="code-container">
+                        <button class="copy-button" onclick="copyToClipboard(this)">Copy</button>
+                        <pre><code class="language-${lang || 'text'}">${text}</code></pre>
+                    </div>`;
+            };
 
             try {
-                const response = await fetch('index.md');
+                const response = await fetch(`${basePath}index.md`);
+                if (!response.ok) throw new Error(`Failed to load index.md`);
+
                 const text = await response.text();
-                
-                // Create a temporary element to parse the structure of index.md
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(marked.parse(text), 'text/html');
-                
-                // We assume index.md is organized like:
-                // ## Category Name
-                // - [Page Name](page.md)
                 const headers = doc.querySelectorAll('h2');
 
                 for (const header of headers) {
-                    // 1. Create Sidebar Section
                     const sectionDiv = document.createElement('div');
                     sectionDiv.className = 'sidebar-section';
-                    
                     const label = document.createElement('div');
                     label.className = 'sidebar-label';
                     label.innerText = header.innerText;
                     sectionDiv.appendChild(label);
 
                     const ul = document.createElement('ul');
-                    
-                    // 2. Find the list immediately following the header
                     const list = header.nextElementSibling;
+
                     if (list && list.tagName === 'UL') {
                         const links = list.querySelectorAll('a');
-                        
                         for (const link of links) {
-                            const href = link.getAttribute('href');
-                            const title = link.innerText;
-                            const anchor = href.replace('.md', '').toLowerCase();
-
-                            // Add to Sidebar
+                            const rawHref = link.getAttribute('href');
+                            const anchor = rawHref.replace('.md', '').toLowerCase().replace(/\//g, '-');
                             const li = document.createElement('li');
-                            li.innerHTML = `<a href="#${anchor}">${title}</a>`;
+                            li.innerHTML = `<a href="#${anchor}">${link.innerText}</a>`;
                             ul.appendChild(li);
 
-                            // 3. Fetch and Render Content into Main Article
-                            const pageRes = await fetch(href);
-                            const pageText = await pageRes.text();
-                            const articleSection = document.createElement('section');
-                            articleSection.id = anchor;
-                            articleSection.innerHTML = marked.parse(pageText);
-                            contentContainer.appendChild(articleSection);
+                            try {
+                                const pageRes = await fetch(`${basePath}${rawHref}`);
+                                if (pageRes.ok) {
+                                    const pageText = await pageRes.text();
+                                    const articleSection = document.createElement('section');
+                                    articleSection.id = anchor;
+                                    articleSection.innerHTML = marked.parse(pageText, { renderer });
+                                    contentContainer.appendChild(articleSection);
+                                }
+                            } catch (pageErr) { console.error(pageErr); }
                         }
                     }
-                    
                     sectionDiv.appendChild(ul);
                     tocContainer.appendChild(sectionDiv);
                 }
 
-                // Trigger LaTeX Rendering
+                if (window.mermaid) await mermaid.run();
                 if (window.renderMathInElement) {
                     renderMathInElement(document.body, {
                         delimiters: [
-                            {left: '$$', right: '$$', display: true},
-                            {left: '$', right: '$', display: false}
+                            { left: '$$', right: '$$', display: true },
+                            { left: '$', right: '$', display: false }
                         ]
                     });
                 }
             } catch (err) {
-                contentContainer.innerHTML = "Connect to a server to view documentation.";
+                console.error(err);
+                contentContainer.innerHTML = `<div style="color: red; padding: 40px; border: 1px solid red; border-radius: 8px;">Load Error: ${err.message}. Ensure you are viewing via a web server (http/https).</div>`;
             }
         }
 
         loadAndRender();
     </script>
 </body>
+
 </html>
