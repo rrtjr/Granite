@@ -10,9 +10,9 @@ Plugins are Python files that live in the `plugins/` directory. They use **event
 
 | Hook | When Triggered | Parameters | Can Modify |
 |------|----------------|------------|------------|
-| `on_note_create` | New note is created | `note_path`, `initial_content` | Yes (return modified content) |
-| `on_note_save` | Note is being saved | `note_path`, `content` | Yes (return transformed content, or None) |
-| `on_note_load` | Note is loaded from disk | `note_path`, `content` | Yes (return transformed content, or None) |
+| `on_note_create` | New note is created | `note_path`, `initial_content` | Yes - return modified content |
+| `on_note_save` | Note is being saved | `note_path`, `content` | Yes - return transformed content, or None |
+| `on_note_load` | Note is loaded from disk | `note_path`, `content` | Yes - return transformed content, or None |
 | `on_note_delete` | Note is deleted | `note_path` | No |
 | `on_search` | Search is performed | `query`, `results` | No |
 | `on_app_startup` | App starts up | None | No |
@@ -56,16 +56,16 @@ class Plugin:
     def on_note_save(self, note_path: str, content: str) -> str | None:
         """Log when a note is saved"""
         word_count = len(content.split())
-        print(f"💾 Note saved: {note_path} ({word_count} words)")
+        print(f"Note saved: {note_path} ({word_count} words)")
         return None  # Don't modify content, just observe
-    
+
     def on_note_delete(self, note_path: str):
         """Log when a note is deleted"""
-        print(f"🗑️  Note deleted: {note_path}")
-    
+        print(f"Note deleted: {note_path}")
+
     def on_search(self, query: str, results: list):
         """Log search queries"""
-        print(f"🔍 Search: '{query}' → {len(results)} results")
+        print(f"Search: '{query}' -> {len(results)} results")
 ```
 
 ### How to see the logs
@@ -90,7 +90,7 @@ docker-compose logs -f notediscovery
 
 The easiest way to manage plugins is through the built-in UI:
 
-1. **Open Settings** - Click the settings icon (⚙️) in the left sidebar
+1. **Open Settings** - Click the settings icon in the left sidebar
 2. **Find the Plugins section** - Scroll down to see all installed plugins
 3. **Toggle plugins** - Click the switch to enable/disable any plugin
 4. **See changes instantly** - Plugin features activate/deactivate immediately
@@ -191,5 +191,5 @@ Export your markdown notes to beautifully formatted PDF files with professional 
 
 ---
 
-💡 **Tip:** Use `print()` statements in plugins to log to Docker logs for debugging and monitoring!
+**Tip:** Use `print()` statements in plugins to log to Docker logs for debugging and monitoring!
 

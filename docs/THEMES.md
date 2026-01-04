@@ -153,5 +153,5 @@ All these CSS variables **must** be defined for your theme to work properly:
 
 ---
 
-🎨 **Tip:** Use browser DevTools to experiment with colors in real-time before creating your theme!
+**Tip:** Use browser DevTools to experiment with colors in real-time before creating your theme!
 

@@ -68,21 +68,21 @@ with version_path.open("r", encoding="utf-8") as f:
 if "AUTHENTICATION_ENABLED" in os.environ:
     auth_enabled = os.getenv("AUTHENTICATION_ENABLED", "false").lower() in ("true", "1", "yes")
     config["authentication"]["enabled"] = auth_enabled
-    print(f"🔐 Authentication {'ENABLED' if auth_enabled else 'DISABLED'} (from AUTHENTICATION_ENABLED env var)")
+    print(f"Authentication {'ENABLED' if auth_enabled else 'DISABLED'} (from AUTHENTICATION_ENABLED env var)")
 else:
     print(
-        f"🔐 Authentication {'ENABLED' if config.get('authentication', {}).get('enabled', False) else 'DISABLED'} (from config.yaml)"
+        f"Authentication {'ENABLED' if config.get('authentication', {}).get('enabled', False) else 'DISABLED'} (from config.yaml)"
     )
 
 # Allow password hash to be set via environment variable (useful for demos)
 if "AUTHENTICATION_PASSWORD_HASH" in os.environ:
     config["authentication"]["password_hash"] = os.getenv("AUTHENTICATION_PASSWORD_HASH")
-    print("🔑 Password hash loaded from AUTHENTICATION_PASSWORD_HASH env var")
+    print("Password hash loaded from AUTHENTICATION_PASSWORD_HASH env var")
 
 # Allow secret key to be set via environment variable (for session security)
 if "AUTHENTICATION_SECRET_KEY" in os.environ:
     config["authentication"]["secret_key"] = os.getenv("AUTHENTICATION_SECRET_KEY")
-    print("🔐 Secret key loaded from AUTHENTICATION_SECRET_KEY env var")
+    print("Secret key loaded from AUTHENTICATION_SECRET_KEY env var")
 
 # Initialize app
 app = FastAPI(title=config["app"]["name"], description=config["app"]["tagline"], version=config["app"]["version"])
@@ -97,7 +97,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-print(f"🌐 CORS allowed origins: {allowed_origins}")
+print(f"CORS allowed origins: {allowed_origins}")
 
 # ============================================================================
 # Security Helpers
@@ -120,7 +120,7 @@ def safe_error_message(error: Exception, user_message: str = "An error occurred"
     error_details = f"{type(error).__name__}: {error!s}"
 
     # Always log the full error server-side
-    print(f"⚠️  [ERROR] {error_details}")
+    print(f"[ERROR] {error_details}")
 
     # In debug mode, return detailed error to help with development
     if config.get("server", {}).get("debug", False):
@@ -150,7 +150,7 @@ if DEMO_MODE:
     limiter = Limiter(key_func=get_remote_address, default_limits=["200/hour"])
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-    print("🎭 DEMO MODE enabled - Rate limiting active")
+    print("DEMO MODE enabled - Rate limiting active")
 else:
     # Production/self-hosted mode - no restrictions
     # Create a dummy limiter that doesn't actually limit
@@ -191,7 +191,7 @@ if os.getenv("ENABLE_TESTS", "false").lower() == "true":
     tests_path = Path(__file__).parent.parent / "tests"
     if tests_path.exists():
         app.mount("/tests", StaticFiles(directory=tests_path), name="tests")
-        print("⚠️  Tests are enabled and accessible at /tests/")
+        print("WARNING: Tests are enabled and accessible at /tests/")
         print("   Set ENABLE_TESTS=false in production!")
 
 

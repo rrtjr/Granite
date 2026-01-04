@@ -5,21 +5,21 @@ date: {{date}}
 
 # Daily Journal - {{date}}
 
-## 🌅 Morning
+## Morning
 **Time:** {{time}}
 
 ### Goals for Today
-- [ ] 
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
+- [ ]
 
-## 📝 Notes
-
-
-## 🌙 Evening Reflection
+## Notes
 
 
-## 💡 Ideas
+## Evening Reflection
+
+
+## Ideas
 
 
 

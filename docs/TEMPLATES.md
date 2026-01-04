@@ -134,11 +134,11 @@ cp documentation/templates/*.md data/_templates/
 
 ## Tips
 
-- ✅ Templates can include YAML frontmatter for tags and metadata
-- ✅ Use descriptive template names (they appear in the dropdown)
-- ✅ Templates work in any folder - the context is preserved
-- ✅ You can edit templates anytime - changes apply to new notes only
-- ✅ Combine templates with tags for powerful organization
+- Templates can include YAML frontmatter for tags and metadata
+- Use descriptive template names (they appear in the dropdown)
+- Templates work in any folder - the context is preserved
+- You can edit templates anytime - changes apply to new notes only
+- Combine templates with tags for powerful organization
 
 ---
 

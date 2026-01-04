@@ -142,7 +142,7 @@ curl.exe -X POST http://localhost:8000/api/upload-image -F "file=@C:\path\to\ima
 - Drag & drop images into the editor automatically uploads and inserts markdown
 - All image access requires authentication when security is enabled
 
-## 📁 Folders
+## Folders
 
 ### Create Folder
 ```http
@@ -183,11 +183,11 @@ Content-Type: application/json
 
 {
   "oldPath": "Projects",
-  "newName": "Work"
+  "newPath": "Work"
 }
 ```
 
-## 🔍 Search
+## Search
 
 ### Search Notes
 ```http
@@ -199,7 +199,7 @@ GET /api/search?q={query}
 curl "http://localhost:8000/api/search?q=hello"
 ```
 
-## 🎨 Themes
+## Themes
 
 ### List Themes
 ```http
@@ -216,7 +216,7 @@ GET /api/themes/{theme_id}
 curl http://localhost:8000/api/themes/dark
 ```
 
-## 🔌 Plugins
+## Plugins
 
 Plugins can hook into various events in the application lifecycle.
 
@@ -224,12 +224,12 @@ Plugins can hook into various events in the application lifecycle.
 
 | Hook | Triggered When | Can Modify Data |
 |------|----------------|-----------------|
-| `on_note_create` | New note is created | ✅ Yes (return modified content) |
-| `on_note_save` | Note is being saved | ✅ Yes (return transformed content, or None) |
-| `on_note_load` | Note is loaded | ✅ Yes (return transformed content, or None) |
-| `on_note_delete` | Note is deleted | ❌ No |
-| `on_search` | Search is performed | ❌ No |
-| `on_app_startup` | App starts | ❌ No |
+| `on_note_create` | New note is created | Yes (return modified content) |
+| `on_note_save` | Note is being saved | Yes (return transformed content, or None) |
+| `on_note_load` | Note is loaded | Yes (return transformed content, or None) |
+| `on_note_delete` | Note is deleted | No |
+| `on_search` | Search is performed | No |
+| `on_app_startup` | App starts | No |
 
 See [PLUGINS.md](PLUGINS.md) for full documentation on creating plugins.
 
@@ -380,7 +380,7 @@ Tests SSH connection to the specified Git host.
 
 See [PLUGIN_GIT_SYNC.md](PLUGIN_GIT_SYNC.md) and [GIT_AUTHENTICATION.md](GIT_AUTHENTICATION.md) for complete documentation.
 
-## 🔗 Graph
+## Graph
 
 ### Get Note Graph
 ```http
@@ -566,7 +566,7 @@ Returns all notes that have a specific tag.
 
 ---
 
-## 📄 Templates
+## Templates
 
 ### List Templates
 `GET /api/templates`
@@ -640,7 +640,7 @@ Creates a new note from a template with placeholder replacement.
 
 ---
 
-## 📝 Response Format
+## Response Format
 
 All endpoints return JSON responses:
 
@@ -660,5 +660,5 @@ All endpoints return JSON responses:
 ```
 ---
 
-💡 **Tip:** Use the `/api` endpoint to get a live, self-documented list of all available endpoints!
+**Tip:** Use the `/api` endpoint to get a live, self-documented list of all available endpoints!
 

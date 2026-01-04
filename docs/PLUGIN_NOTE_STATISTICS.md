@@ -1,4 +1,4 @@
-# 📊 Note Statistics Plugin
+# Note Statistics Plugin
 
 **Version:** 1.0.0  
 **Status:** Enabled by default  
@@ -42,36 +42,36 @@ curl -X POST http://localhost:8000/api/plugins/note_stats/toggle \
 
 ## Statistics Provided
 
-### 📝 Content Metrics
+### Content Metrics
 - **Words** - Total word count
 - **Characters** - With and without spaces
 - **Lines** - Total lines in the note
 - **Paragraphs** - Number of paragraphs
 - **Sentences** - Estimated sentence count
 
-### ⏱️ Reading Time
+### Reading Time
 - Calculated at 200 words per minute
 - Displayed in minutes
 
-### 🔗 Links & References
+### Links & References
 - **Total Links** - All links (markdown + wikilinks)
 - **Internal Links** - Links to other notes (`.md` files and wikilinks)
 - **External Links** - HTTP/HTTPS URLs
 - **Wikilinks** - `[[note]]` and `[[note|display]]` count
 - **Images** - `![alt](image.png)` count
 
-### 💻 Code Blocks
+### Code Blocks
 - **Inline Code** - `` `code` `` count
 - **Code Blocks** - ` ```language ` ` blocks
 - **Languages Used** - List of detected languages
 
-### ✅ Tasks
+### Tasks
 - **Total Tasks** - All `- [ ]` and `- [x]` items
 - **Completed** - `- [x]` checked tasks
 - **Pending** - `- [ ]` unchecked tasks
 - **Progress** - Percentage complete
 
-### 📑 Structure
+### Structure
 - **Headings** - H1, H2, H3 counts
 - **Lists** - Bullet and numbered lists
 - **Blockquotes** - `>` quote blocks
@@ -105,12 +105,12 @@ When a note is saved, the plugin:
 
 ### In Docker Logs
 ```bash
-docker-compose logs -f | grep "📊"
+docker-compose logs -f
 ```
 
 Example output:
 ```
-📊 projects/website.md:
+projects/website.md:
    1,234 words | 6m read | 89 lines
    15 links (5 internal)
    8/12 tasks completed
@@ -151,19 +151,19 @@ words_per_minute = 200  # Change to your reading speed
 
 ## Use Cases
 
-### 📝 Writing Goals
+### Writing Goals
 Track word count to meet daily writing targets.
 
-### ⏱️ Content Planning
+### Content Planning
 Estimate reading time for blog posts or documentation.
 
-### ✅ Task Management
+### Task Management
 Monitor task completion progress across notes.
 
-### 📊 Content Analysis
+### Content Analysis
 Understand structure and complexity of notes.
 
-### 🔗 Link Auditing
+### Link Auditing
 Find orphaned notes or track reference density.
 
 ---

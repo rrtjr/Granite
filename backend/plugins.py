@@ -123,7 +123,7 @@ class Plugin:
 
     def on_note_save(self, note_path: str, content: str):
         """This runs every time a note is saved"""
-        print(f"✓ Plugin: Note saved - {note_path}")
+        print(f"Plugin: Note saved - {note_path}")
 
         # Example: Automatically add tags to notes
         # if '#todo' in content:
@@ -131,11 +131,11 @@ class Plugin:
 
     def on_note_delete(self, note_path: str):
         """This runs when a note is deleted"""
-        print(f"✗ Plugin: Note deleted - {note_path}")
+        print(f"Plugin: Note deleted - {note_path}")
 
     def on_search(self, query: str, results: list):
         """This runs after a search is performed"""
-        print(f"🔍 Plugin: Search performed for '{query}' ({len(results)} results)")
+        print(f"Plugin: Search performed for '{query}' ({len(results)} results)")
 '''
         example_path = self.plugins_dir / "example_plugin.py"
         with example_path.open("w", encoding="utf-8") as f:
