@@ -200,7 +200,7 @@ class TestPluginSettingsPersistence:
         # Skip if git plugin not available
         plugins_response = client.get("/api/plugins")
         plugins = plugins_response.json()["plugins"]
-        git_plugin = next((p for p in plugins if p["name"] == "git"), None)
+        git_plugin = next((p for p in plugins if p["id"] == "git"), None)
 
         if not git_plugin:
             pytest.skip("Git plugin not available")
@@ -225,7 +225,7 @@ class TestPluginSettingsPersistence:
         # Skip if PDF export plugin not available
         plugins_response = client.get("/api/plugins")
         plugins = plugins_response.json()["plugins"]
-        pdf_plugin = next((p for p in plugins if p["name"] == "pdf_export"), None)
+        pdf_plugin = next((p for p in plugins if p["id"] == "pdf_export"), None)
 
         if not pdf_plugin:
             pytest.skip("PDF Export plugin not available")
