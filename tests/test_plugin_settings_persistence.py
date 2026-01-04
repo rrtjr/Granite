@@ -91,11 +91,11 @@ class TestPluginSettingsGeneral:
 
             # Document which plugins have settings endpoints
             if response.status_code == 200:
-                print(f"✓ {plugin_name} ({plugin_id}): Has settings endpoint")
+                print(f"+{plugin_name} ({plugin_id}): Has settings endpoint")
             elif response.status_code == 404:
-                print(f"ℹ {plugin_name} ({plugin_id}): No settings endpoint")
+                print(f"- {plugin_name} ({plugin_id}): No settings endpoint")
             else:
-                print(f"⚠ {plugin_name} ({plugin_id}): Unexpected status {response.status_code}")
+                print(f"* {plugin_name} ({plugin_id}): Unexpected status {response.status_code}")
 
     def test_plugin_settings_persist_to_user_settings_json(self, client):
         """Test that any plugin's settings persist to user-settings.json"""
@@ -522,6 +522,10 @@ class TestPluginSettingsIntegration:
 
         assert user_settings["plugins"]["git"]["backup_interval"] == 7200
         assert user_settings["plugins"]["git"]["git_user_name"] == "Integration Test User"
+
+        # Step 5: Revert back to old settings
+        revert_response = client.post("/api/plugins/git/settings", json=original_settings)
+        assert revert_response.status_code == 200
 
     def test_sequential_updates_across_plugins(self, client, available_plugins):
         """Test updating multiple plugins in sequence"""
