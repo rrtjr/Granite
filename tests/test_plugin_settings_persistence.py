@@ -200,8 +200,7 @@ class TestGitPluginSettings:
 
         # This is critical - prevents circular commits
         assert "user-settings.json" in ignore_patterns, (
-            "user-settings.json MUST be in ignore_patterns "
-            "to prevent git plugin from committing its own settings file"
+            "user-settings.json MUST be in ignore_patterns to prevent git plugin from committing its own settings file"
         )
 
     def test_git_settings_update_multiple_fields(self, client, git_plugin):
