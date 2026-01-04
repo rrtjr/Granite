@@ -1,9 +1,8 @@
-name: Deploy GitHub Pages
+name: Deploy Static Content to Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: ["main"]
     paths:
       - 'docs/**'
       - '.github/workflows/pages.yml'
