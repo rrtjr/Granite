@@ -45,14 +45,14 @@ def preserve_user_settings():
     if original_settings is not None:
         with user_settings_path.open("w") as f:
             json.dump(original_settings, f, indent=2)
-        print(f"\n[conftest] Restored original user-settings.json")
+        print("\n[conftest] Restored original user-settings.json")
 
         # Remove backup file
         if backup_path.exists():
             backup_path.unlink()
-            print(f"[conftest] Removed backup file")
+            print("[conftest] Removed backup file")
     else:
-        print(f"\n[conftest] No original settings to restore")
+        print("\n[conftest] No original settings to restore")
 
 
 @pytest.fixture(scope="function")
