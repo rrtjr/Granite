@@ -6,29 +6,29 @@ folder: {{folder}}
 
 # Project: {{title}}
 
-## 📋 Overview
+## Overview
 
 
-## 🎯 Objectives
-- 
+## Objectives
+-
 
-## 📅 Timeline
+## Timeline
 - **Start Date:** {{date}}
-- **Target Completion:** 
+- **Target Completion:**
 
-## 📦 Deliverables
-- 
+## Deliverables
+-
 
-## 👥 Team
+## Team
 
 
-## 📊 Status
+## Status
 - [ ] Planning
 - [ ] In Progress
 - [ ] Review
 - [ ] Completed
 
-## 📝 Notes
+## Notes
 
 
 

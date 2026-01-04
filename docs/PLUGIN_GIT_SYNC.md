@@ -2,7 +2,7 @@
 
 The Git Sync plugin provides automatic version control and synchronization for your Granite notes using Git. It automatically commits and pushes your changes at configurable intervals, and syncs the latest changes when the application starts.
 
-> **⚠️ IMPORTANT**: Before enabling this plugin, your **data folder must be a Git repository**. The plugin does not auto-initialize repositories. See the [Setup Guide](#setup-guide) section for instructions.
+> **IMPORTANT**: Before enabling this plugin, your **data folder must be a Git repository**. The plugin does not auto-initialize repositories. See the [Setup Guide](#setup-guide) section for instructions.
 
 ## Features
 
@@ -17,9 +17,9 @@ The Git Sync plugin provides automatic version control and synchronization for y
 ## Requirements
 
 - **Git** must be installed and available in the system PATH
-  - ✅ **Docker users**: Git is automatically included in the Granite Docker image (v1.1.0+)
-  - 🔧 **Local installation users**: Install Git manually (see [Installation](#installation) section)
-- **The data directory (`/app/data`) must be a Git repository** ⚠️
+  - **Docker users**: Git is automatically included in the Granite Docker image (v1.1.0+)
+  - **Local installation users**: Install Git manually (see [Installation](#installation) section)
+- **The data directory (`/app/data`) must be a Git repository**
   - The plugin does NOT auto-initialize repositories - see [Setup Guide](#setup-guide)
   - You must manually initialize or clone a repository before enabling the plugin
 - Git repository must have a remote configured (for push/pull operations)
@@ -38,7 +38,7 @@ Simply enable it in the Settings panel:
 2. Click the **Settings** icon in the sidebar
 3. Scroll to the **Plugins** section
 4. Toggle **Git Sync** to enable it
-5. Click the **⚙️** (gear icon) to configure settings
+5. Click the gear icon to configure settings
 
 ### Local Installation (Without Docker)
 
@@ -176,7 +176,7 @@ If commits are not appearing, check:
 **Via UI:**
 1. Go to Settings → Plugins
 2. Find "Git Sync" in the plugin list
-3. Click the **⚙️** (gear) icon
+3. Click the gear icon
 4. Modify settings as needed
 5. Click **Save Settings**
 
@@ -198,7 +198,7 @@ The plugin can automatically configure the git user name and email for commits:
 **Option 1: Configure via Plugin Settings** (Recommended)
 
 Set `git_user_name` and `git_user_email` in the plugin settings UI:
-1. Open Settings → Plugins → Git Sync → ⚙️
+1. Open Settings → Plugins → Git Sync → gear icon
 2. Enter your name in "Git User Name"
 3. Enter your email in "Git User Email"
 4. Click "Save Settings"
@@ -264,7 +264,7 @@ You can manually trigger git operations from the settings modal:
 **Pull Now**: Fetch and pull latest changes from remote
 
 **Via UI:**
-1. Open Settings → Plugins → Git Sync → ⚙️
+1. Open Settings → Plugins → Git Sync → gear icon
 2. Click **Backup Now** or **Pull Now**
 
 **Via API:**
@@ -535,7 +535,7 @@ Or make some changes to your notes first.
 
 ### Sensitive Information
 
-⚠️ **Warning**: The plugin commits all files in the notes directory. Be careful not to commit:
+**Warning**: The plugin commits all files in the notes directory. Be careful not to commit:
 
 - API keys or tokens
 - Passwords or credentials

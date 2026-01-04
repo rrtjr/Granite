@@ -372,5 +372,5 @@ For the complete Mermaid syntax and more diagram types, visit the official docum
 
 ---
 
-**Pro Tip**: Combine Mermaid diagrams with LaTeX math expressions and code blocks for comprehensive technical documentation! 📊
+**Pro Tip**: Combine Mermaid diagrams with LaTeX math expressions and code blocks for comprehensive technical documentation!
 

@@ -55,7 +55,7 @@
 ## Customization
 
 ### Themes
-- **8 built-in themes** - Light, Dark, Dracula, Nord, Monokai, Vue High Contrast, Cobalt2, VS Blue
+- **10 built-in themes** - Light, Dark, Dracula, Nord, Monokai, Vue High Contrast, Cobalt2, VS Blue, Gruvbox Dark, Matcha Light
 - **Theme persistence** - Remembers your choice
 - **Custom themes** - Create your own CSS themes
 - **Instant switching** - No reload required
@@ -158,7 +158,7 @@ View and interact with YAML frontmatter metadata directly in the preview.
 - **Collapsible panel** - Compact bar at the top of preview, expands on click
 - **Auto-hides** - Only appears when note has frontmatter
 - **Clickable tags** - Filter notes by clicking any tag
-- **Smart formatting** - Dates formatted nicely, booleans shown as ✓/✗
+- **Smart formatting** - Dates formatted nicely, booleans shown as checkmark/cross
 - **URL detection** - Links in metadata are clickable
 - **Real-time updates** - Changes as you edit frontmatter
 - **Performance optimized** - Cached parsing, no re-parse if unchanged
@@ -178,7 +178,7 @@ author: John Doe               # String value
 status: draft                  # String value
 priority: high                 # String value
 source: https://example.com    # Clickable link
-draft: true                    # Shows as "✓ Yes"
+draft: true                    # Shows as "Yes"
 custom-field: any value        # Keys with hyphens supported
 items:                         # YAML list format
   - item 1
@@ -200,7 +200,7 @@ items:                         # YAML list format
 - **Smart display** - Shows flat list when filtering, tree view when browsing
 - **Empty states** - Clear "no matches" message with quick actions
 
-## 🧮 Math & LaTeX Support
+## Math & LaTeX Support
 
 ### Mathematical Notation
 - **Inline math** - Use `$...$` or `\(...\)` for equations within text
@@ -298,9 +298,9 @@ date: {{date}}
 - **daily-journal** - Daily journal with morning goals and evening reflection
 - **project-plan** - Project planning template with objectives and timeline
 
-📚 **See [TEMPLATES.md](TEMPLATES.md)** for detailed documentation and example templates you can copy to your instance.
+**See [TEMPLATES.md](TEMPLATES.md)** for detailed documentation and example templates you can copy to your instance.
 
-## ⚡ Keyboard Shortcuts
+## Keyboard Shortcuts
 
 ### General
 
@@ -332,5 +332,5 @@ date: {{date}}
 
 ---
 
-💡 **Tip:** Explore the interface! Most features are discoverable through intuitive drag & drop and hover menus.
+**Tip:** Explore the interface! Most features are discoverable through intuitive drag & drop and hover menus.
 

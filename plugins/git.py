@@ -59,6 +59,12 @@ class Plugin:
         """Initialize git sync on app startup"""
         print(f"[{self.name}] Starting up...")
 
+        # Auto-populate git_repo_path if it's null
+        if not self.settings["git_repo_path"]:
+            resolved_path = str(self._get_git_repo_path())
+            self.settings["git_repo_path"] = resolved_path
+            print(f"[{self.name}] Auto-detected git repository path: {resolved_path}")
+
         # Pull latest changes if enabled
         if self.settings["pull_on_startup"]:
             self._git_pull()

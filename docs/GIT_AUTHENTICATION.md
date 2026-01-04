@@ -6,10 +6,10 @@ This guide explains different methods to authenticate with your Git remote repos
 
 | Method | Difficulty | Security | Best For |
 |--------|-----------|----------|----------|
-| **HTTPS + Personal Access Token** | ⭐ Easy | ⭐⭐ Good | Beginners, quick setup |
-| **SSH (Manual Setup)** | ⭐⭐ Medium | ⭐⭐⭐ Excellent | Advanced users, existing keys |
-| **SSH (Auto-generated)** | ⭐ Easy | ⭐⭐⭐ Excellent | Most users (recommended) |
-| **Mount Existing SSH Keys** | ⭐⭐⭐ Advanced | ⭐⭐⭐ Excellent | DevOps, existing infrastructure |
+| **HTTPS + Personal Access Token** | Easy | Good | Beginners, quick setup |
+| **SSH (Manual Setup)** | Medium | Excellent | Advanced users, existing keys |
+| **SSH (Auto-generated)** | Easy | Excellent | Most users (recommended) |
+| **Mount Existing SSH Keys** | Advanced | Excellent | DevOps, existing infrastructure |
 
 ---
 
@@ -50,13 +50,13 @@ docker exec -it granite bash -c "cd /app/data && git push origin main"
 ```
 
 **Pros**:
-- ✅ Quick setup (5 minutes)
-- ✅ No SSH key management
-- ✅ Works through firewalls
+- Quick setup (5 minutes)
+- No SSH key management
+- Works through firewalls
 
 **Cons**:
-- ❌ Token stored in plaintext in container
-- ❌ Need to regenerate token if it expires
+- Token stored in plaintext in container
+- Need to regenerate token if it expires
 
 ---
 
@@ -118,12 +118,12 @@ docker exec granite bash -c "cd /app/data && git remote set-url origin git@githu
 ```
 
 **Pros**:
-- ✅ More secure than HTTPS
-- ✅ No password/token needed
-- ✅ Keys persist in Docker volume
+- More secure than HTTPS
+- No password/token needed
+- Keys persist in Docker volume
 
 **Cons**:
-- ❌ Keys lost if container is recreated without volumes
+- Keys lost if container is recreated without volumes
 
 ---
 
@@ -180,13 +180,13 @@ docker exec granite ssh -T git@github.com
 ```
 
 **Pros**:
-- ✅ Uses your existing keys
-- ✅ Consistent across all containers
-- ✅ Easy to manage centrally
+- Uses your existing keys
+- Consistent across all containers
+- Easy to manage centrally
 
 **Cons**:
-- ❌ Requires docker-compose.yml modification
-- ❌ Security risk if container is compromised (mount as read-only!)
+- Requires docker-compose.yml modification
+- Security risk if container is compromised (mount as read-only!)
 
 ---
 
@@ -258,18 +258,18 @@ volumes:
 ## Security Best Practices
 
 ### For HTTPS:
-1. ✅ Use personal access tokens, not passwords
-2. ✅ Set token expiration
-3. ✅ Limit token scope to minimum required (`repo` only)
-4. ✅ Rotate tokens periodically
-5. ❌ Don't share tokens or commit them to git
+1. Use personal access tokens, not passwords
+2. Set token expiration
+3. Limit token scope to minimum required (`repo` only)
+4. Rotate tokens periodically
+5. Don't share tokens or commit them to git
 
 ### For SSH:
-1. ✅ Use ed25519 keys (more secure than RSA)
-2. ✅ Mount SSH directory as read-only in production
-3. ✅ Use separate keys for each service
-4. ✅ Add passphrase for extra security (manual entry on first use)
-5. ❌ Don't share private keys
+1. Use ed25519 keys (more secure than RSA)
+2. Mount SSH directory as read-only in production
+3. Use separate keys for each service
+4. Add passphrase for extra security (manual entry on first use)
+5. Don't share private keys
 
 ---
 

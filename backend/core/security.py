@@ -26,7 +26,7 @@ def check_default_credentials(config: dict) -> None:
     if current_hash == default_password_hash:
         logger.warning("")
         logger.warning("=" * 80)
-        logger.warning("🔴 SECURITY WARNING: Default password 'admin' is in use!")
+        logger.warning("SECURITY WARNING: Default password 'admin' is in use!")
         logger.warning("   Please change this immediately by running:")
         logger.warning("   python generate_password.py")
         logger.warning("   Then update config.yaml or set AUTHENTICATION_PASSWORD_HASH")
@@ -40,7 +40,7 @@ def check_default_credentials(config: dict) -> None:
     if current_secret in default_secret_keys:
         logger.error("")
         logger.error("=" * 80)
-        logger.error("🔴 CRITICAL SECURITY ERROR: Default session secret key detected!")
+        logger.error("CRITICAL SECURITY ERROR: Default session secret key detected!")
         logger.error("   This is a CRITICAL security vulnerability.")
         logger.error("   Generate a secure secret key:")
         logger.error('   python -c "import secrets; print(secrets.token_hex(32))"')

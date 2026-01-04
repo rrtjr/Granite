@@ -142,7 +142,7 @@ class TestPluginSettingsGeneral:
             assert field in plugin_settings, f"{plugin_id} settings should have {field}"
             assert plugin_settings[field] == expected, f"{plugin_id}.{field} should be {expected}"
 
-            print(f"✓ {plugin_id}: Settings persist correctly")
+            print(f"{plugin_id}: Settings persist correctly")
 
 
 # =============================================================================

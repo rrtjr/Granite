@@ -430,4 +430,4 @@ For more LaTeX commands and symbols, see:
 
 ---
 
-💡 **Tip:** Copy and paste examples from this note to quickly start using math in your own notes!
+**Tip:** Copy and paste examples from this note to quickly start using math in your own notes!
