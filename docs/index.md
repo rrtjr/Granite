@@ -4,7 +4,7 @@ Welcome to the Granite documentation - a self-hosted, markdown-based knowledge b
 
 ## Getting Started
 
-- [Features](FEATURES.md) - Discover what Granite can do
+- [Features](./FEATURES.md) - Discover what Granite can do
 - [Environment Variables](ENVIRONMENT_VARIABLES.md) - Configuration guide
 
 ## Configuration
