@@ -26,6 +26,7 @@ Welcome to the Granite documentation - a self-hosted, markdown-based knowledge b
 
 - [API Documentation](API.md) - REST API reference
 - [Testing Guide](TESTING.md) - Running and writing tests
+- [Test Isolation](TEST_ISOLATION.md) - Test isolation and best practices
 - [Release Workflow](RELEASE_WORKFLOW.md) - Release process
 - [Setup Release Workflow](SETUP_RELEASE_WORKFLOW.md) - Setup guide
 
@@ -39,3 +40,4 @@ Welcome to the Granite documentation - a self-hosted, markdown-based knowledge b
 
 - [GitHub Repository](https://github.com/rrtjr/granite)
 - [Report Issues](https://github.com/rrtjr/granite/issues)
+- [Changelog](../CHANGELOG.md) - Version history and release notes
