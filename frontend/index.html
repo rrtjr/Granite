@@ -2772,7 +2772,7 @@
             
             <!-- Empty state when no templates available -->
             <div x-show="availableTemplates.length === 0" class="mb-4 text-sm p-3 rounded" style="background-color: var(--bg-tertiary); color: var(--text-secondary);">
-                No templates found. Create templates in the <code style="font-family: monospace;">_templates</code> folder.
+                No templates found. Create templates in the <code style="font-family: monospace;" x-text="templatesDir"></code> folder.
             </div>
             
             <!-- Actions -->
