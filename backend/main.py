@@ -166,6 +166,32 @@ else:
 # Ensure required directories exist
 ensure_directories(config)
 
+
+# ============================================================================
+# Helper Functions for Runtime Settings
+# ============================================================================
+
+
+def get_templates_dir() -> str:
+    """
+    Get the templates directory path, preferring user-settings.json over config.yaml.
+    This allows templates_dir to be updated at runtime without server restart.
+
+    Returns:
+        Templates directory path (relative or absolute)
+    """
+    try:
+        user_settings = load_user_settings(user_settings_path)
+        templates_dir = user_settings.get("paths", {}).get("templatesDir")
+        if templates_dir:
+            return templates_dir
+    except Exception:
+        pass
+
+    # Fall back to config.yaml
+    return config["storage"].get("templates_dir", "_templates")
+
+
 # Initialize plugin manager
 plugin_manager = PluginManager(config["storage"]["plugins_dir"])
 
@@ -517,9 +543,9 @@ async def get_config():
 
 @api_router.get("/settings/templates-dir")
 @limiter.limit("60/minute")
-async def get_templates_dir(request: Request):
+async def get_templates_dir_setting(request: Request):
     """Get the current templates directory path (relative to notes_dir)"""
-    return {"templatesDir": config["storage"].get("templates_dir", "_templates")}
+    return {"templatesDir": get_templates_dir()}
 
 
 @api_router.post("/settings/templates-dir")
@@ -570,9 +596,18 @@ async def get_user_settings(request: Request):
     """
     Get all user settings (reading preferences, performance settings, paths).
     Settings are stored in user-settings.json at root level.
+    Falls back to config.yaml for templatesDir if not in user settings.
     """
     try:
-        return load_user_settings(user_settings_path)
+        settings = load_user_settings(user_settings_path)
+
+        # Ensure templatesDir is present, falling back to config.yaml
+        if "paths" not in settings:
+            settings["paths"] = {}
+        if "templatesDir" not in settings["paths"]:
+            settings["paths"]["templatesDir"] = config["storage"].get("templates_dir", "_templates")
+
+        return settings
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to load user settings: {e!r}") from e
 
@@ -877,15 +912,32 @@ async def get_notes_by_tag_endpoint(tag_name: str):
 @limiter.limit("120/minute")
 async def list_templates(request: Request):
     """
-    List all available templates from _templates folder.
+    List all available templates from templates folder.
 
     Returns:
         List of template metadata
     """
     try:
-        templates = get_templates(config["storage"]["notes_dir"], config["storage"].get("templates_dir"))
+        notes_dir = config["storage"]["notes_dir"]
+        templates_dir = get_templates_dir()
+
+        # Debug logging
+        templates_path = Path(templates_dir) if Path(templates_dir).is_absolute() else Path(notes_dir) / templates_dir
+        print(f"[DEBUG] Loading templates from: {templates_path.resolve()}")
+        print(f"[DEBUG] Templates dir exists: {templates_path.exists()}")
+        if templates_path.exists():
+            md_files = list(templates_path.glob("*.md"))
+            print(f"[DEBUG] Found {len(md_files)} .md files")
+
+        templates = get_templates(notes_dir, templates_dir)
+        print(f"[DEBUG] Returning {len(templates)} templates")
+
         return {"templates": templates}
     except Exception as e:
+        print(f"[ERROR] Failed to list templates: {e}")
+        import traceback
+
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=safe_error_message(e, "Failed to list templates")) from e
 
 
@@ -902,9 +954,7 @@ async def get_template(request: Request, template_name: str):
         Template name and content
     """
     try:
-        content = get_template_content(
-            config["storage"]["notes_dir"], template_name, config["storage"].get("templates_dir")
-        )
+        content = get_template_content(config["storage"]["notes_dir"], template_name, get_templates_dir())
 
         if content is None:
             raise HTTPException(status_code=404, detail="Template not found")
@@ -936,9 +986,7 @@ async def create_note_from_template(request: Request, data: dict):
             raise HTTPException(status_code=400, detail="Template name and note path required")
 
         # Get template content
-        template_content = get_template_content(
-            config["storage"]["notes_dir"], template_name, config["storage"].get("templates_dir")
-        )
+        template_content = get_template_content(config["storage"]["notes_dir"], template_name, get_templates_dir())
 
         if template_content is None:
             raise HTTPException(status_code=404, detail="Template not found")
