@@ -191,6 +191,7 @@ def get_templates_dir() -> str:
     # Fall back to config.yaml
     return config["storage"].get("templates_dir", "_templates")
 
+
 # Initialize plugin manager
 plugin_manager = PluginManager(config["storage"]["plugins_dir"])
 
@@ -935,6 +936,7 @@ async def list_templates(request: Request):
     except Exception as e:
         print(f"[ERROR] Failed to list templates: {e}")
         import traceback
+
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=safe_error_message(e, "Failed to list templates")) from e
 
@@ -952,9 +954,7 @@ async def get_template(request: Request, template_name: str):
         Template name and content
     """
     try:
-        content = get_template_content(
-            config["storage"]["notes_dir"], template_name, get_templates_dir()
-        )
+        content = get_template_content(config["storage"]["notes_dir"], template_name, get_templates_dir())
 
         if content is None:
             raise HTTPException(status_code=404, detail="Template not found")
@@ -986,9 +986,7 @@ async def create_note_from_template(request: Request, data: dict):
             raise HTTPException(status_code=400, detail="Template name and note path required")
 
         # Get template content
-        template_content = get_template_content(
-            config["storage"]["notes_dir"], template_name, get_templates_dir()
-        )
+        template_content = get_template_content(config["storage"]["notes_dir"], template_name, get_templates_dir())
 
         if template_content is None:
             raise HTTPException(status_code=404, detail="Template not found")
