@@ -4,22 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Granite</title>
-    
+
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/static/granite.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/granite-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/static/granite-16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/granite-180.png">
-    
+
     <!-- Tailwind CSS from CDN (v3.4.17) -->
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-    
+
     <!-- Alpine.js (v3.14.1) -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
-    
+
     <!-- Marked.js for Markdown parsing (v12.0.2) -->
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
-    
+
     <!-- MathJax for LaTeX math rendering -->
     <script>
         MathJax = {
@@ -40,7 +40,7 @@
         };
     </script>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
-    
+
     <!-- Highlight.js for code syntax highlighting (v11.9.0) -->
     <link rel="stylesheet" id="highlight-theme" href="">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -56,14 +56,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/yaml.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/css.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/http.min.js"></script>
-    
+
     <!-- Mermaid.js for diagram rendering -->
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.12.2/dist/mermaid.esm.min.mjs';
         // Note: Mermaid is initialized dynamically by app.js renderMermaid() based on current theme
         window.mermaid = mermaid;
     </script>
-    
+
     <!-- vis-network for graph visualization (v9.1.9) -->
     <script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
 
@@ -72,17 +72,17 @@
 
     <!-- Theme styles will be loaded dynamically -->
     <link rel="stylesheet" id="theme-stylesheet" href="">
-    
+
     <!-- Custom styles -->
     <style>
         [x-cloak] { display: none !important; }
-        
+
         /* Theme-aware styles using CSS variables */
         body {
             background-color: var(--bg-primary, #ffffff);
             color: var(--text-primary, #111827);
         }
-        
+
         /* Truncate utility for long text */
         .truncate {
             overflow: hidden;
@@ -90,53 +90,53 @@
             white-space: nowrap;
             max-width: 100%;
         }
-        
+
         .bg-themed {
             background-color: var(--bg-primary);
         }
-        
+
         .bg-themed-secondary {
             background-color: var(--bg-secondary);
         }
-        
+
         .text-themed {
             color: var(--text-primary);
         }
-        
+
         .text-themed-secondary {
             color: var(--text-secondary);
         }
-        
+
         .border-themed {
             border-color: var(--border-primary);
         }
-        
+
         .bg-accent {
             background-color: var(--accent-primary);
         }
-        
+
         .bg-accent:hover {
             background-color: var(--accent-hover);
         }
-        
+
         .text-accent {
             color: var(--accent-primary);
         }
-        
+
         /* Markdown preview styling */
         .markdown-preview {
             line-height: 1.8;
             color: var(--text-primary);
             font-size: 16px;
         }
-        
+
         /* Remove top margin from first element */
         .markdown-preview > *:first-child {
             margin-top: 0 !important;
         }
-        
+
         /* Headings */
-        .markdown-preview h1 { 
+        .markdown-preview h1 {
             font-size: 2.25rem;
             font-weight: 700;
             margin-top: 2rem;
@@ -145,7 +145,7 @@
             border-bottom: 2px solid var(--border-primary);
             padding-bottom: 0.5rem;
         }
-        .markdown-preview h2 { 
+        .markdown-preview h2 {
             font-size: 1.875rem;
             font-weight: 700;
             margin-top: 1.75rem;
@@ -154,52 +154,52 @@
             border-bottom: 1px solid var(--border-primary);
             padding-bottom: 0.3rem;
         }
-        .markdown-preview h3 { 
+        .markdown-preview h3 {
             font-size: 1.5rem;
             font-weight: 600;
             margin-top: 1.5rem;
             margin-bottom: 0.75rem;
             color: var(--text-primary);
         }
-        .markdown-preview h4 { 
+        .markdown-preview h4 {
             font-size: 1.25rem;
             font-weight: 600;
             margin-top: 1.25rem;
             margin-bottom: 0.625rem;
             color: var(--text-primary);
         }
-        .markdown-preview h5 { 
+        .markdown-preview h5 {
             font-size: 1.125rem;
             font-weight: 600;
             margin-top: 1rem;
             margin-bottom: 0.5rem;
             color: var(--text-primary);
         }
-        .markdown-preview h6 { 
+        .markdown-preview h6 {
             font-size: 1rem;
             font-weight: 600;
             margin-top: 1rem;
             margin-bottom: 0.5rem;
             color: var(--text-secondary);
         }
-        
+
         /* Paragraphs and text */
-        .markdown-preview p { 
+        .markdown-preview p {
             margin-bottom: 1rem;
             line-height: 1.7;
         }
-        
+
         .markdown-preview strong {
             font-weight: 600;
             color: var(--text-primary);
         }
-        
+
         .markdown-preview em {
             font-style: italic;
         }
-        
+
         /* Lists */
-        .markdown-preview ul, .markdown-preview ol { 
+        .markdown-preview ul, .markdown-preview ol {
             margin-bottom: 1rem;
             margin-left: 1.5rem;
             padding-left: 0.5rem;
@@ -215,9 +215,9 @@
             margin-top: 0.5rem;
             margin-bottom: 0.5rem;
         }
-        
+
         /* Inline code */
-        .markdown-preview code:not(pre code) { 
+        .markdown-preview code:not(pre code) {
             background-color: var(--bg-tertiary);
             color: var(--accent-primary);
             padding: 0.2rem 0.4rem;
@@ -226,9 +226,9 @@
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             font-weight: 500;
         }
-        
+
         /* Code blocks */
-        .markdown-preview pre { 
+        .markdown-preview pre {
             background-color: var(--bg-tertiary);
             margin-bottom: 1.5rem;
             border-radius: 0.5rem;
@@ -243,9 +243,9 @@
             line-height: 1.6;
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
         }
-        
+
         /* Blockquotes */
-        .markdown-preview blockquote { 
+        .markdown-preview blockquote {
             border-left: 4px solid var(--accent-primary);
             padding-left: 1rem;
             margin: 1.5rem 0;
@@ -259,9 +259,9 @@
         .markdown-preview blockquote p {
             margin-bottom: 0;
         }
-        
+
         /* Links */
-        .markdown-preview a { 
+        .markdown-preview a {
             color: var(--accent-primary);
             text-decoration: underline;
             text-decoration-color: transparent;
@@ -271,7 +271,7 @@
         .markdown-preview a:hover {
             text-decoration-color: var(--accent-primary);
         }
-        
+
         /* Wikilinks - Obsidian style internal links */
         .markdown-preview a[data-wikilink] {
             color: var(--link-internal, var(--accent-primary));
@@ -286,7 +286,7 @@
             background-color: var(--link-internal-hover-bg, var(--bg-tertiary));
             text-decoration: underline;
         }
-        
+
         /* Broken wikilinks - note doesn't exist (Obsidian shows these dimmed) */
         .markdown-preview a[data-wikilink].wikilink-broken {
             color: var(--link-broken, var(--text-tertiary));
@@ -308,7 +308,7 @@
             background-color: var(--accent-primary);
             color: white;
         }
-        
+
         /* Note Properties Panel */
         .note-properties {
             font-size: 0.8125rem;
@@ -326,7 +326,7 @@
         .note-properties .metadata-link:hover {
             border-bottom-style: solid;
         }
-        
+
         /* Graph View */
         #graph-overlay {
             position: absolute;
@@ -362,25 +362,25 @@
             height: 10px;
             border-radius: 50%;
         }
-        
+
         /* Standard internal links (non-wikilink, e.g. [text](path)) */
         .markdown-preview a:not([href^="http"]):not([href^="https"]):not([href^="//"]):not([href^="mailto:"]):not([data-wikilink]) {
             color: var(--accent-primary);
         }
-        
+
         /* Tables */
-        .markdown-preview table { 
+        .markdown-preview table {
             width: 100%;
             margin-bottom: 1.5rem;
             border-collapse: collapse;
             border: 1px solid var(--border-primary);
         }
-        .markdown-preview th, .markdown-preview td { 
+        .markdown-preview th, .markdown-preview td {
             border: 1px solid var(--border-primary);
             padding: 0.75rem 1rem;
             text-align: left;
         }
-        .markdown-preview th { 
+        .markdown-preview th {
             background-color: var(--bg-tertiary);
             font-weight: 600;
             color: var(--text-primary);
@@ -388,14 +388,14 @@
         .markdown-preview tr:nth-child(even) {
             background-color: var(--bg-secondary);
         }
-        
+
         /* Horizontal rule */
         .markdown-preview hr {
             border: none;
             border-top: 2px solid var(--border-primary);
             margin: 2rem 0;
         }
-        
+
         /* Images */
         .markdown-preview img {
             max-width: 100%;
@@ -473,25 +473,25 @@
         .markdown-preview input[type="checkbox"] {
             margin-right: 0.5rem;
         }
-        
+
         /* Math/LaTeX styling */
         .markdown-preview .MathJax {
             color: var(--text-primary);
             overflow-x: auto;
             overflow-y: hidden;
         }
-        
+
         /* Display math (block) */
         .markdown-preview mjx-container[display="true"] {
             margin: 1.5rem 0;
             overflow-x: auto;
         }
-        
+
         /* Inline math */
         .markdown-preview mjx-container[display="false"] {
             margin: 0 0.2rem;
         }
-        
+
         /* Mermaid diagram styling - minimal, let Mermaid handle its own rendering */
         .markdown-preview .mermaid-rendered svg {
             max-width: 100%;
@@ -640,77 +640,77 @@
         .link-drop-target .cm-content {
             cursor: copy !important;
         }
-        
+
         /* Folder tree styling - compact Obsidian-like */
         .folder-item {
             user-select: none;
             border-radius: 4px;
         }
-        
+
         .folder-item:hover {
             background-color: var(--bg-hover);
         }
-        
+
         .folder-item.drag-over {
             background-color: var(--accent-light) !important;
             border: 2px dashed var(--accent-primary) !important;
         }
-        
+
         .folder-expanded {
             font-weight: 600;
         }
-        
+
         .note-item {
             border-radius: 4px;
         }
-        
+
         .note-item:hover {
             background-color: var(--bg-hover);
         }
-        
+
         /* Drag and drop improvements */
         .note-item[draggable="true"],
         .folder-item[draggable="true"] {
             cursor: grab;
         }
-        
+
         .note-item[draggable="true"]:active,
         .folder-item[draggable="true"]:active {
             cursor: grabbing;
         }
-        
+
         /* Smooth transitions for drag states */
         .folder-item,
         .note-item {
             transition: background-color 0.15s ease, border-color 0.15s ease;
         }
-        
+
         /* Better drop zone visibility */
         .folder-item:has(+ .folder-contents) {
             position: relative;
         }
-        
+
         .hover-buttons {
             transition: opacity 0.2s;
         }
-        
+
         .folder-item:hover .hover-buttons {
             opacity: 1 !important;
             pointer-events: auto !important;
         }
-        
+
         /* Note delete button on hover */
         .note-item:hover .note-delete-btn {
             opacity: 1 !important;
         }
-        
+
         /* Folder hierarchy lines (Obsidian-style) */
         .folder-contents {
             position: relative;
             padding-left: 1rem;
             margin-left: 0.5rem;
         }
-        
+
         .folder-contents::before {
             content: '';
             position: absolute;
@@ -721,7 +721,7 @@
             background-color: var(--text-tertiary);
             opacity: 0.4;
         }
-        
+
         /* Icon Rail (VS Code-style navigation) */
         .icon-rail {
             width: 44px;
@@ -733,7 +733,7 @@
             background-color: var(--bg-tertiary);
             border-right: 1px solid var(--border-primary);
         }
-        
+
         .icon-rail-btn {
             width: 36px;
             height: 36px;
@@ -748,26 +748,26 @@
             background: transparent;
             border: none;
         }
-        
+
         .icon-rail-btn:hover {
             background-color: var(--bg-hover);
             color: var(--text-primary);
         }
-        
+
         .icon-rail-btn.active {
             background-color: var(--accent-light);
             color: var(--accent-primary);
         }
-        
+
         .icon-rail-btn svg {
             width: 20px;
             height: 20px;
         }
-        
+
         .icon-rail-spacer {
             flex: 1;
         }
-        
+
         .icon-rail-logo {
             width: 28px;
             height: 28px;
@@ -776,11 +776,11 @@
             opacity: 0.9;
             transition: opacity 0.15s ease;
         }
-        
+
         .icon-rail-logo:hover {
             opacity: 1;
         }
-        
+
         /* Sidebar panel (content area next to icon rail) */
         .sidebar-panel {
             flex: 1;
@@ -789,7 +789,7 @@
             min-width: 0;
             overflow: hidden;
         }
-        
+
         .sidebar-panel-header {
             padding: 12px;
             border-bottom: 1px solid var(--border-primary);
@@ -799,7 +799,7 @@
             letter-spacing: 0.5px;
             color: var(--text-tertiary);
         }
-        
+
         .sidebar-panel-content {
             flex: 1;
             overflow-y: auto;
@@ -859,7 +859,7 @@
             .icon-rail {
                 display: none;
             }
-            
+
             .mobile-bottom-tabs {
                 display: flex !important;
                 position: fixed;
@@ -872,7 +872,7 @@
                 z-index: 1001;
                 padding-bottom: env(safe-area-inset-bottom);
             }
-            
+
             .mobile-bottom-tab {
                 flex: 1;
                 display: flex;
@@ -888,32 +888,32 @@
                 min-width: 44px;
                 min-height: 44px;
             }
-            
+
             .mobile-bottom-tab:active {
                 background-color: var(--bg-hover);
             }
-            
+
             .mobile-bottom-tab.active {
                 color: var(--accent-primary);
             }
-            
+
             .mobile-bottom-tab svg {
                 width: 22px;
                 height: 22px;
             }
-            
+
             .mobile-bottom-tab span {
                 font-size: 10px;
             }
-            
+
         }
-        
+
         @media (min-width: 769px) {
             .mobile-bottom-tabs {
                 display: none !important;
             }
         }
-        
+
         /* Scrollbar styling */
         .custom-scrollbar::-webkit-scrollbar,
         .cm-scroller::-webkit-scrollbar,
@@ -946,37 +946,37 @@
             scrollbar-width: thin;
             scrollbar-color: var(--border-secondary) var(--bg-tertiary);
         }
-        
+
         /* Resize handle */
         .resize-handle {
             position: relative;
             user-select: none;
             flex-shrink: 0;
         }
-        
+
         .resize-handle:hover {
             background-color: var(--accent-primary) !important;
         }
-        
+
         .resize-handle:active {
             background-color: var(--accent-hover) !important;
         }
-        
+
         /* Split view resize handle */
         .split-resize-handle {
             position: relative;
             user-select: none;
             flex-shrink: 0;
         }
-        
+
         .split-resize-handle:hover {
             background-color: var(--accent-primary) !important;
         }
-        
+
         .split-resize-handle:active {
             background-color: var(--accent-hover) !important;
         }
-        
+
         /* Enhanced Shell/Bash Syntax Highlighting */
         .markdown-preview pre code.language-shell .hljs-meta,
         .markdown-preview pre code.language-bash .hljs-meta,
@@ -984,54 +984,54 @@
             color: #7c3aed !important; /* Purple for prompts like $ # */
             font-weight: 600;
         }
-        
+
         .markdown-preview pre code.language-shell .hljs-built_in,
         .markdown-preview pre code.language-bash .hljs-built_in,
         .markdown-preview pre code.language-sh .hljs-built_in {
             color: #10b981 !important; /* Green for built-in commands */
             font-weight: 500;
         }
-        
+
         .markdown-preview pre code.language-shell .hljs-string,
         .markdown-preview pre code.language-bash .hljs-string,
         .markdown-preview pre code.language-sh .hljs-string {
             color: #f59e0b !important; /* Orange for strings */
         }
-        
+
         .markdown-preview pre code.language-shell .hljs-variable,
         .markdown-preview pre code.language-bash .hljs-variable,
         .markdown-preview pre code.language-sh .hljs-variable {
             color: #06b6d4 !important; /* Cyan for variables */
             font-weight: 500;
         }
-        
+
         .markdown-preview pre code.language-shell .hljs-comment,
         .markdown-preview pre code.language-bash .hljs-comment,
         .markdown-preview pre code.language-sh .hljs-comment {
             color: #6b7280 !important; /* Gray for comments */
             font-style: italic;
         }
-        
+
         .markdown-preview pre code.language-shell .hljs-keyword,
         .markdown-preview pre code.language-bash .hljs-keyword,
         .markdown-preview pre code.language-sh .hljs-keyword {
             color: #ec4899 !important; /* Pink for keywords like if, then, else */
             font-weight: 600;
         }
-        
+
         .markdown-preview pre code.language-shell .hljs-number,
         .markdown-preview pre code.language-bash .hljs-number,
         .markdown-preview pre code.language-sh .hljs-number {
             color: #8b5cf6 !important; /* Purple for numbers */
         }
-        
+
         .markdown-preview pre code.language-shell .hljs-literal,
         .markdown-preview pre code.language-bash .hljs-literal,
         .markdown-preview pre code.language-sh .hljs-literal {
             color: #3b82f6 !important; /* Blue for literals like true, false */
             font-weight: 500;
         }
-        
+
         /* Enhanced PowerShell Syntax Highlighting */
         .markdown-preview pre code.language-powershell .hljs-built_in,
         .markdown-preview pre code.language-ps1 .hljs-built_in,
@@ -1039,67 +1039,67 @@
             color: #10b981 !important; /* Green for cmdlets like Get-Process, Set-Location */
             font-weight: 600;
         }
-        
+
         .markdown-preview pre code.language-powershell .hljs-literal,
         .markdown-preview pre code.language-ps1 .hljs-literal,
         .markdown-preview pre code.language-ps .hljs-literal {
             color: #3b82f6 !important; /* Blue for $true, $false, $null */
             font-weight: 600;
         }
-        
+
         .markdown-preview pre code.language-powershell .hljs-variable,
         .markdown-preview pre code.language-ps1 .hljs-variable,
         .markdown-preview pre code.language-ps .hljs-variable {
             color: #06b6d4 !important; /* Cyan for $variables */
             font-weight: 500;
         }
-        
+
         .markdown-preview pre code.language-powershell .hljs-string,
         .markdown-preview pre code.language-ps1 .hljs-string,
         .markdown-preview pre code.language-ps .hljs-string {
             color: #f59e0b !important; /* Orange for strings */
         }
-        
+
         .markdown-preview pre code.language-powershell .hljs-keyword,
         .markdown-preview pre code.language-ps1 .hljs-keyword,
         .markdown-preview pre code.language-ps .hljs-keyword {
             color: #ec4899 !important; /* Pink for keywords like if, else, foreach */
             font-weight: 600;
         }
-        
+
         .markdown-preview pre code.language-powershell .hljs-params,
         .markdown-preview pre code.language-ps1 .hljs-params,
         .markdown-preview pre code.language-ps .hljs-params {
             color: #8b5cf6 !important; /* Purple for -Parameters */
             font-weight: 500;
         }
-        
+
         .markdown-preview pre code.language-powershell .hljs-type,
         .markdown-preview pre code.language-ps1 .hljs-type,
         .markdown-preview pre code.language-ps .hljs-type {
             color: #14b8a6 !important; /* Teal for [Types] */
             font-weight: 500;
         }
-        
+
         .markdown-preview pre code.language-powershell .hljs-comment,
         .markdown-preview pre code.language-ps1 .hljs-comment,
         .markdown-preview pre code.language-ps .hljs-comment {
             color: #6b7280 !important; /* Gray for comments */
             font-style: italic;
         }
-        
+
         .markdown-preview pre code.language-powershell .hljs-number,
         .markdown-preview pre code.language-ps1 .hljs-number,
         .markdown-preview pre code.language-ps .hljs-number {
             color: #8b5cf6 !important; /* Purple for numbers */
         }
-        
+
         .markdown-preview pre code.language-powershell .hljs-operator,
         .markdown-preview pre code.language-ps1 .hljs-operator,
         .markdown-preview pre code.language-ps .hljs-operator {
             color: #f472b6 !important; /* Pink for operators */
         }
-        
+
         /* Mobile Responsive Styles */
         /* Z-index hierarchy (for reference):
            - Mobile sidebar: 1000
@@ -1119,12 +1119,12 @@
                 z-index: 1000;
                 transition: left 0.3s ease;
             }
-            
+
             /* Show sidebar when open */
             .mobile-sidebar-open {
                 left: 0;
             }
-            
+
             /* Mobile overlay */
             .mobile-overlay {
                 position: fixed;
@@ -1133,57 +1133,57 @@
                 z-index: 999;
                 display: none;
             }
-            
+
             .mobile-overlay-visible {
                 display: block;
             }
-            
+
             /* Hamburger button */
             .mobile-menu-button {
                 display: flex !important;
             }
-            
+
             /* Hide desktop resize handle on mobile */
             .sidebar-resize-handle,
             .resize-handle {
                 display: none;
             }
-            
+
             /* Make editor take full width on mobile */
             .mobile-editor {
                 width: 100% !important;
             }
-            
+
             /* Stack view modes vertically on mobile */
             .mobile-view-toggle {
                 flex-direction: column;
                 gap: 0.25rem;
             }
-            
+
             /* Smaller buttons on mobile */
             .mobile-toolbar button {
                 padding: 0.5rem;
                 font-size: 0.875rem;
             }
-            
+
             /* Smaller text input on mobile */
             .mobile-toolbar input {
                 min-width: 100px !important;
                 max-width: 200px !important;
                 font-size: 1rem !important;
             }
-            
+
             /* Hide split view on mobile (not enough space) */
             .mobile-hide-split {
                 display: none !important;
             }
-            
+
             /* Make toolbar wrap on very small screens */
             .mobile-toolbar {
                 flex-wrap: wrap;
                 gap: 0.5rem;
             }
-            
+
             /* Touch-friendly but compact */
             .note-item,
             .folder-item {
@@ -1191,7 +1191,7 @@
                 min-height: 36px;
             }
         }
-        
+
         /* Hide mobile menu button on desktop */
         @media (min-width: 769px) {
             .mobile-menu-button {
@@ -1201,17 +1201,17 @@
     </style>
 </head>
 <body x-data="noteApp()" x-init="init()" style="background-color: var(--bg-primary);">
-    
+
     <!-- Mobile Overlay -->
-    <div 
+    <div
         @click="mobileSidebarOpen = false"
         :class="{'mobile-overlay': true, 'mobile-overlay-visible': mobileSidebarOpen}"
         x-show="mobileSidebarOpen"
     ></div>
-    
+
     <!-- Main Container -->
     <div class="flex h-screen overflow-hidden">
-        
+
         <!-- Sidebar with Icon Rail -->
         <div
             class="flex mobile-sidebar sidebar-container"
@@ -1228,10 +1228,10 @@
                     @click="goHome()"
                     title="Go to homepage"
                 >
-                
+
                 <!-- Files -->
                     <button
-                    class="icon-rail-btn" 
+                    class="icon-rail-btn"
                     :class="{'active': activePanel === 'files'}"
                     @click="activePanel = 'files'"
                     title="Files"
@@ -1241,10 +1241,10 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
                         </svg>
                     </button>
-                
+
                 <!-- Search -->
                         <button
-                    class="icon-rail-btn relative" 
+                    class="icon-rail-btn relative"
                     :class="{'active': activePanel === 'search'}"
                     @click="activePanel = 'search'"
                     title="Search"
@@ -1254,7 +1254,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
                     <!-- Search results badge -->
-                    <span 
+                    <span
                         x-show="searchQuery.trim() && searchResults.length > 0"
                         x-cloak
                         class="absolute -top-1 -right-1 w-4 h-4 text-[9px] font-bold rounded-full flex items-center justify-center"
@@ -1262,10 +1262,10 @@
                         x-text="searchResults.length > 9 ? '9+' : searchResults.length"
                     ></span>
                         </button>
-                
+
                 <!-- Tags -->
                         <button
-                    class="icon-rail-btn relative" 
+                    class="icon-rail-btn relative"
                     :class="{'active': activePanel === 'tags'}"
                     @click="activePanel = 'tags'"
                     title="Tags"
@@ -1275,7 +1275,7 @@
                         <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
                             </svg>
                     <!-- Filtered notes badge (shows result count when tags selected) -->
-                    <span 
+                    <span
                         x-show="selectedTags.length > 0"
                         x-cloak
                         class="absolute -top-1 -right-1 w-4 h-4 text-[9px] font-bold rounded-full flex items-center justify-center"
@@ -1283,11 +1283,11 @@
                         x-text="searchResults.length > 9 ? '9+' : searchResults.length"
                     ></span>
                         </button>
-                
+
                 <div class="icon-rail-spacer"></div>
-                
+
                 <!-- Graph -->
-                        <button 
+                        <button
                     class="icon-rail-btn"
                     :class="{'active': showGraph}"
                     @click="showGraph = true; initGraph()"
@@ -1298,10 +1298,10 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
                             </svg>
                         </button>
-                    
+
                 <!-- Settings -->
-                            <button 
-                    class="icon-rail-btn" 
+                            <button
+                    class="icon-rail-btn"
                     :class="{'active': activePanel === 'settings'}"
                     @click="activePanel = 'settings'"
                     title="Settings"
@@ -1313,16 +1313,16 @@
                     </svg>
                             </button>
                     </div>
-                    
+
             <!-- Sidebar Panel -->
             <div class="sidebar-panel" style="border-right: 1px solid var(--border-primary);">
-                
+
                 <!-- ==================== FILES PANEL ==================== -->
                 <div x-show="activePanel === 'files'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="flex flex-col h-full">
                     <!-- Header with + New -->
                     <div class="flex-shrink-0 px-2 py-2 border-b flex items-center justify-between" style="border-color: var(--border-primary);">
                         <span class="text-xs font-semibold uppercase tracking-wide" style="color: var(--text-tertiary);">Files</span>
-                <button 
+                <button
                     @click="dropdownTargetFolder = ''; toggleNewDropdown($event)"
                             class="px-2 py-1 text-xs font-medium text-white rounded focus:outline-none flex items-center gap-1"
                     style="background-color: var(--accent-primary);"
@@ -1335,20 +1335,20 @@
                             New
                 </button>
             </div>
-            
+
                     <!-- Folder Tree -->
                     <div class="flex-1 overflow-y-auto custom-scrollbar p-2">
                         <div class="text-xs px-2 py-1 mb-2" style="color: var(--text-tertiary);">
                             <div class="flex items-center justify-between mb-1">
                                 <span>Folders & Notes</span>
                                 <div class="flex gap-1">
-                                    <button 
+                                    <button
                                         @click="expandAllFolders()"
                                         class="text-xs px-2 py-0.5 rounded hover:bg-opacity-20"
                                         style="color: var(--text-secondary);"
                                         title="Expand all folders"
                                     >⊞</button>
-                                    <button 
+                                    <button
                                         @click="collapseAllFolders()"
                                         class="text-xs px-2 py-0.5 rounded hover:bg-opacity-20"
                                         style="color: var(--text-secondary);"
@@ -1357,7 +1357,7 @@
                                 </div>
                             </div>
                             <!-- Dual-purpose: hint text OR root drop zone when dragging -->
-                            <div 
+                            <div
                                 class="text-xs px-2 py-1 mb-2 rounded transition-all font-medium text-center"
                                 :class="{
                                     'border-2 border-dashed bg-accent-light': (draggedNote || draggedFolder) && dragOverFolder === '',
@@ -1380,15 +1380,15 @@
                                 <span x-show="draggedNote || draggedFolder">📂 Root folder</span>
                             </div>
                         </div>
-                        
+
                         <!-- Folders (rendered recursively for unlimited nesting) -->
                         <template x-for="[folderKey, folder] in Object.entries(folderTree).filter(([k]) => k !== '__root__').sort((a, b) => a[1].name.toLowerCase().localeCompare(b[1].name.toLowerCase()))" :key="folderKey">
                             <div x-html="renderFolderRecursive(folder, 0, true)"></div>
                         </template>
-                        
+
                         <!-- Root notes and images (no folder) - shown after folders -->
                         <template x-for="note in (folderTree.__root__ && folderTree.__root__.notes ? folderTree.__root__.notes : [])" :key="note.path">
-                            <div 
+                            <div
                                 draggable="true"
                                 @dragstart="onNoteDragStart(note.path, $event)"
                                 @dragend="onNoteDragEnd()"
@@ -1402,7 +1402,7 @@
                                     <template x-if="note.type === 'image'">🖼️ </template>
                                     <span x-text="note.name"></span>
                                 </span>
-                                <button 
+                                <button
                                     @click.stop="note.type === 'image' ? deleteImage(note.path) : deleteNote(note.path, note.name)"
                                     class="note-delete-btn absolute right-2 top-1/2 transform -translate-y-1/2 px-1 py-0.5 text-xs rounded hover:brightness-110 transition-opacity"
                                     style="opacity: 0; color: var(--error);"
@@ -1414,7 +1414,7 @@
                                 </button>
                             </div>
                         </template>
-                        
+
                         <!-- Empty state -->
                         <template x-if="notes.length === 0 && allFolders.length === 0">
                             <div class="px-3 py-4 text-sm text-center" style="color: var(--text-tertiary);">
@@ -1424,19 +1424,19 @@
                     </div>
                 </div>
                 <!-- END FILES PANEL -->
-                
+
                 <!-- ==================== SEARCH PANEL ==================== -->
                 <div x-show="activePanel === 'search'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="flex flex-col h-full">
                     <!-- Search Header -->
                     <div class="flex-shrink-0 px-3 py-2 border-b" style="border-color: var(--border-primary);">
                         <span class="text-xs font-semibold uppercase tracking-wide" style="color: var(--text-tertiary);">Search</span>
                     </div>
-                    
+
                     <!-- Search Input -->
                     <div class="flex-shrink-0 px-2 py-2 border-b" style="border-color: var(--border-primary);">
                         <div class="relative">
-                            <input 
-                                type="text" 
+                            <input
+                                type="text"
                                 x-model="searchQuery"
                                 @input="searchNotes()"
                                 placeholder="Search notes..."
@@ -1458,10 +1458,10 @@
                                 </svg>
                             </button>
                         </div>
-                        
+
                         <!-- Match Navigation -->
-                        <div 
-                            x-show="totalMatches > 0" 
+                        <div
+                            x-show="totalMatches > 0"
                             class="flex items-center justify-between mt-1.5 px-2 py-0.5 rounded text-xs"
                             style="background-color: var(--bg-tertiary); color: var(--text-secondary);"
                         >
@@ -1476,7 +1476,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Search Results -->
                     <div class="flex-1 overflow-y-auto custom-scrollbar">
                         <template x-if="searchQuery.trim() && searchResults.length > 0">
@@ -1485,7 +1485,7 @@
                                     <span x-text="`${searchResults.length} result${searchResults.length === 1 ? '' : 's'}`"></span>
                                 </div>
                                 <template x-for="note in searchResults" :key="note.path">
-                                    <div 
+                                    <div
                                         @click="openItem(note.path, note.type, searchQuery)"
                                         class="px-2 py-1.5 text-sm cursor-pointer rounded mb-1"
                                         :style="currentNote === note.path ? 'background-color: var(--accent-light); color: var(--accent-primary);' : 'color: var(--text-primary);'"
@@ -1517,7 +1517,7 @@
                     </div>
                 </div>
                 <!-- END SEARCH PANEL -->
-                
+
                 <!-- ==================== TAGS PANEL ==================== -->
                 <div x-show="activePanel === 'tags'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="flex flex-col h-full">
                     <!-- Tags Header -->
@@ -1525,10 +1525,10 @@
                         <span class="text-xs font-semibold uppercase tracking-wide" style="color: var(--text-tertiary);">Tags</span>
                         <span class="text-xs px-1.5 py-0.5 rounded" style="background-color: var(--bg-tertiary); color: var(--text-tertiary);" x-text="Object.keys(allTags).length"></span>
                     </div>
-                    
+
                     <!-- Active Filters -->
                     <div x-show="selectedTags.length > 0" class="flex-shrink-0 px-2 py-2 border-b" style="border-color: var(--border-primary);">
-                        <button 
+                        <button
                             @click="clearTagFilters()"
                             class="w-full px-2 py-1.5 text-xs rounded flex items-center justify-center gap-1"
                             style="background-color: var(--accent-primary); color: white;"
@@ -1540,7 +1540,7 @@
                             Clear Filters (<span x-text="selectedTags.length"></span>)
                         </button>
                     </div>
-                    
+
                     <!-- Scrollable content: Tags + Filtered Results -->
                     <div class="flex-1 overflow-y-auto custom-scrollbar">
                         <!-- Tag Chips -->
@@ -1548,10 +1548,10 @@
                             <template x-if="Object.keys(allTags).length > 0">
                                 <div class="flex flex-wrap gap-1.5">
                                     <template x-for="[tag, count] in sortedTags" :key="tag">
-                                        <button 
+                                        <button
                                             @click="toggleTag(tag)"
                                             class="px-2 py-1 text-xs rounded-full transition-all hover:brightness-110"
-                                            :style="selectedTags.includes(tag) 
+                                            :style="selectedTags.includes(tag)
                                                 ? 'background-color: var(--accent-primary); color: white; font-weight: 600;'
                                                 : 'background-color: var(--bg-tertiary); color: var(--text-primary);'"
                                             :title="`Filter by ${tag} (${count} notes)`"
@@ -1572,7 +1572,7 @@
                                 </div>
                             </template>
                         </div>
-                        
+
                         <!-- Filtered Notes (shown immediately after tags when selected) -->
                         <template x-if="selectedTags.length > 0">
                             <div class="border-t" style="border-color: var(--border-primary);">
@@ -1581,7 +1581,7 @@
                                 </div>
                                 <div>
                                     <template x-for="note in searchResults" :key="note.path">
-                                        <div 
+                                        <div
                                             @click="openItem(note.path, note.type)"
                                             class="px-3 py-1.5 text-sm cursor-pointer"
                                             :style="currentNote === note.path ? 'background-color: var(--accent-light); color: var(--accent-primary);' : 'color: var(--text-primary);'"
@@ -1600,7 +1600,7 @@
                     </div>
                 </div>
                 <!-- END TAGS PANEL -->
-                
+
                 <!-- ==================== SETTINGS PANEL ==================== -->
                 <template x-if="activePanel === 'settings'">
                     <div class="flex flex-col h-full">
@@ -1608,14 +1608,14 @@
                         <div class="flex-shrink-0 px-3 py-2 border-b" style="border-color: var(--border-primary);">
                             <span class="text-xs font-semibold uppercase tracking-wide" style="color: var(--text-tertiary);">Settings</span>
                         </div>
-                        
+
                         <!-- Scrollable content -->
                         <div class="flex-1 overflow-y-auto custom-scrollbar">
                             <div class="p-3">
                                 <!-- Theme -->
                                 <div class="mb-4">
                                     <label class="block text-xs font-medium mb-2" style="color: var(--text-secondary);">Theme</label>
-                                    <select 
+                                    <select
                                         x-model="currentTheme"
                                         @change="setTheme(currentTheme)"
                                         class="w-full px-2 py-2 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
@@ -1935,8 +1935,8 @@
                                 <!-- Logout (if auth enabled) - uses authEnabled from main app state -->
                                 <div x-show="authEnabled" class="mb-4">
                                     <label class="block text-xs font-medium mb-2" style="color: var(--text-secondary);">Account</label>
-                                    <a 
-                                        href="/logout" 
+                                    <a
+                                        href="/logout"
                                         class="flex items-center justify-center gap-2 px-3 py-2 text-sm rounded transition-colors"
                                         style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary);"
                                         onmouseover="this.style.backgroundColor='var(--bg-hover)'"
@@ -1946,7 +1946,7 @@
                                     </a>
                                 </div>
                             </div>
-                            
+
                             <!-- Footer Info (inside scroll area) -->
                             <div class="p-3 mt-4 border-t text-center" style="border-color: var(--border-primary);">
                                 <div class="text-xs" style="color: var(--text-tertiary);">
@@ -1962,26 +1962,26 @@
                         style="color: var(--accent-primary);"
                     >
                                     GitHub
-                    </a>                    
+                    </a>
                 </div>
             </div>
                     </div>
                 </template>
                 <!-- END SETTINGS PANEL -->
-                
+
             </div>
             <!-- END Sidebar Panel -->
         </div>
-        
+
         <!-- Resize Handle -->
-        <div 
+        <div
             @mousedown="startResize($event)"
             class="resize-handle"
             style="width: 4px; cursor: col-resize; background-color: transparent; transition: background-color 0.2s;"
             @mouseover="$el.style.backgroundColor='var(--accent-primary)'"
             @mouseout="if(!isResizing) $el.style.backgroundColor='transparent'"
         ></div>
-        
+
         <!-- Main Content Area -->
         <div class="flex-1 flex flex-col overflow-hidden relative">
 
@@ -2003,7 +2003,7 @@
             </button>
 
             <!-- Graph View Overlay (works from homepage or editor) -->
-            <div 
+            <div
                 x-show="showGraph"
                 id="graph-overlay"
                 class="absolute inset-0"
@@ -2020,7 +2020,7 @@
                     </div>
                 </div>
                 <!-- Close button -->
-                <button 
+                <button
                     @click="showGraph = false"
                     class="absolute top-4 left-4 px-3 py-2 text-sm font-medium rounded-lg transition-colors z-10"
                     style="background-color: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-primary);"
@@ -2030,13 +2030,13 @@
                     ← Back
                 </button>
             </div>
-            
+
             <template x-if="!currentNote && !currentImage">
                 <!-- Notes Homepage -->
                 <div class="flex-1 overflow-y-auto custom-scrollbar" style="background-color: var(--bg-primary);">
                     <!-- Mobile Menu Button (Homepage) -->
                     <div class="mobile-menu-button px-4 py-3" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-primary); display: none;">
-                        <button 
+                        <button
                             @click="mobileSidebarOpen = !mobileSidebarOpen"
                             class="p-2 rounded-lg"
                             style="color: var(--text-primary);"
@@ -2049,7 +2049,7 @@
                             </svg>
                         </button>
                     </div>
-                    
+
                     <!-- Welcome Hero - Show when app is empty -->
                     <template x-if="isAppEmpty">
                         <div class="flex flex-col items-center justify-center h-full py-16 text-center">
@@ -2058,7 +2058,7 @@
                         </svg>
                             <h2 class="text-2xl font-bold mb-2" style="color: var(--text-primary);">No notes yet</h2>
                             <p class="mb-6" style="color: var(--text-secondary);">Create your first note or folder</p>
-                        <button 
+                        <button
                                 @click="dropdownTargetFolder = selectedHomepageFolder; toggleNewDropdown($event)"
                                 class="px-6 py-3 text-sm font-medium text-white rounded-lg transition-colors"
                             style="background-color: var(--accent-primary);"
@@ -2069,7 +2069,7 @@
                         </button>
                     </div>
                     </template>
-                    
+
                     <!-- Grid View - Show when app has content -->
                     <template x-if="!isAppEmpty">
                         <div class="max-w-7xl mx-auto p-6 md:p-8">
@@ -2085,18 +2085,18 @@
                                     <span><strong>DEMO MODE:</strong> Contents reset daily. Changes may be overwritten by other users.</span>
                                 </div>
                             </div>
-                            
+
                             <!-- Breadcrumb Navigation -->
                             <div class="mb-4 flex items-center gap-2 text-sm" style="color: var(--text-secondary);">
                                 <template x-if="Array.isArray(homepageBreadcrumb())">
                                     <template x-for="(crumb, index) in homepageBreadcrumb()" :key="index">
                                         <div class="flex items-center gap-2">
-                                            <span 
+                                            <span
                                                 x-show="index > 0"
                                                 class="text-xs"
                                                 style="color: var(--text-tertiary);"
                                             >/</span>
-                                            <span 
+                                            <span
                                                 @click="goToHomepageFolder(crumb.path)"
                                                 class="cursor-pointer hover:underline"
                                                 :style="crumb.path === selectedHomepageFolder ? 'color: var(--accent-primary); font-weight: 600;' : 'color: var(--text-secondary);'"
@@ -2106,20 +2106,20 @@
             </template>
                                 </template>
                             </div>
-                            
+
                             <!-- Stats Bar - Only show when there are notes or folders -->
                             <template x-if="homepageNotes().length > 0 || homepageFolders().length > 0">
                                 <div class="mb-6 p-4 rounded-lg" style="background-color: var(--bg-secondary); border: 1px solid var(--border-primary);">
                                     <div class="flex flex-wrap items-center gap-4 text-sm" style="color: var(--text-secondary);">
                                         <span class="font-semibold" style="color: var(--text-primary);">
-                                            <span x-text="homepageNotes().length"></span> 
+                                            <span x-text="homepageNotes().length"></span>
                                             <span x-text="homepageNotes().length === 1 ? 'note' : 'notes'"></span>
                                         </span>
                                         <span x-show="homepageFolders().length > 0">
-                                            <span x-text="homepageFolders().length"></span> 
+                                            <span x-text="homepageFolders().length"></span>
                                             <span x-text="homepageFolders().length === 1 ? 'folder' : 'folders'"></span>
                                         </span>
-                                        <button 
+                                        <button
                                             @click="dropdownTargetFolder = selectedHomepageFolder; toggleNewDropdown($event)"
                                             class="ml-auto px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
                                             style="background-color: var(--accent-primary);"
@@ -2131,7 +2131,7 @@
                                     </div>
                                 </div>
                             </template>
-                            
+
                             <!-- Empty State (for folder view) -->
                             <template x-if="homepageNotes().length === 0 && homepageFolders().length === 0">
                                 <div class="flex flex-col items-center justify-center py-16 text-center">
@@ -2140,7 +2140,7 @@
                                     </svg>
                                     <h2 class="text-2xl font-bold mb-2" style="color: var(--text-primary);" x-text="selectedHomepageFolder ? 'This folder is empty' : 'No notes yet'"></h2>
                                     <p class="mb-6" style="color: var(--text-secondary);" x-text="selectedHomepageFolder ? 'Create something to get started' : 'Create your first note or folder'"></p>
-                                    <button 
+                                    <button
                                         @click="dropdownTargetFolder = selectedHomepageFolder; toggleNewDropdown($event)"
                                         class="px-6 py-3 text-sm font-medium text-white rounded-lg transition-colors"
                                         style="background-color: var(--accent-primary);"
@@ -2151,13 +2151,13 @@
                                     </button>
                                 </div>
                             </template>
-                            
+
                             <!-- Folders and Notes Grid -->
                             <template x-if="homepageNotes().length > 0 || homepageFolders().length > 0">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                     <!-- Folders First -->
                                     <template x-for="folder in homepageFolders()" :key="folder.path">
-                                        <div 
+                                        <div
                                             @click="goToHomepageFolder(folder.path)"
                                             class="p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-lg"
                                             style="background-color: var(--bg-secondary); border-color: var(--accent-primary); min-height: 140px; display: flex; flex-direction: column; border-width: 2px; position: relative;"
@@ -2165,7 +2165,7 @@
                                             onmouseout="this.style.borderColor='var(--accent-primary)'; this.style.transform='translateY(0)'; this.querySelector('.card-delete-btn').style.opacity='0';"
                                         >
                                             <!-- Delete Button -->
-                                            <button 
+                                            <button
                                                 @click.stop="deleteFolder(folder.path, folder.name)"
                                                 class="card-delete-btn"
                                                 style="position: absolute; top: 8px; right: 8px; opacity: 0; transition: opacity 0.2s; color: var(--error); padding: 4px; border-radius: 4px; background-color: var(--bg-secondary);"
@@ -2177,7 +2177,7 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                                 </svg>
                                             </button>
-                                            
+
                                             <!-- Folder Icon -->
                                             <div class="mb-2 flex items-center gap-2">
                                                 <svg class="w-6 h-6" style="color: var(--accent-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2185,7 +2185,7 @@
                                                 </svg>
                                                 <h3 class="font-semibold text-base" style="color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical;" x-text="folder.name"></h3>
                                             </div>
-                                            
+
                                             <!-- Folder Metadata -->
                                             <div class="flex items-center justify-between text-xs mt-auto pt-2" style="color: var(--text-tertiary);">
                                                 <span x-text="folder.noteCount + ' ' + (folder.noteCount === 1 ? 'note' : 'notes')"></span>
@@ -2195,10 +2195,10 @@
                                             </div>
                                         </div>
                                     </template>
-                                    
+
                                     <!-- Notes -->
                                     <template x-for="note in homepageNotes().slice(0, HOMEPAGE_MAX_NOTES)" :key="note.path">
-                                        <div 
+                                        <div
                                             @click="openItem(note.path, note.type)"
                                             class="p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-lg"
                                             style="background-color: var(--bg-secondary); border-color: var(--border-primary); min-height: 140px; display: flex; flex-direction: column; position: relative;"
@@ -2206,7 +2206,7 @@
                                             onmouseout="this.style.borderColor='var(--border-primary)'; this.style.transform='translateY(0)'; this.querySelector('.card-delete-btn').style.opacity='0';"
                                         >
                                             <!-- Delete Button -->
-                                            <button 
+                                            <button
                                                 @click.stop="note.type === 'image' ? deleteImage(note.path) : deleteNote(note.path, note.name)"
                                                 class="card-delete-btn"
                                                 style="position: absolute; top: 8px; right: 8px; opacity: 0; transition: opacity 0.2s; color: var(--error); padding: 4px; border-radius: 4px; background-color: var(--bg-secondary);"
@@ -2218,10 +2218,10 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                                 </svg>
                                             </button>
-                                            
+
                                             <!-- Note Title -->
                                             <h3 class="font-semibold text-base mb-2" style="color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical;" x-text="note.name"></h3>
-                                            
+
                                             <!-- Metadata -->
                                             <div class="flex items-center justify-between text-xs mt-auto pt-2" style="color: var(--text-tertiary);">
                                                 <span x-text="new Date(note.modified).toLocaleDateString()"></span>
@@ -2231,7 +2231,7 @@
                                     </template>
                                 </div>
                             </template>
-                            
+
                             <!-- Show More Indicator -->
                             <div x-show="homepageNotes().length > HOMEPAGE_MAX_NOTES" class="mt-6 text-center">
                                 <p class="text-sm" style="color: var(--text-secondary);">
@@ -2242,7 +2242,7 @@
                     </template>
                 </div>
             </template>
-            
+
             <template x-if="currentNote || currentImage">
                 <!-- Editor Area -->
                 <div class="flex-1 flex flex-col overflow-hidden" style="background-color: var(--bg-primary);">
@@ -2252,7 +2252,7 @@
                          style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-primary); transition: padding-left 0.3s ease;">
                         <div class="flex items-center space-x-2">
                             <!-- Mobile Menu Button -->
-                            <button 
+                            <button
                                 @click="mobileSidebarOpen = !mobileSidebarOpen"
                                 class="mobile-menu-button p-2 rounded-lg"
                                 style="color: var(--text-primary); display: none;"
@@ -2264,8 +2264,8 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                                 </svg>
                             </button>
-                            <input 
-                                type="text" 
+                            <input
+                                type="text"
                                 :value="currentNote ? currentNoteName : (currentImage ? currentImage.split('/').pop() : '')"
                                 @input="if (currentNote) currentNoteName = $event.target.value"
                                 @blur="if (currentNote) renameNote()"
@@ -2274,7 +2274,7 @@
                                 :style="'background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); min-width: 150px; max-width: 300px;' + (!currentNote ? ' cursor: default; opacity: 0.9;' : '')"
                             >
                             <!-- Undo Button -->
-                            <button 
+                            <button
                                 @click="undo()"
                                 :disabled="undoHistory.length <= 1"
                                 class="p-2 rounded-lg"
@@ -2287,9 +2287,9 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
                                 </svg>
                             </button>
-                            
+
                             <!-- Redo Button -->
-                            <button 
+                            <button
                                 @click="redo()"
                                 :disabled="redoHistory.length === 0"
                                 class="p-2 rounded-lg"
@@ -2302,9 +2302,9 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6"></path>
                                 </svg>
                             </button>
-                            
+
                             <!-- Delete Button -->
-                            <button 
+                            <button
                                 @click="currentImage ? deleteImage(currentImage) : deleteCurrentNote()"
                                 class="p-2 rounded-lg"
                                 style="color: var(--error);"
@@ -2319,7 +2319,7 @@
                             <span x-show="isSaving" class="text-xs" style="color: var(--text-secondary);">Saving...</span>
                             <span x-show="!isSaving && lastSaved" class="text-xs" style="color: var(--success);">✓ Saved</span>
                         </div>
-                        
+
                         <!-- Demo Mode Warning Banner -->
                         <div x-data="{ showDemoBanner: false }" x-init="fetch('/api/config').then(r => r.json()).then(d => showDemoBanner = d.demoMode || false)" x-show="showDemoBanner" class="flex items-center px-3 py-1.5 text-xs rounded-lg" style="background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%); color: white; font-weight: 500;">
                             <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2327,11 +2327,11 @@
                             </svg>
                             <span><strong>DEMO MODE:</strong> Contents reset daily. Changes may be overwritten by other users.</span>
                         </div>
-                        
+
                         <div class="flex items-center space-x-2" x-show="currentNote">
                             <!-- View Toggle (only for notes) -->
                             <div class="flex rounded-lg p-1" style="background-color: var(--bg-tertiary);">
-                                <button 
+                                <button
                                     @click="viewMode = 'edit'"
                                     class="px-2 md:px-3 py-1 text-xs md:text-sm rounded transition"
                                     :style="viewMode === 'edit' ? 'background-color: var(--accent-primary); color: white;' : 'color: var(--text-secondary);'"
@@ -2340,7 +2340,7 @@
                                 >
                                     Edit
                                 </button>
-                                <button 
+                                <button
                                     @click="viewMode = 'split'"
                                     class="mobile-hide-split px-2 md:px-3 py-1 text-xs md:text-sm rounded transition"
                                     :style="viewMode === 'split' ? 'background-color: var(--accent-primary); color: white;' : 'color: var(--text-secondary);'"
@@ -2349,7 +2349,7 @@
                                 >
                                     Split
                                 </button>
-                                <button 
+                                <button
                                     @click="viewMode = 'preview'"
                                     class="px-2 md:px-3 py-1 text-xs md:text-sm rounded transition"
                                     :style="viewMode === 'preview' ? 'background-color: var(--accent-primary); color: white;' : 'color: var(--text-secondary);'"
@@ -2359,9 +2359,9 @@
                                     Preview
                                 </button>
                             </div>
-                            
+
                             <!-- Note Actions Toolbar -->
-                            <div 
+                            <div
                                 x-show="currentNote"
                                 class="flex items-center rounded overflow-hidden"
                                 style="background-color: var(--bg-tertiary); border: 1px solid var(--border-primary);"
@@ -2399,7 +2399,7 @@
                                     </svg>
                                 </button>
                                 <div style="width: 1px; height: 20px; background-color: var(--border-primary);"></div>
-                                <button 
+                                <button
                                     @click="copyNoteLink()"
                                     class="p-2 transition hover:bg-opacity-80"
                                     :title="linkCopied ? 'Copied!' : 'Copy link to clipboard'"
@@ -2416,10 +2416,24 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                     </svg>
                                 </button>
+                                <div style="width: 1px; height: 20px; background-color: var(--border-primary);"></div>
+                                <button
+                                    @click="openUnsplashPicker()"
+                                    class="p-2 transition"
+                                    style="color: var(--text-secondary);"
+                                    title="Add banner from Unsplash"
+                                    @mouseenter="$el.style.backgroundColor = 'var(--bg-secondary)'"
+                                    @mouseleave="$el.style.backgroundColor = 'transparent'"
+                                >
+                                    <!-- Image/Banner icon -->
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </button>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Editor/Preview/Graph -->
                     <div class="flex-1 flex relative" style="min-height: 0;">
                         <!-- Editor -->
@@ -2442,9 +2456,9 @@
                                 @dragleave="onEditorDragLeave($event)"
                             ></div>
                         </div>
-                        
+
                         <!-- Split view resize handle -->
-                        <div 
+                        <div
                             x-show="!currentImage && viewMode === 'split'"
                             @mousedown="startSplitResize($event)"
                             class="split-resize-handle"
@@ -2452,21 +2466,21 @@
                             @mouseover="$el.style.opacity='1'; $el.style.background='var(--accent-primary)'"
                             @mouseout="if(!isResizingSplit) { $el.style.opacity='0.5'; $el.style.background='linear-gradient(90deg, transparent 0%, var(--border-secondary) 50%, transparent 100%)' }"
                         ></div>
-                        
+
                         <!-- Preview -->
-                        <div 
+                        <div
                             x-show="(viewMode === 'preview' || viewMode === 'split') && !currentImage"
                             class="overflow-y-auto overflow-x-hidden custom-scrollbar"
                             style="background-color: var(--bg-primary); min-height: 0;"
                             :style="viewMode === 'split' ? `width: ${100 - editorWidth}%;` : 'width: 100%;'"
                         >
                             <!-- Note Properties/Metadata Panel -->
-                            <div 
+                            <div
                                 x-show="getHasMetadata() && currentNote"
                                 class="note-properties mx-6 mt-4 mb-2"
                             >
                                 <!-- Collapsed View -->
-                                <div 
+                                <div
                                     x-show="!metadataExpanded"
                                     @click="metadataExpanded = true"
                                     class="flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all"
@@ -2476,10 +2490,10 @@
                                 >
                                     <!-- Property icon -->
                                     <span class="text-xs opacity-60">⚙️</span>
-                                    
+
                                     <!-- Tags as pills -->
                                     <template x-for="tag in getMetadataTags().slice(0, 5)" :key="tag">
-                                        <span 
+                                        <span
                                             @click.stop="toggleTag(tag.toLowerCase())"
                                             class="metadata-tag px-2 py-0.5 text-xs rounded-full cursor-pointer transition-colors"
                                             style="background-color: var(--accent-light, rgba(124, 58, 237, 0.15)); color: var(--accent-primary);"
@@ -2491,7 +2505,7 @@
                                     <template x-if="getMetadataTags().length > 5">
                                         <span class="text-xs" style="color: var(--text-tertiary);">+<span x-text="getMetadataTags().length - 5"></span> more</span>
                                     </template>
-                                    
+
                                     <!-- Priority fields (date, author, status) -->
                                     <template x-for="field in getPriorityMetadataFields()" :key="field.key">
                                         <span class="text-xs flex items-center gap-1" style="color: var(--text-secondary);">
@@ -2500,19 +2514,19 @@
                                             <span style="color: var(--text-primary);" x-html="field.valueHtml" @click="field.isUrl && $event.stopPropagation()"></span>
                                         </span>
                                     </template>
-                                    
+
                                     <!-- Expand hint -->
                                     <span class="ml-auto text-xs opacity-40">▼</span>
                                 </div>
-                                
+
                                 <!-- Expanded View -->
-                                <div 
+                                <div
                                     x-show="metadataExpanded"
                                     class="rounded-lg overflow-hidden"
                                     style="background-color: var(--bg-tertiary); border: 1px solid var(--border-primary);"
                                 >
                                     <!-- Header -->
-                                    <div 
+                                    <div
                                         @click="metadataExpanded = false"
                                         class="flex items-center justify-between px-3 py-2 cursor-pointer"
                                         style="border-bottom: 1px solid var(--border-primary);"
@@ -2522,7 +2536,7 @@
                                         </span>
                                         <span class="text-xs opacity-40">▲ Collapse</span>
                                     </div>
-                                    
+
                                     <!-- Properties Grid -->
                                     <div class="px-3 py-2 space-y-2">
                                         <!-- Tags row -->
@@ -2531,7 +2545,7 @@
                                                 <span class="text-xs w-16 shrink-0 pt-0.5" style="color: var(--text-tertiary);">tags</span>
                                                 <div class="flex flex-wrap gap-1">
                                                     <template x-for="tag in getMetadataTags()" :key="tag">
-                                                        <span 
+                                                        <span
                                                             @click="toggleTag(tag.toLowerCase())"
                                                             class="metadata-tag px-2 py-0.5 text-xs rounded-full cursor-pointer transition-colors"
                                                             style="background-color: var(--accent-light, rgba(124, 58, 237, 0.15)); color: var(--accent-primary);"
@@ -2543,7 +2557,7 @@
                                                 </div>
                                             </div>
                                         </template>
-                                        
+
                                         <!-- Other fields -->
                                         <template x-for="field in getAllMetadataFields()" :key="field.key">
                                             <div class="flex gap-1.5 items-start text-xs">
@@ -2552,7 +2566,7 @@
                                                 <template x-if="field.isArray">
                                                     <div class="flex flex-wrap gap-1">
                                                         <template x-for="item in field.value" :key="item">
-                                                            <span 
+                                                            <span
                                                                 class="px-1.5 py-0.5 rounded text-xs"
                                                                 style="background-color: var(--bg-hover); color: var(--text-primary);"
                                                                 x-text="item"
@@ -2569,7 +2583,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div
                                 class="markdown-preview"
                                 :class="{
@@ -2590,29 +2604,29 @@
                                 @click="handleInternalLink($event)"
                             ></div>
                         </div>
-                        
+
                         <!-- Image Viewer -->
                         <template x-if="currentImage">
-                            <div 
+                            <div
                                 class="flex-1 flex items-center justify-center overflow-auto"
                                 style="background-color: var(--bg-primary); min-height: 0;"
                             >
-                                <img 
-                                    :src="`/api/images/${currentImage}`" 
+                                <img
+                                    :src="`/api/images/${currentImage}`"
                                     :alt="currentImage.split('/').pop()"
                                     style="max-width: 100%; max-height: 100%; object-fit: contain; padding: 2rem;"
                                 />
                             </div>
                         </template>
                     </div>
-                    
+
                     <!-- Stats Status Bar (only shows if plugin enabled) -->
-                    <div x-show="statsPluginEnabled && currentNote && noteStats" 
+                    <div x-show="statsPluginEnabled && currentNote && noteStats"
                          class="border-t"
                          style="background-color: var(--bg-secondary); border-color: var(--border-primary);">
-                        
+
                         <!-- Collapsed State (default) -->
-                        <div x-show="!statsExpanded" 
+                        <div x-show="!statsExpanded"
                              @click="statsExpanded = true"
                              class="px-4 py-2 flex items-center justify-between cursor-pointer hover:bg-opacity-80 transition-colors"
                              onmouseover="this.style.backgroundColor='var(--bg-hover)'"
@@ -2635,21 +2649,21 @@
                             </div>
                             <span class="text-xs" style="color: var(--text-tertiary);">▼ Click for details</span>
                         </div>
-                        
+
                         <!-- Expanded State -->
-                        <div x-show="statsExpanded" 
+                        <div x-show="statsExpanded"
                              class="px-4 py-3"
                              style="background-color: var(--bg-tertiary);">
                             <div class="flex items-center justify-between mb-3">
                                 <h3 class="font-semibold text-sm" style="color: var(--text-primary);">📊 Note Statistics</h3>
-                                <button 
+                                <button
                                     @click="statsExpanded = false"
                                     class="text-xs px-2 py-1 rounded hover:bg-opacity-80"
                                     style="color: var(--text-secondary); background-color: var(--bg-hover);">
                                     ▲ Collapse
                                 </button>
                             </div>
-                            
+
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                                 <!-- Basic Stats -->
                                 <div>
@@ -2668,7 +2682,7 @@
                                     <div class="text-xs" style="color: var(--text-tertiary);">Lines</div>
                                     <div class="font-semibold" style="color: var(--text-primary);" x-text="noteStats ? noteStats.lines.toLocaleString() : '0'"></div>
                                 </div>
-                                
+
                                 <!-- Sentences -->
                                 <div>
                                     <div class="text-xs" style="color: var(--text-tertiary);">Sentences</div>
@@ -2686,7 +2700,7 @@
                                     <div class="text-xs" style="color: var(--text-tertiary);">Tables</div>
                                     <div class="font-semibold" style="color: var(--text-primary);" x-text="noteStats ? noteStats.tables.toLocaleString() : '0'"></div>
                                 </div>
-                                
+
                                 <!-- Links -->
                                 <template x-if="noteStats && noteStats.links > 0">
                                     <div>
@@ -2699,7 +2713,7 @@
                                         </div>
                                     </div>
                                 </template>
-                                
+
                                 <!-- Headings -->
                                 <template x-if="noteStats && noteStats.headings.total > 0">
                                     <div>
@@ -2712,7 +2726,7 @@
                                         </div>
                                     </div>
                                 </template>
-                                
+
                                 <!-- Code Blocks -->
                                 <template x-if="noteStats && noteStats.code_blocks > 0">
                                     <div>
@@ -2720,7 +2734,7 @@
                                         <div class="font-semibold" style="color: var(--text-primary);" x-text="noteStats.code_blocks"></div>
                                     </div>
                                 </template>
-                                
+
                                 <!-- Tasks -->
                                 <template x-if="noteStats && noteStats.tasks.total > 0">
                                     <div>
@@ -2733,7 +2747,7 @@
                                         </div>
                                     </div>
                                 </template>
-                                
+
                                 <!-- Images -->
                                 <template x-if="noteStats && noteStats.images > 0">
                                     <div>
@@ -2744,15 +2758,15 @@
                             </div>
                         </div>
                     </div>
-                    
+
                 </div>
             </template>
-            
+
         </div>
     </div>
-    
+
     <!-- Contextual New Item Dropdown -->
-    <div 
+    <div
         x-show="showNewDropdown"
         @click.outside="closeDropdown()"
         x-transition:enter="transition ease-out duration-100"
@@ -2766,7 +2780,7 @@
         x-cloak
     >
         <div class="py-1">
-            <button 
+            <button
                 @click="createNote()"
                 class="w-full px-4 py-2.5 text-sm text-left flex items-center gap-3 transition-colors"
                 style="color: var(--text-primary);"
@@ -2776,7 +2790,7 @@
                 <span class="text-lg">📝</span>
                 <span>New Note</span>
             </button>
-            <button 
+            <button
                 @click="createFolder()"
                 class="w-full px-4 py-2.5 text-sm text-left flex items-center gap-3 transition-colors"
                 style="color: var(--text-primary);"
@@ -2786,7 +2800,7 @@
                 <span class="text-lg">📁</span>
                 <span>New Folder</span>
             </button>
-            <button 
+            <button
                 @click.stop="showTemplateModal = true; showNewDropdown = false; mobileSidebarOpen = false"
                 class="w-full px-4 py-2.5 text-sm text-left flex items-center gap-3 transition-colors"
                 style="color: var(--text-primary);"
@@ -2798,9 +2812,9 @@
             </button>
         </div>
     </div>
-    
+
     <!-- Template Selection Modal -->
-    <div x-show="showTemplateModal" 
+    <div x-show="showTemplateModal"
          @click.self="showTemplateModal = false; selectedTemplate = ''; newTemplateNoteName = ''"
          @keydown.escape.window="showTemplateModal && (showTemplateModal = false, selectedTemplate = '', newTemplateNoteName = '')"
          class="fixed inset-0 flex items-center justify-center"
@@ -2809,15 +2823,15 @@
         <div class="rounded-lg shadow-xl p-6 max-w-md w-full mx-4"
              style="background-color: var(--bg-secondary); color: var(--text-primary);"
              @click.stop>
-            
+
             <h2 class="text-xl font-bold mb-4" style="color: var(--text-primary);">Create from Template</h2>
-            
+
             <!-- Template Selection -->
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">
                     Select Template
                 </label>
-                <select 
+                <select
                     x-model="selectedTemplate"
                     class="w-full px-3 py-2 rounded border"
                     style="background-color: var(--bg-tertiary); color: var(--text-primary); border-color: var(--border-primary);"
@@ -2828,13 +2842,13 @@
                     </template>
                 </select>
             </div>
-            
+
             <!-- Note Name Input -->
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">
                     Note Name
                 </label>
-                <input 
+                <input
                     x-model="newTemplateNoteName"
                     type="text"
                     placeholder="Enter note name"
@@ -2843,25 +2857,25 @@
                     @keydown.enter="createNoteFromTemplate()"
                 />
             </div>
-            
+
             <!-- Info about placeholders -->
             <div class="mb-4 text-xs p-3 rounded" style="background-color: var(--bg-tertiary); color: var(--text-secondary);">
                 <strong>Available placeholders:</strong><br>
-                <code style="font-family: monospace;">{{date}}</code>, 
-                <code style="font-family: monospace;">{{time}}</code>, 
-                <code style="font-family: monospace;">{{datetime}}</code>, 
-                <code style="font-family: monospace;">{{title}}</code>, 
+                <code style="font-family: monospace;">{{date}}</code>,
+                <code style="font-family: monospace;">{{time}}</code>,
+                <code style="font-family: monospace;">{{datetime}}</code>,
+                <code style="font-family: monospace;">{{title}}</code>,
                 <code style="font-family: monospace;">{{folder}}</code>
             </div>
-            
+
             <!-- Empty state when no templates available -->
             <div x-show="availableTemplates.length === 0" class="mb-4 text-sm p-3 rounded" style="background-color: var(--bg-tertiary); color: var(--text-secondary);">
                 No templates found. Create templates in the <code style="font-family: monospace;" x-text="templatesDir"></code> folder.
             </div>
-            
+
             <!-- Actions -->
             <div class="flex gap-2">
-                <button 
+                <button
                     @click="createNoteFromTemplate()"
                     :disabled="!selectedTemplate || !newTemplateNoteName.trim() || availableTemplates.length === 0"
                     class="flex-1 px-4 py-2 rounded font-medium text-white transition-colors"
@@ -2872,7 +2886,7 @@
                 >
                     Create Note
                 </button>
-                <button 
+                <button
                     @click="showTemplateModal = false; selectedTemplate = ''; newTemplateNoteName = ''"
                     class="flex-1 px-4 py-2 rounded font-medium transition-colors"
                     style="background-color: var(--bg-tertiary); color: var(--text-primary);"
@@ -3594,9 +3608,103 @@
         </div>
     </div>
 
+    <!-- Unsplash Banner Picker Modal -->
+    <div x-show="showUnsplashModal"
+         @click.self="showUnsplashModal = false; unsplashUrl = ''; unsplashPreviewError = false"
+         @keydown.escape.window="showUnsplashModal && (showUnsplashModal = false, unsplashUrl = '', unsplashPreviewError = false)"
+         class="fixed inset-0 flex items-center justify-center"
+         style="background-color: rgba(0, 0, 0, 0.5); z-index: 1100;"
+         x-cloak>
+        <div class="rounded-lg shadow-xl max-w-lg w-full mx-4"
+             style="background-color: var(--bg-secondary); color: var(--text-primary);"
+             @click.stop>
+
+            <!-- Header -->
+            <div class="px-6 py-4 border-b" style="border-color: var(--border-primary);">
+                <h2 class="text-lg font-bold">Add Banner from Unsplash</h2>
+                <p class="text-sm mt-1" style="color: var(--text-secondary);">
+                    Browse <a href="https://unsplash.com" target="_blank" rel="noopener" class="underline" style="color: var(--accent-primary);">unsplash.com</a>, copy an image URL, and paste it below.
+                </p>
+            </div>
+
+            <!-- Content -->
+            <div class="px-6 py-4 space-y-4">
+                <!-- URL Input -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">Image URL</label>
+                    <input
+                        x-model="unsplashUrl"
+                        @input="previewUnsplashUrl()"
+                        type="url"
+                        placeholder="https://images.unsplash.com/photo-..."
+                        class="w-full px-3 py-2 rounded border text-sm"
+                        style="background-color: var(--bg-tertiary); color: var(--text-primary); border-color: var(--border-primary);"
+                        @keydown.enter="unsplashUrl.trim() && insertUnsplashBanner()"
+                    />
+                    <p class="text-xs mt-1" style="color: var(--text-secondary);">
+                        Tip: Right-click an image on Unsplash and select "Copy image address"
+                    </p>
+                </div>
+
+                <!-- Preview -->
+                <div x-show="unsplashUrl.trim()" class="space-y-2">
+                    <label class="block text-sm font-medium">Preview</label>
+                    <div class="relative rounded overflow-hidden" style="background-color: var(--bg-tertiary); height: 150px;">
+                        <img
+                            :src="unsplashUrl"
+                            @error="handleUnsplashPreviewError()"
+                            @load="unsplashPreviewError = false"
+                            class="w-full h-full object-cover"
+                            :class="{'hidden': unsplashPreviewError}"
+                            alt="Banner preview"
+                        />
+                        <div x-show="unsplashPreviewError" class="absolute inset-0 flex items-center justify-center text-sm" style="color: var(--text-secondary);">
+                            Unable to load image. Please check the URL.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Help text -->
+                <div class="text-xs p-3 rounded" style="background-color: var(--bg-tertiary); color: var(--text-secondary);">
+                    <strong>How to get an Unsplash image URL:</strong>
+                    <ol class="list-decimal ml-4 mt-1 space-y-1">
+                        <li>Go to <a href="https://unsplash.com" target="_blank" rel="noopener" class="underline">unsplash.com</a></li>
+                        <li>Find an image you like</li>
+                        <li>Right-click the image and select "Copy image address"</li>
+                        <li>Paste the URL above</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-2 px-6 py-4 border-t" style="border-color: var(--border-primary);">
+                <button
+                    @click="insertUnsplashBanner()"
+                    :disabled="!unsplashUrl.trim() || unsplashPreviewError"
+                    class="flex-1 px-4 py-2 rounded font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    style="background-color: var(--accent-primary);"
+                    :style="(!unsplashUrl.trim() || unsplashPreviewError) ? '' : 'cursor: pointer'"
+                    onmouseover="if(!this.disabled) this.style.backgroundColor='var(--accent-hover)'"
+                    onmouseout="this.style.backgroundColor='var(--accent-primary)'"
+                >
+                    Set as Banner
+                </button>
+                <button
+                    @click="showUnsplashModal = false; unsplashUrl = ''; unsplashPreviewError = false"
+                    class="flex-1 px-4 py-2 rounded font-medium transition-colors"
+                    style="background-color: var(--bg-tertiary); color: var(--text-primary);"
+                    onmouseover="this.style.backgroundColor='var(--bg-hover)'"
+                    onmouseout="this.style.backgroundColor='var(--bg-tertiary)'"
+                >
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Mobile Bottom Tabs -->
     <nav class="mobile-bottom-tabs" style="display: none;" role="navigation" aria-label="Main navigation">
-        <button 
+        <button
             class="mobile-bottom-tab"
             :class="{'active': activePanel === 'files'}"
             @click="activePanel = 'files'; mobileSidebarOpen = true;"
@@ -3607,7 +3715,7 @@
             </svg>
             <span>Files</span>
         </button>
-        <button 
+        <button
             class="mobile-bottom-tab relative"
             :class="{'active': activePanel === 'search'}"
             @click="activePanel = 'search'; mobileSidebarOpen = true;"
@@ -3618,7 +3726,7 @@
             </svg>
             <span>Search</span>
             <!-- Search results badge -->
-            <span 
+            <span
                 x-show="searchQuery.trim() && searchResults.length > 0"
                 x-cloak
                 class="absolute top-1 right-1/4 w-4 h-4 text-[9px] font-bold rounded-full flex items-center justify-center"
@@ -3626,7 +3734,7 @@
                 x-text="searchResults.length > 9 ? '9+' : searchResults.length"
             ></span>
         </button>
-        <button 
+        <button
             class="mobile-bottom-tab relative"
             :class="{'active': activePanel === 'tags'}"
             @click="activePanel = 'tags'; mobileSidebarOpen = true;"
@@ -3637,7 +3745,7 @@
             </svg>
             <span>Tags</span>
             <!-- Filtered notes badge (shows result count when tags selected) -->
-            <span 
+            <span
                 x-show="selectedTags.length > 0"
                 x-cloak
                 class="absolute top-1 right-1/4 w-4 h-4 text-[9px] font-bold rounded-full flex items-center justify-center"
@@ -3645,7 +3753,7 @@
                 x-text="searchResults.length > 9 ? '9+' : searchResults.length"
             ></span>
         </button>
-        <button 
+        <button
             class="mobile-bottom-tab"
             :class="{'active': showGraph}"
             @click="showGraph = true; initGraph(); mobileSidebarOpen = false;"
@@ -3656,7 +3764,7 @@
             </svg>
             <span>Graph</span>
         </button>
-        <button 
+        <button
             class="mobile-bottom-tab"
             :class="{'active': activePanel === 'settings'}"
             @click="activePanel = 'settings'; mobileSidebarOpen = true;"
@@ -3669,7 +3777,7 @@
             <span>Settings</span>
         </button>
     </nav>
-    
+
     <script src="/static/app.js"></script>
 </body>
 </html>

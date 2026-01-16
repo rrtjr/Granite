@@ -76,6 +76,17 @@ Tests include:
 - Manual pull trigger
 - Settings persistence
 
+**`test_unsplash_banner.html`** - Interactive tests for the Unsplash banner picker
+
+Tests include:
+- Banner insertion into notes without frontmatter
+- Banner insertion into existing frontmatter
+- Updating existing banner field
+- Preserving all frontmatter fields
+- Handling empty content
+- Handling URLs with special characters
+- Banner field position handling (first/last)
+
 ## Running the Tests
 
 ### Quick Start (Recommended - Docker)
@@ -163,6 +174,7 @@ Tests are disabled by default for security. To enable them:
    ```
    http://localhost:8000/tests/test_plugin_ui.html
    http://localhost:8000/tests/test_git_plugin_ui.html
+   http://localhost:8000/tests/test_unsplash_banner.html
    ```
 
 3. Tests will run automatically on page load, or click **"Run All Tests"** to re-run
@@ -285,6 +297,8 @@ cd /app
 | Manual backup trigger | Yes |
 | Manual pull trigger | Yes |
 | Git status display | Yes |
+| Unsplash banner picker | Yes |
+| Banner frontmatter insertion | Yes |
 
 ## Continuous Integration
 

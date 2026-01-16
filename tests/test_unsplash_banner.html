@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unsplash Banner Picker Tests</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case {
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #ddd;
+            background: #f9f9f9;
+        }
+        .test-case.pass {
+            border-left-color: #4caf50;
+            background: #f1f8f4;
+        }
+        .test-case.fail {
+            border-left-color: #f44336;
+            background: #fef1f0;
+        }
+        .test-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .test-result {
+            font-size: 14px;
+            color: #666;
+        }
+        .test-details {
+            font-family: monospace;
+            font-size: 12px;
+            background: #eee;
+            padding: 8px;
+            margin-top: 8px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .summary {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .summary.pass {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .summary.fail {
+            background: #ffebee;
+            color: #c62828;
+        }
+        button {
+            padding: 10px 20px;
+            background: #7c3aed;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #6d28d9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Unsplash Banner Picker Tests</h1>
+
+    <button onclick="runTests()">Run All Tests</button>
+
+    <div class="test-section">
+        <h2>Banner Insertion Logic Tests</h2>
+        <p>Tests the <code>insertBannerInFrontmatter()</code> function logic</p>
+        <div id="test-results"></div>
+    </div>
+
+    <div id="summary"></div>
+
+    <script>
+        // Simulate the insertBannerInFrontmatter function from app.js
+        function insertBannerInFrontmatter(content, bannerUrl) {
+            if (content.trim().startsWith('---')) {
+                // Frontmatter exists - update or add banner field
+                const lines = content.split('\n');
+                let endIdx = -1;
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim() === '---') {
+                        endIdx = i;
+                        break;
+                    }
+                }
+
+                if (endIdx > 0) {
+                    // Check if banner already exists
+                    let bannerIdx = -1;
+                    for (let i = 1; i < endIdx; i++) {
+                        if (lines[i].trim().startsWith('banner:')) {
+                            bannerIdx = i;
+                            break;
+                        }
+                    }
+
+                    if (bannerIdx > 0) {
+                        // Update existing banner
+                        lines[bannerIdx] = `banner: "${bannerUrl}"`;
+                    } else {
+                        // Add banner before closing ---
+                        lines.splice(endIdx, 0, `banner: "${bannerUrl}"`);
+                    }
+                    return lines.join('\n');
+                }
+            }
+
+            // No frontmatter - create it
+            return `---\nbanner: "${bannerUrl}"\n---\n\n${content}`;
+        }
+
+        // Test cases
+        const tests = [
+            {
+                name: 'Create frontmatter when none exists',
+                input: {
+                    content: '# My Note\n\nSome content here.',
+                    bannerUrl: 'https://images.unsplash.com/photo-123'
+                },
+                validate: (result) => {
+                    return result.startsWith('---\nbanner: "https://images.unsplash.com/photo-123"\n---') &&
+                           result.includes('# My Note');
+                }
+            },
+            {
+                name: 'Add banner to existing frontmatter without banner',
+                input: {
+                    content: '---\ntags: [test]\ndate: 2024-01-01\n---\n\n# My Note',
+                    bannerUrl: 'https://images.unsplash.com/photo-456'
+                },
+                validate: (result) => {
+                    return result.includes('tags: [test]') &&
+                           result.includes('banner: "https://images.unsplash.com/photo-456"') &&
+                           result.includes('# My Note');
+                }
+            },
+            {
+                name: 'Update existing banner in frontmatter',
+                input: {
+                    content: '---\ntags: [test]\nbanner: "https://old-image.com/old.jpg"\n---\n\n# My Note',
+                    bannerUrl: 'https://images.unsplash.com/photo-789'
+                },
+                validate: (result) => {
+                    return result.includes('banner: "https://images.unsplash.com/photo-789"') &&
+                           !result.includes('old-image.com') &&
+                           result.includes('tags: [test]');
+                }
+            },
+            {
+                name: 'Preserve all existing frontmatter fields',
+                input: {
+                    content: '---\ntags: [a, b, c]\ndate: 2024-01-01\nauthor: John\nstatus: draft\n---\n\nContent',
+                    bannerUrl: 'https://images.unsplash.com/photo-abc'
+                },
+                validate: (result) => {
+                    return result.includes('tags: [a, b, c]') &&
+                           result.includes('date: 2024-01-01') &&
+                           result.includes('author: John') &&
+                           result.includes('status: draft') &&
+                           result.includes('banner: "https://images.unsplash.com/photo-abc"');
+                }
+            },
+            {
+                name: 'Handle empty content',
+                input: {
+                    content: '',
+                    bannerUrl: 'https://images.unsplash.com/photo-empty'
+                },
+                validate: (result) => {
+                    return result.includes('banner: "https://images.unsplash.com/photo-empty"') &&
+                           result.startsWith('---');
+                }
+            },
+            {
+                name: 'Handle content with only whitespace',
+                input: {
+                    content: '   \n\n   ',
+                    bannerUrl: 'https://images.unsplash.com/photo-ws'
+                },
+                validate: (result) => {
+                    return result.includes('banner: "https://images.unsplash.com/photo-ws"');
+                }
+            },
+            {
+                name: 'Handle URL with special characters',
+                input: {
+                    content: '# Test',
+                    bannerUrl: 'https://images.unsplash.com/photo-123?w=1080&fit=crop'
+                },
+                validate: (result) => {
+                    return result.includes('banner: "https://images.unsplash.com/photo-123?w=1080&fit=crop"');
+                }
+            },
+            {
+                name: 'Preserve content after frontmatter',
+                input: {
+                    content: '---\ntags: [test]\n---\n\n# Title\n\nParagraph 1\n\nParagraph 2\n\n- List item',
+                    bannerUrl: 'https://images.unsplash.com/photo-content'
+                },
+                validate: (result) => {
+                    return result.includes('# Title') &&
+                           result.includes('Paragraph 1') &&
+                           result.includes('Paragraph 2') &&
+                           result.includes('- List item');
+                }
+            },
+            {
+                name: 'Handle frontmatter with banner as first field',
+                input: {
+                    content: '---\nbanner: "https://old.com/img.jpg"\ntags: [test]\n---\n\nContent',
+                    bannerUrl: 'https://images.unsplash.com/photo-first'
+                },
+                validate: (result) => {
+                    return result.includes('banner: "https://images.unsplash.com/photo-first"') &&
+                           !result.includes('old.com') &&
+                           result.includes('tags: [test]');
+                }
+            },
+            {
+                name: 'Handle frontmatter with banner as last field',
+                input: {
+                    content: '---\ntags: [test]\ndate: 2024\nbanner: "https://old.com/img.jpg"\n---\n\nContent',
+                    bannerUrl: 'https://images.unsplash.com/photo-last'
+                },
+                validate: (result) => {
+                    return result.includes('banner: "https://images.unsplash.com/photo-last"') &&
+                           !result.includes('old.com');
+                }
+            }
+        ];
+
+        function runTests() {
+            const resultsContainer = document.getElementById('test-results');
+            const summaryContainer = document.getElementById('summary');
+            resultsContainer.innerHTML = '';
+
+            let passed = 0;
+            let failed = 0;
+
+            tests.forEach(test => {
+                const result = insertBannerInFrontmatter(test.input.content, test.input.bannerUrl);
+                const success = test.validate(result);
+
+                if (success) {
+                    passed++;
+                } else {
+                    failed++;
+                }
+
+                const testDiv = document.createElement('div');
+                testDiv.className = `test-case ${success ? 'pass' : 'fail'}`;
+                testDiv.innerHTML = `
+                    <div class="test-name">${success ? '✓' : '✗'} ${test.name}</div>
+                    <div class="test-result">${success ? 'PASSED' : 'FAILED'}</div>
+                    <details>
+                        <summary>Details</summary>
+                        <div class="test-details">Input Content:
+${test.input.content || '(empty)'}
+
+Banner URL: ${test.input.bannerUrl}
+
+Output:
+${result}</div>
+                    </details>
+                `;
+                resultsContainer.appendChild(testDiv);
+            });
+
+            const total = passed + failed;
+            summaryContainer.innerHTML = `
+                <div class="summary ${failed === 0 ? 'pass' : 'fail'}">
+                    ${failed === 0 ? '✓ All tests passed!' : '✗ Some tests failed'}
+                    <br>
+                    ${passed}/${total} tests passed
+                </div>
+            `;
+        }
+
+        // Run tests on load
+        window.onload = runTests;
+    </script>
+</body>
+</html>
