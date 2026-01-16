@@ -70,3 +70,6 @@ docker-compose.override.yml
 # Frontend built files
 docs/@eaDir/
 frontend/@eaDir/
+
+# LLM specific settings
+.claude/

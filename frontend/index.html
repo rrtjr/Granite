@@ -403,7 +403,72 @@
             border-radius: 0.5rem;
             margin: 1rem 0;
         }
-        
+
+        /* Note Banner - translucent header image from frontmatter */
+        .markdown-preview .note-banner {
+            width: calc(100% + 3rem);
+            margin-left: -1.5rem;
+            margin-top: -1.5rem;
+            margin-bottom: 1.5rem;
+            height: 200px;
+            position: relative;
+        }
+
+        /* Banner image with opacity control */
+        .markdown-preview .note-banner .banner-image {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Gradient fade at bottom */
+        .markdown-preview .note-banner::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom,
+                transparent 60%,
+                var(--bg-primary) 100%);
+            pointer-events: none;
+        }
+
+        /* Adjust banner for different margin settings */
+        .markdown-preview.margins-compact .note-banner {
+            width: calc(100% + 3rem);
+            margin-left: -1.5rem;
+            margin-top: -1rem;
+        }
+
+        .markdown-preview.margins-relaxed .note-banner {
+            width: calc(100% + 6rem);
+            margin-left: -3rem;
+            margin-top: -2rem;
+        }
+
+        .markdown-preview.margins-extra-relaxed .note-banner {
+            width: calc(100% + 8rem);
+            margin-left: -4rem;
+            margin-top: -3rem;
+        }
+
+        /* Banner title overlay */
+        .markdown-preview .note-banner .banner-title {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: 0;
+            padding: 1rem 1.5rem;
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
+            z-index: 1;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
+            border: none;
+        }
+
         /* Task lists */
         .markdown-preview input[type="checkbox"] {
             margin-right: 0.5rem;
@@ -1731,6 +1796,25 @@
                                                 <option value="relaxed">Relaxed</option>
                                                 <option value="extra-relaxed">Extra Relaxed</option>
                                             </select>
+                                        </div>
+
+                                        <!-- Banner Opacity -->
+                                        <div>
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">
+                                                Banner Opacity
+                                                <span class="ml-1" style="color: var(--text-primary);" x-text="Math.round(parseFloat(bannerOpacity) * 100) + '%'"></span>
+                                            </label>
+                                            <input
+                                                type="range"
+                                                x-model.number="bannerOpacity"
+                                                @change="saveReadingPreferences()"
+                                                min="0"
+                                                max="1"
+                                                step="0.1"
+                                                class="w-full h-2 rounded-lg appearance-none cursor-pointer"
+                                                style="background: linear-gradient(to right, var(--accent-primary), var(--bg-tertiary));"
+                                            />
+                                            <p class="text-xs mt-1" style="color: var(--text-tertiary);">Controls the fade effect on note banners</p>
                                         </div>
                                     </div>
                                 </div>
