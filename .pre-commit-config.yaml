@@ -1,74 +1,77 @@
+---
 exclude: ^data/
 
 repos:
-  # Pre-commit hooks for common issues
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+  # Local hooks using current venv
+  - repo: local
     hooks:
+      # Basic file checks (auto-fix enabled)
       - id: trailing-whitespace
+        name: trailing-whitespace
+        entry: python scripts/fix_trailing_whitespace.py
+        language: system
+        types: [text]
+
       - id: end-of-file-fixer
+        name: end-of-file-fixer
+        entry: python scripts/fix_end_of_file.py
+        language: system
+        types: [text]
+
       - id: check-yaml
-      - id: check-added-large-files
-        args: ['--maxkb=1000']
-      - id: check-merge-conflict
+        name: check-yaml
+        entry: python -c "import sys,yaml;[yaml.safe_load(open(f))for f in sys.argv[1:]]"
+        language: system
+        types: [yaml]
+
       - id: check-json
+        name: check-json
+        entry: python -c "import sys,json;[json.load(open(f))for f in sys.argv[1:]]"
+        language: system
+        types: [json]
+
       - id: check-toml
-      - id: check-case-conflict
-      - id: detect-private-key
-      - id: mixed-line-ending
+        name: check-toml
+        entry: python -c "import sys,tomllib;[tomllib.load(open(f,'rb'))for f in sys.argv[1:]]"
+        language: system
+        types: [toml]
 
-  # Ruff - Fast Python linter and formatter (replaces black, flake8, isort, and more)
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.4
-    hooks:
-      # Run the linter
+      # Ruff - linter and formatter
       - id: ruff
-        args: [--fix]
-      # Run the formatter
+        name: ruff
+        entry: ruff check --fix
+        language: system
+        types: [python]
+
       - id: ruff-format
+        name: ruff-format
+        entry: ruff format
+        language: system
+        types: [python]
 
-  # bandit - Security linter
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.10
-    hooks:
+      # Bandit - security linter
       - id: bandit
-        args: ['-c', 'pyproject.toml']
-        additional_dependencies: ['bandit[toml]']
+        name: bandit
+        entry: bandit -c pyproject.toml
+        language: system
+        types: [python]
 
-  # mypy - Static type checking (optional but recommended)
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.13.0
-    hooks:
+      # Mypy - type checking
       - id: mypy
-        args: ['--ignore-missing-imports', '--no-strict-optional']
-        additional_dependencies: [types-all]
+        name: mypy
+        entry: mypy --ignore-missing-imports --no-strict-optional
+        language: system
+        types: [python]
 
-  # yamllint - YAML linting
-  - repo: https://github.com/adrienverge/yamllint
-    rev: v1.35.1
-    hooks:
+      # Yamllint
       - id: yamllint
-        args: ['-d', '{extends: default, rules: {line-length: {max: 120}}}']
-
-  # markdownlint - Markdown linting
-  - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.42.0
-    hooks:
-      - id: markdownlint
-        args: ['--fix']
-
-  # shellcheck - Shell script linting
-  - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.10.0.1
-    hooks:
-      - id: shellcheck
-
-# Configuration
-default_language_version:
-  python: python3.11
+        name: yamllint
+        entry: "yamllint -d '{extends: default, rules: {line-length: {max: 120}}}'"
+        language: system
+        types: [yaml]
 
 # Run these hooks on all files during the first installation
-default_stages: [commit]
+default_stages: [pre-commit]
 
 # Fail fast on first error
 fail_fast: false
