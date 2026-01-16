@@ -211,6 +211,23 @@ Content here...
 - **Local images**: `banner: myimage.png` (searches notes directory)
 - **Obsidian-style**: `banner: "[[myimage.png]]"` (wiki-link format)
 
+### Unsplash Integration
+
+Easily add beautiful banners from [Unsplash](https://unsplash.com) - a library of free, high-quality images.
+
+**Using the Unsplash Picker:**
+1. Open any note
+2. Click the **image icon** in the note toolbar (next to the link button)
+3. Browse [unsplash.com](https://unsplash.com) in a new tab
+4. Right-click an image and select "Copy image address"
+5. Paste the URL in the picker - a preview will appear
+6. Click "Set as Banner" to add it to your note
+
+The picker will automatically:
+- Create frontmatter if your note doesn't have any
+- Update the existing banner if one is already set
+- Auto-save the note after inserting
+
 ### Customization
 
 Control the banner fade effect in Settings > Reading Preferences:
@@ -226,6 +243,7 @@ Control the banner fade effect in Settings > Reading Preferences:
 - **Gradient fade** - Smooth transition from image to note background
 - **Theme-aware** - Gradient uses your current theme's background color
 - **Responsive** - Adapts to different content width settings
+- **Unsplash picker** - Quick access to free stock photos via toolbar button
 
 ## Search & Filtering
 
