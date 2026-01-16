@@ -3793,6 +3793,7 @@ function noteApp() {
 
             const bannerUrl = this.unsplashUrl.trim();
             let content = this.noteContent;
+            let newContent = content;
 
             if (content.trim().startsWith('---')) {
                 // Frontmatter exists - update or add banner field
@@ -3822,12 +3823,19 @@ function noteApp() {
                         // Add banner before closing ---
                         lines.splice(endIdx, 0, `banner: "${bannerUrl}"`);
                     }
-                    this.noteContent = lines.join('\n');
+                    newContent = lines.join('\n');
+                } else {
+                    // Malformed frontmatter (no closing ---), create new
+                    newContent = `---\nbanner: "${bannerUrl}"\n---\n\n${content}`;
                 }
             } else {
                 // No frontmatter - create it
-                this.noteContent = `---\nbanner: "${bannerUrl}"\n---\n\n${content}`;
+                newContent = `---\nbanner: "${bannerUrl}"\n---\n\n${content}`;
             }
+
+            // Update both the data model and CodeMirror editor
+            this.noteContent = newContent;
+            this.updateEditorContent(newContent);
 
             // Close modal and reset state
             this.showUnsplashModal = false;

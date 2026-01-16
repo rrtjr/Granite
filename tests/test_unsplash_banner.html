@@ -87,6 +87,23 @@
 
     <button onclick="runTests()">Run All Tests</button>
 
+    <div class="test-section" style="background: #fff3cd; border-left: 4px solid #ffc107;">
+        <h2>Test Coverage Note</h2>
+        <p><strong>These tests cover:</strong> String manipulation logic for inserting banners into frontmatter</p>
+        <p><strong>Not covered (requires integration testing):</strong></p>
+        <ul>
+            <li>CodeMirror editor synchronization (<code>updateEditorContent()</code> must be called)</li>
+            <li>Alpine.js reactivity and state management</li>
+            <li>Auto-save trigger (<code>debouncedSave()</code>)</li>
+        </ul>
+        <p style="font-size: 12px; color: #856404;">
+            <strong>Integration checklist:</strong> After inserting a banner, verify:
+            (1) Editor shows updated content,
+            (2) Preview shows the banner,
+            (3) Note is auto-saved
+        </p>
+    </div>
+
     <div class="test-section">
         <h2>Banner Insertion Logic Tests</h2>
         <p>Tests the <code>insertBannerInFrontmatter()</code> function logic</p>
@@ -97,7 +114,10 @@
 
     <script>
         // Simulate the insertBannerInFrontmatter function from app.js
+        // This must match the logic in app.js insertUnsplashBanner()
         function insertBannerInFrontmatter(content, bannerUrl) {
+            let newContent = content;
+
             if (content.trim().startsWith('---')) {
                 // Frontmatter exists - update or add banner field
                 const lines = content.split('\n');
@@ -126,12 +146,17 @@
                         // Add banner before closing ---
                         lines.splice(endIdx, 0, `banner: "${bannerUrl}"`);
                     }
-                    return lines.join('\n');
+                    newContent = lines.join('\n');
+                } else {
+                    // Malformed frontmatter (no closing ---), create new
+                    newContent = `---\nbanner: "${bannerUrl}"\n---\n\n${content}`;
                 }
+            } else {
+                // No frontmatter - create it
+                newContent = `---\nbanner: "${bannerUrl}"\n---\n\n${content}`;
             }
 
-            // No frontmatter - create it
-            return `---\nbanner: "${bannerUrl}"\n---\n\n${content}`;
+            return newContent;
         }
 
         // Test cases
@@ -250,6 +275,18 @@
                 validate: (result) => {
                     return result.includes('banner: "https://images.unsplash.com/photo-last"') &&
                            !result.includes('old.com');
+                }
+            },
+            {
+                name: 'Handle malformed frontmatter (missing closing ---)',
+                input: {
+                    content: '---\ntags: [test]\ndate: 2024\n\n# My Note\n\nContent without closing frontmatter',
+                    bannerUrl: 'https://images.unsplash.com/photo-malformed'
+                },
+                validate: (result) => {
+                    // Should create new proper frontmatter since original is malformed
+                    return result.startsWith('---\nbanner: "https://images.unsplash.com/photo-malformed"\n---') &&
+                           result.includes('# My Note');
                 }
             }
         ];
