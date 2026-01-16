@@ -80,6 +80,7 @@ Customize your reading experience in Settings → Reading Preferences:
 - **Content Width** - Narrow (650px), Medium (850px), Wide (1100px), or Full Width
 - **Text Alignment** - Left aligned, Centered, or Justified
 - **Content Spacing** - Compact, Normal, Relaxed, or Extra Relaxed
+- **Banner Opacity** - Controls fade effect on note banners (0-100%)
 
 ### Performance Tuning
 Advanced settings for power users in Settings → Advanced Settings:
@@ -185,6 +186,46 @@ items:                         # YAML list format
   - item 2
 ---
 ```
+
+## Note Banners
+
+Add visual header banners to your notes using YAML frontmatter. Banners display as translucent images at the top of the note preview.
+
+### Usage
+
+Add a `banner` field to your note's frontmatter:
+
+```yaml
+---
+banner: https://example.com/image.jpg
+tags: [project, design]
+---
+
+# My Note
+Content here...
+```
+
+### Supported Formats
+
+- **External URLs**: `banner: https://example.com/image.jpg`
+- **Local images**: `banner: myimage.png` (searches notes directory)
+- **Obsidian-style**: `banner: "[[myimage.png]]"` (wiki-link format)
+
+### Customization
+
+Control the banner fade effect in Settings > Reading Preferences:
+
+- **Banner Opacity** (0-100%) - Controls how much the gradient overlay fades the banner
+  - 0% = Full banner visibility (no fade)
+  - 100% = Maximum fade effect
+
+### Features
+
+- **Title overlay** - Note's H1 title displays at the bottom of the banner with text shadow
+- **Scrolls with content** - Banner moves with the note as you read
+- **Gradient fade** - Smooth transition from image to note background
+- **Theme-aware** - Gradient uses your current theme's background color
+- **Responsive** - Adapts to different content width settings
 
 ## Search & Filtering
 

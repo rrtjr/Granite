@@ -851,6 +851,7 @@ def get_default_user_settings() -> dict:
             "width": "full",  # 'narrow', 'medium', 'wide', 'full'
             "align": "left",  # 'left', 'center', 'justified'
             "margins": "normal",  # 'compact', 'normal', 'relaxed', 'extra-relaxed'
+            "bannerOpacity": 0.5,  # 0.0 to 1.0 - opacity of banner gradient overlay
         },
         "performance": {
             "updateDelay": 100,

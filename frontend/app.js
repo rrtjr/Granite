@@ -48,6 +48,7 @@ function noteApp() {
         readingWidth: 'full', // 'narrow', 'medium', 'wide', 'full'
         contentAlign: 'left', // 'left', 'center', 'justified'
         contentMargins: 'normal', // 'compact', 'normal', 'relaxed', 'extra-relaxed'
+        bannerOpacity: 0.5, // 0.0 to 1.0 - opacity of the banner gradient overlay
 
         // Folders & Paths
         templatesDir: '_templates', // Templates folder path (relative to notes_dir)
@@ -1132,7 +1133,89 @@ function noteApp() {
                 return [];
             }
         },
-        
+
+        // Parse banner URL from YAML frontmatter
+        parseBannerFromContent(content) {
+            if (!content || !content.trim().startsWith('---')) {
+                return null;
+            }
+
+            try {
+                const lines = content.split('\n');
+                if (lines[0].trim() !== '---') return null;
+
+                // Find closing ---
+                let endIdx = -1;
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim() === '---') {
+                        endIdx = i;
+                        break;
+                    }
+                }
+
+                if (endIdx === -1) return null;
+
+                const frontmatterLines = lines.slice(1, endIdx);
+
+                for (const line of frontmatterLines) {
+                    const stripped = line.trim();
+
+                    // Check for banner: field
+                    if (stripped.startsWith('banner:')) {
+                        let value = stripped.substring(7).trim();
+
+                        // Remove surrounding quotes if present
+                        if ((value.startsWith('"') && value.endsWith('"')) ||
+                            (value.startsWith("'") && value.endsWith("'"))) {
+                            value = value.substring(1, value.length - 1);
+                        }
+
+                        if (!value) return null;
+
+                        // Check if it's an external URL
+                        if (value.startsWith('http://') || value.startsWith('https://')) {
+                            return { url: value, isExternal: true };
+                        }
+
+                        // Check if it's Obsidian-style reference: [[image.png]]
+                        const wikiMatch = value.match(/^\[\[([^\]]+)\]\]$/);
+                        if (wikiMatch) {
+                            value = wikiMatch[1].trim();
+                        }
+
+                        // It's a local image reference - resolve it
+                        const allImages = this.notes.filter(n => n.type === 'image');
+                        const valueLower = value.toLowerCase();
+
+                        const foundImage = allImages.find(img => {
+                            const nameLower = img.name.toLowerCase();
+                            return (
+                                img.name === value ||
+                                nameLower === valueLower ||
+                                img.path === value ||
+                                img.path.toLowerCase() === valueLower ||
+                                img.path.endsWith('/' + value) ||
+                                img.path.toLowerCase().endsWith('/' + valueLower)
+                            );
+                        });
+
+                        if (foundImage) {
+                            const encodedPath = foundImage.path.split('/').map(segment => encodeURIComponent(segment)).join('/');
+                            return { url: `/api/images/${encodedPath}`, isExternal: false };
+                        }
+
+                        // Image not found, return null
+                        return null;
+                    }
+                }
+
+                return null;
+            } catch (e) {
+                console.error('Error parsing banner:', e);
+                return null;
+            }
+        },
+
         // Build folder tree structure
         buildFolderTree() {
             const tree = {};
@@ -3037,7 +3120,10 @@ function noteApp() {
         // Computed property for rendered markdown
         get renderedMarkdown() {
             if (!this.noteContent) return '<p style="color: var(--text-tertiary);">Nothing to preview yet...</p>';
-            
+
+            // Parse banner from frontmatter before stripping it
+            const bannerInfo = this.parseBannerFromContent(this.noteContent);
+
             // Strip YAML frontmatter from content before rendering
             let contentToRender = this.noteContent;
             if (contentToRender.trim().startsWith('---')) {
@@ -3252,10 +3338,29 @@ function noteApp() {
                     });
                 }
             }, 0);
-            
+
+            // Prepend banner if present
+            if (bannerInfo && bannerInfo.url) {
+                const safeUrl = bannerInfo.url.replace(/"/g, '%22');
+                const opacity = this.bannerOpacity;
+
+                // Extract first H1 title from content to overlay on banner
+                let titleHtml = '';
+                const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/i);
+                if (h1Match) {
+                    const titleText = h1Match[1];
+                    titleHtml = `<h1 class="banner-title">${titleText}</h1>`;
+                    // Remove the first H1 from the main content
+                    html = html.replace(h1Match[0], '');
+                }
+
+                const bannerHtml = `<div class="note-banner"><div class="banner-image" style="background-image: url('${safeUrl}'); opacity: ${opacity}"></div>${titleHtml}</div>`;
+                html = bannerHtml + html;
+            }
+
             return html;
         },
-        
+
         // Refresh DOM element cache
         refreshDOMCache() {
             this._domCache.editor = document.querySelector('.editor-textarea');
@@ -4094,6 +4199,7 @@ function noteApp() {
                         this.readingWidth = settings.reading.width || 'full';
                         this.contentAlign = settings.reading.align || 'left';
                         this.contentMargins = settings.reading.margins || 'normal';
+                        this.bannerOpacity = settings.reading.bannerOpacity !== undefined ? parseFloat(settings.reading.bannerOpacity) : 0.5;
                     }
 
                     // Apply performance settings
@@ -4190,7 +4296,8 @@ function noteApp() {
                     reading: {
                         width: this.readingWidth,
                         align: this.contentAlign,
-                        margins: this.contentMargins
+                        margins: this.contentMargins,
+                        bannerOpacity: this.bannerOpacity
                     },
                     performance: this.performanceSettings,
                     paths: {

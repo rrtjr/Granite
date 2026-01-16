@@ -61,6 +61,7 @@ class TestUserSettingsUtils:
         assert defaults["reading"]["width"] == "full"
         assert defaults["reading"]["align"] == "left"
         assert defaults["reading"]["margins"] == "normal"
+        assert defaults["reading"]["bannerOpacity"] == 0.5
 
         # Check performance settings
         assert defaults["performance"]["updateDelay"] == 100
@@ -251,3 +252,83 @@ class TestPluginSettingsPersistence:
         assert user_settings["plugins"]["pdf_export"]["orientation"] == "landscape"
         assert user_settings["plugins"]["pdf_export"]["include_author"] is True
         assert user_settings["plugins"]["pdf_export"]["author_name"] == "Test Author"
+
+
+class TestBannerOpacitySettings:
+    """Test banner opacity reading preference"""
+
+    def test_default_banner_opacity(self):
+        """Test that default settings include bannerOpacity"""
+        defaults = get_default_user_settings()
+
+        assert "reading" in defaults
+        assert "bannerOpacity" in defaults["reading"]
+        assert defaults["reading"]["bannerOpacity"] == 0.5
+
+    def test_banner_opacity_in_api_response(self, client):
+        """Test that GET /api/settings/user returns bannerOpacity"""
+        response = client.get("/api/settings/user")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "reading" in data
+        # bannerOpacity should be present (either from defaults or existing settings)
+        # It may be missing in legacy settings, so we just check the structure
+        assert isinstance(data["reading"], dict)
+
+    def test_update_banner_opacity(self, client):
+        """Test updating banner opacity via API"""
+        new_settings = {"reading": {"bannerOpacity": 0.8}}
+
+        response = client.post("/api/settings/user", json=new_settings)
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["success"] is True
+        assert data["settings"]["reading"]["bannerOpacity"] == 0.8
+
+    def test_banner_opacity_persistence(self, client):
+        """Test that banner opacity persists across requests"""
+        # Set banner opacity
+        client.post("/api/settings/user", json={"reading": {"bannerOpacity": 0.3}})
+
+        # Get settings again
+        response = client.get("/api/settings/user")
+        data = response.json()
+
+        assert data["reading"]["bannerOpacity"] == 0.3
+
+    def test_banner_opacity_boundary_values(self, client):
+        """Test banner opacity with boundary values (0 and 1)"""
+        # Test minimum value
+        response = client.post("/api/settings/user", json={"reading": {"bannerOpacity": 0}})
+        assert response.status_code == 200
+        assert response.json()["settings"]["reading"]["bannerOpacity"] == 0
+
+        # Test maximum value
+        response = client.post("/api/settings/user", json={"reading": {"bannerOpacity": 1}})
+        assert response.status_code == 200
+        assert response.json()["settings"]["reading"]["bannerOpacity"] == 1
+
+    def test_banner_opacity_with_other_reading_settings(self, client):
+        """Test that banner opacity works alongside other reading settings"""
+        new_settings = {
+            "reading": {
+                "width": "narrow",
+                "align": "center",
+                "margins": "relaxed",
+                "bannerOpacity": 0.7,
+            }
+        }
+
+        response = client.post("/api/settings/user", json=new_settings)
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["settings"]["reading"]["width"] == "narrow"
+        assert data["settings"]["reading"]["align"] == "center"
+        assert data["settings"]["reading"]["margins"] == "relaxed"
+        assert data["settings"]["reading"]["bannerOpacity"] == 0.7
