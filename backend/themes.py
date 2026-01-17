@@ -32,10 +32,10 @@ def parse_theme_metadata(theme_path: Path) -> dict[str, str]:
     return metadata
 
 
-def get_available_themes(themes_dir: str) -> list[dict[str, str]]:
+def get_available_themes(themes_dir: str) -> list[dict[str, str | bool]]:
     """Get all available themes from the themes directory"""
     themes_path = Path(themes_dir)
-    themes = []
+    themes: list[dict[str, str | bool]] = []
 
     # Theme icons/emojis mapping
     theme_icons = {
@@ -49,6 +49,12 @@ def get_available_themes(themes_dir: str) -> list[dict[str, str]]:
         "vs-blue": "🔷",
         "gruvbox-dark": "🟫",
         "matcha-light": "🍵",
+        "solarized-light": "🔆",
+        "solarized-dark": "🌃",
+        "one-dark-pro": "⚛️",
+        "github-light": "🐙",
+        "github-dark": "🦑",
+        "catppuccin-mocha": "☕",
     }
 
     # Load all themes from themes folder

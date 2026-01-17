@@ -1,0 +1,36 @@
+/* One Dark Pro Theme */
+/* Based on Atom's One Dark theme */
+/* @theme-type: dark */
+
+:root[data-theme="one-dark-pro"] {
+    /* Background colors */
+    --bg-primary: #282c34;
+    --bg-secondary: #21252b;
+    --bg-tertiary: #2c323c;
+    --bg-hover: #2c323c;
+    --bg-active: #3e4451;
+
+    /* Text colors */
+    --text-primary: #abb2bf;
+    --text-secondary: #9da5b4;
+    --text-tertiary: #5c6370;
+
+    /* Border colors */
+    --border-primary: #3e4451;
+    --border-secondary: #2c323c;
+
+    /* Accent colors */
+    --accent-primary: #61afef;
+    --accent-hover: #c678dd;
+    --accent-light: rgba(97, 175, 239, 0.15);
+
+    /* Status colors */
+    --success: #98c379;
+    --error: #e06c75;
+    --warning: #e5c07b;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}

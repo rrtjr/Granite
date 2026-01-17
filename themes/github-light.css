@@ -1,0 +1,36 @@
+/* GitHub Light Theme */
+/* Based on GitHub's official editor colors */
+/* @theme-type: light */
+
+:root[data-theme="github-light"] {
+    /* Background colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f6f8fa;
+    --bg-tertiary: #eaeef2;
+    --bg-hover: #f3f4f6;
+    --bg-active: #eaeef2;
+
+    /* Text colors */
+    --text-primary: #24292f;
+    --text-secondary: #57606a;
+    --text-tertiary: #8b949e;
+
+    /* Border colors */
+    --border-primary: #d0d7de;
+    --border-secondary: #e1e4e8;
+
+    /* Accent colors */
+    --accent-primary: #0969da;
+    --accent-hover: #0550ae;
+    --accent-light: rgba(9, 105, 218, 0.1);
+
+    /* Status colors */
+    --success: #1a7f37;
+    --error: #cf222e;
+    --warning: #9a6700;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
