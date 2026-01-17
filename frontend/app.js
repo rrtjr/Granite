@@ -107,6 +107,8 @@ function noteApp() {
             enable_toc: false,
             break_tables_across_pages: false,
             compress_tables: true,
+            remove_frontmatter: true,
+            remove_banner: true,
         },
 
         // Theme state

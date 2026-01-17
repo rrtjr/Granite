@@ -3599,6 +3599,32 @@
                                 style="background-color: var(--bg-secondary); color: var(--text-primary); border-color: var(--border-primary);"
                             />
                         </div>
+
+                        <!-- Remove Frontmatter -->
+                        <label class="flex items-start gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                x-model="pdfExportSettings.remove_frontmatter"
+                                class="cursor-pointer mt-1"
+                            />
+                            <div>
+                                <span style="color: var(--text-primary);">Remove frontmatter</span>
+                                <p class="text-xs" style="color: var(--text-tertiary);">Strip YAML frontmatter block from exported PDF</p>
+                            </div>
+                        </label>
+
+                        <!-- Remove Banner -->
+                        <label class="flex items-start gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                x-model="pdfExportSettings.remove_banner"
+                                class="cursor-pointer mt-1"
+                            />
+                            <div>
+                                <span style="color: var(--text-primary);">Remove banner</span>
+                                <p class="text-xs" style="color: var(--text-tertiary);">Strip banner image reference from exported PDF</p>
+                            </div>
+                        </label>
                     </div>
                 </div>
 
