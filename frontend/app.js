@@ -111,6 +111,12 @@ function noteApp() {
             remove_banner: true,
         },
 
+        // Datetime settings state
+        datetimeSettings: {
+            timezone: 'local',
+            updateModifiedOnOpen: true,
+        },
+
         // Theme state
         currentTheme: 'light',
         availableThemes: [],
@@ -4307,6 +4313,14 @@ function noteApp() {
                     if (settings.paths) {
                         this.templatesDir = settings.paths.templatesDir || '_templates';
                     }
+
+                    // Apply datetime settings
+                    if (settings.datetime) {
+                        this.datetimeSettings = {
+                            timezone: settings.datetime.timezone || 'local',
+                            updateModifiedOnOpen: settings.datetime.updateModifiedOnOpen !== false,
+                        };
+                    }
                 } else {
                     // Migrate from localStorage if server settings don't exist
                     await this.migrateFromLocalStorage();
@@ -4392,7 +4406,8 @@ function noteApp() {
                     performance: this.performanceSettings,
                     paths: {
                         templatesDir: this.templatesDir
-                    }
+                    },
+                    datetime: this.datetimeSettings
                 };
 
                 const response = await fetch('/api/settings/user', {
@@ -4429,6 +4444,11 @@ function noteApp() {
 
         // Save performance settings (called from UI)
         savePerformanceSettings() {
+            this.saveUserSettings();
+        },
+
+        // Save datetime settings (called from UI)
+        saveDatetimeSettings() {
             this.saveUserSettings();
         },
 

@@ -55,6 +55,7 @@ class TestUserSettingsUtils:
         assert "reading" in defaults
         assert "performance" in defaults
         assert "paths" in defaults
+        assert "datetime" in defaults
         assert "plugins" in defaults
 
         # Check reading preferences
@@ -69,6 +70,10 @@ class TestUserSettingsUtils:
 
         # Check paths
         assert defaults["paths"]["templatesDir"] == "_templates"
+
+        # Check datetime settings
+        assert defaults["datetime"]["timezone"] == "local"
+        assert defaults["datetime"]["updateModifiedOnOpen"] is True
 
     def test_load_user_settings_creates_file(self, temp_settings_file):
         """Test that load_user_settings creates file with defaults if missing"""
@@ -146,6 +151,7 @@ class TestUserSettingsAPI:
         assert "reading" in data
         assert "performance" in data
         assert "paths" in data
+        assert "datetime" in data
         assert "plugins" in data
 
     def test_update_user_settings(self, client):

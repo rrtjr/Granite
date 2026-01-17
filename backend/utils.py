@@ -7,8 +7,9 @@ import re
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 # In-memory cache for parsed tags
 # Format: {file_path: (mtime, tags)}
@@ -331,8 +332,8 @@ def search_notes(notes_dir: str, query: str) -> list[dict]:
                         "matches": matched_lines,
                     }
                 )
-        except Exception:
-            continue
+        except Exception:  # nosec B112
+            continue  # Skip files that can't be read/searched
 
     return results
 
@@ -491,7 +492,7 @@ def parse_tags(content: str) -> list[str]:
     Returns:
         List of tag strings (lowercase, no duplicates)
     """
-    tags = []
+    tags: list[str] = []
 
     # Check if content starts with frontmatter
     if not content.strip().startswith("---"):
@@ -605,7 +606,7 @@ def get_all_tags(notes_dir: str) -> dict[str, int]:
     Returns:
         Dictionary mapping tag names to note counts
     """
-    tag_counts = {}
+    tag_counts: dict[str, int] = {}
     notes_path = Path(notes_dir)
 
     for md_file in notes_path.rglob("*.md"):
@@ -671,7 +672,7 @@ def get_templates(notes_dir: str, templates_dir: str | None = None) -> list[dict
     Returns:
         List of template metadata (name, path, modified)
     """
-    templates = []
+    templates: list[dict[str, str]] = []
 
     # Resolve templates_dir relative to notes_dir if not absolute
     if templates_dir:
@@ -753,7 +754,7 @@ def get_template_content(notes_dir: str, template_name: str, templates_dir: str 
         return None
 
 
-def apply_template_placeholders(content: str, note_path: str) -> str:
+def apply_template_placeholders(content: str, note_path: str, user_settings: dict | None = None) -> str:
     """
     Replace template placeholders with actual values.
 
@@ -764,24 +765,48 @@ def apply_template_placeholders(content: str, note_path: str) -> str:
         {{timestamp}} - Unix timestamp
         {{title}}     - Note name without extension
         {{folder}}    - Parent folder name
+        {{created}}   - Current datetime for created field (YYYY-MM-DD HH:MM:SS)
+        {{modified}}  - Current datetime for modified field (YYYY-MM-DD HH:MM:SS)
 
     Args:
         content: Template content with placeholders
         note_path: Path of the note being created
+        user_settings: Optional user settings for timezone configuration
 
     Returns:
         Content with placeholders replaced
     """
-    now = datetime.now(timezone.utc)
+    # Get timezone setting
+    tz_setting = "local"
+    if user_settings and "datetime" in user_settings:
+        tz_setting = user_settings["datetime"].get("timezone", "local")
+
+    # Get timezone object
+    tz = get_timezone_from_setting(tz_setting)
+
+    # Calculate time based on timezone
+    if tz is None:
+        # Local time - use system timezone
+        local_now = datetime.now(tz=timezone.utc).astimezone()
+    else:
+        # Convert UTC to specified timezone
+        utc_now = datetime.now(timezone.utc)
+        local_now = utc_now.astimezone(tz)
+
     note = Path(note_path)
 
+    # Format datetime string for created/modified
+    datetime_str = local_now.strftime("%Y-%m-%d %H:%M:%S")
+
     replacements = {
-        "{{date}}": now.strftime("%Y-%m-%d"),
-        "{{time}}": now.strftime("%H:%M:%S"),
-        "{{datetime}}": now.strftime("%Y-%m-%d %H:%M:%S"),
-        "{{timestamp}}": str(int(now.timestamp())),
+        "{{date}}": local_now.strftime("%Y-%m-%d"),
+        "{{time}}": local_now.strftime("%H:%M:%S"),
+        "{{datetime}}": datetime_str,
+        "{{timestamp}}": str(int(local_now.timestamp())),
         "{{title}}": note.stem,
         "{{folder}}": note.parent.name if str(note.parent) != "." else "Root",
+        "{{created}}": datetime_str,
+        "{{modified}}": datetime_str,
     }
 
     result = content
@@ -789,6 +814,97 @@ def apply_template_placeholders(content: str, note_path: str) -> str:
         result = result.replace(placeholder, value)
 
     return result
+
+
+# ============================================================================
+# Timezone and Datetime Functions
+# ============================================================================
+
+
+def get_timezone_from_setting(tz_setting: str) -> ZoneInfo | timezone | None:
+    """
+    Convert a timezone setting string to a timezone object.
+
+    Args:
+        tz_setting: "local", "UTC", or IANA timezone name (e.g., "America/New_York")
+
+    Returns:
+        ZoneInfo for IANA timezones, timezone.utc for UTC, or None for local time
+    """
+    if tz_setting == "UTC":
+        return timezone.utc
+    if tz_setting == "local":
+        return None  # Use local time (no tz conversion)
+    try:
+        return ZoneInfo(tz_setting)
+    except Exception:
+        return timezone.utc  # Fallback to UTC if invalid
+
+
+def format_datetime_for_frontmatter(tz_setting: str = "local") -> str:
+    """
+    Format current datetime for frontmatter according to user timezone settings.
+
+    Args:
+        tz_setting: Timezone setting from user settings
+
+    Returns:
+        Formatted datetime string like "2026-01-17 14:30:45"
+    """
+    tz = get_timezone_from_setting(tz_setting)
+
+    if tz is None:
+        # Local time - use system timezone
+        local_dt = datetime.now(tz=timezone.utc).astimezone()
+        return local_dt.strftime("%Y-%m-%d %H:%M:%S")
+    # Convert to specified timezone
+    now = datetime.now(timezone.utc)
+    converted = now.astimezone(tz)
+    return converted.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def update_frontmatter_field(content: str, field: str, value: str) -> str:
+    """
+    Update or add a field in YAML frontmatter.
+
+    Args:
+        content: Full note content with frontmatter
+        field: Field name to update (e.g., "modified")
+        value: New value for the field
+
+    Returns:
+        Content with updated frontmatter, or original content if no frontmatter
+    """
+    if not content.strip().startswith("---"):
+        return content  # No frontmatter, return unchanged
+
+    lines = content.split("\n")
+    if lines[0].strip() != "---":
+        return content
+
+    # Find closing ---
+    end_idx = None
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            end_idx = i
+            break
+
+    if end_idx is None:
+        return content  # Malformed frontmatter
+
+    # Check if field exists and update it
+    field_found = False
+    for i in range(1, end_idx):
+        if lines[i].startswith(f"{field}:"):
+            lines[i] = f"{field}: {value}"
+            field_found = True
+            break
+
+    # Add field if not found (before closing ---)
+    if not field_found:
+        lines.insert(end_idx, f"{field}: {value}")
+
+    return "\n".join(lines)
 
 
 # ============================================================================
@@ -861,6 +977,10 @@ def get_default_user_settings() -> dict:
             "autosaveDelay": 1000,
         },
         "paths": {"templatesDir": "_templates"},
+        "datetime": {
+            "timezone": "local",  # "local", "UTC", or IANA timezone like "America/New_York"
+            "updateModifiedOnOpen": True,  # Update modified date when file is opened
+        },
         "plugins": {},  # Plugin-specific settings
     }
 
@@ -890,7 +1010,7 @@ def load_user_settings(settings_path: Path) -> dict:
                         for key in defaults[section]:
                             if key not in settings[section]:
                                 settings[section][key] = defaults[section][key]
-                return settings
+                return dict(settings)
         else:
             # Create default settings file
             defaults = get_default_user_settings()

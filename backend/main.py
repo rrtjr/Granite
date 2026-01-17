@@ -6,9 +6,9 @@ Main FastAPI application
 import os
 from pathlib import Path
 
-import aiofiles
+import aiofiles  # type: ignore[import-untyped]
 import bcrypt
-import yaml
+import yaml  # type: ignore[import-untyped]
 from fastapi import APIRouter, Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
@@ -27,6 +27,7 @@ from .utils import (
     delete_folder,
     delete_note,
     ensure_directories,
+    format_datetime_for_frontmatter,
     get_all_folders,
     get_all_notes,
     get_all_tags,
@@ -43,6 +44,7 @@ from .utils import (
     save_user_settings,
     search_notes,
     update_config_value,
+    update_frontmatter_field,
     update_user_setting,
     validate_path_security,
 )
@@ -66,9 +68,9 @@ with version_path.open("r", encoding="utf-8") as f:
 # Environment variable overrides for authentication settings
 # Allows different configs for local vs production deployments
 if "AUTHENTICATION_ENABLED" in os.environ:
-    auth_enabled = os.getenv("AUTHENTICATION_ENABLED", "false").lower() in ("true", "1", "yes")
-    config["authentication"]["enabled"] = auth_enabled
-    print(f"Authentication {'ENABLED' if auth_enabled else 'DISABLED'} (from AUTHENTICATION_ENABLED env var)")
+    auth_enabled_env = os.getenv("AUTHENTICATION_ENABLED", "false").lower() in ("true", "1", "yes")
+    config["authentication"]["enabled"] = auth_enabled_env
+    print(f"Authentication {'ENABLED' if auth_enabled_env else 'DISABLED'} (from AUTHENTICATION_ENABLED env var)")
 else:
     print(
         f"Authentication {'ENABLED' if config.get('authentication', {}).get('enabled', False) else 'DISABLED'} (from config.yaml)"
@@ -149,7 +151,7 @@ if DEMO_MODE:
     # Enable rate limiting for demo deployments
     limiter = Limiter(key_func=get_remote_address, default_limits=["200/hour"])
     app.state.limiter = limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
     print("DEMO MODE enabled - Rate limiting active")
 else:
     # Production/self-hosted mode - no restrictions
@@ -161,7 +163,7 @@ else:
 
             return decorator
 
-    limiter = DummyLimiter()
+    limiter = DummyLimiter()  # type: ignore[assignment]
 
 # Ensure required directories exist
 ensure_directories(config)
@@ -184,12 +186,12 @@ def get_templates_dir() -> str:
         user_settings = load_user_settings(user_settings_path)
         templates_dir = user_settings.get("paths", {}).get("templatesDir")
         if templates_dir:
-            return templates_dir
-    except Exception:
-        pass
+            return str(templates_dir)
+    except Exception:  # nosec B110
+        pass  # Intentional fallback to config.yaml on any error
 
     # Fall back to config.yaml
-    return config["storage"].get("templates_dir", "_templates")
+    return str(config["storage"].get("templates_dir", "_templates"))
 
 
 # Initialize plugin manager
@@ -254,7 +256,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 def auth_enabled() -> bool:
     """Check if authentication is enabled in config"""
-    return config.get("authentication", {}).get("enabled", False)
+    return bool(config.get("authentication", {}).get("enabled", False))
 
 
 async def require_auth(request: Request):
@@ -991,8 +993,9 @@ async def create_note_from_template(request: Request, data: dict):
         if template_content is None:
             raise HTTPException(status_code=404, detail="Template not found")
 
-        # Apply placeholder replacements
-        final_content = apply_template_placeholders(template_content, note_path)
+        # Apply placeholder replacements with user timezone settings
+        user_settings = load_user_settings(user_settings_path)
+        final_content = apply_template_placeholders(template_content, note_path, user_settings)
 
         # Run on_note_create hook BEFORE saving (allows plugins to modify initial content)
         final_content = plugin_manager.run_hook_with_return(
@@ -1043,6 +1046,20 @@ async def get_note(note_path: str):
         content = get_note_content(config["storage"]["notes_dir"], note_path)
         if content is None:
             raise HTTPException(status_code=404, detail="Note not found")
+
+        # Load user settings for datetime configuration
+        user_settings = load_user_settings(user_settings_path)
+        datetime_settings = user_settings.get("datetime", {})
+
+        # Update modified date if enabled and frontmatter exists
+        if datetime_settings.get("updateModifiedOnOpen", True):
+            tz_setting = datetime_settings.get("timezone", "local")
+            new_modified = format_datetime_for_frontmatter(tz_setting=tz_setting)
+            updated_content = update_frontmatter_field(content, "modified", new_modified)
+
+            if updated_content != content:
+                save_note(config["storage"]["notes_dir"], note_path, updated_content)
+                content = updated_content
 
         # Run on_note_load hook (can transform content, e.g., decrypt)
         transformed_content = plugin_manager.run_hook("on_note_load", note_path=note_path, content=content)
@@ -1285,7 +1302,7 @@ async def calculate_note_stats(content: str):
         if not plugin or not plugin.enabled:
             return {"enabled": False, "stats": None}
 
-        stats = plugin.calculate_stats(content)
+        stats = plugin.calculate_stats(content)  # type: ignore[attr-defined]
         return {"enabled": True, "stats": stats}
     except Exception as e:
         raise HTTPException(status_code=500, detail=safe_error_message(e, "Failed to calculate note statistics")) from e
@@ -1337,12 +1354,12 @@ async def update_git_plugin_settings(request: Request, settings: dict):
             plugin.update_settings(settings)
 
             # Persist to user-settings.json
-            success, _ = update_user_setting(user_settings_path, "plugins", "git", plugin.get_settings())
+            success, _ = update_user_setting(user_settings_path, "plugins", "git", plugin.get_settings())  # type: ignore[attr-defined]
 
             if not success:
                 print("Warning: Failed to persist git plugin settings to user-settings.json")
 
-            return {"success": True, "settings": plugin.get_settings()}
+            return {"success": True, "settings": plugin.get_settings()}  # type: ignore[attr-defined]
         raise HTTPException(status_code=400, detail="Git plugin does not support settings updates")
     except HTTPException:
         raise
@@ -1505,7 +1522,7 @@ async def test_ssh_connection(request: Request, data: dict | None = None):
         if not host or len(host) < 3 or " " in host:
             raise HTTPException(status_code=400, detail="Invalid host format")
 
-        success, message = plugin.test_ssh_connection(host)
+        success, message = plugin.test_ssh_connection(host)  # type: ignore[attr-defined]
 
         # Ensure message is a string
         if not isinstance(message, str):
@@ -1553,7 +1570,7 @@ async def update_pdf_export_settings(request: Request, settings: dict):
             plugin.update_settings(settings)
 
             # Persist to user-settings.json
-            success, _ = update_user_setting(user_settings_path, "plugins", "pdf_export", plugin.get_settings())
+            success, _ = update_user_setting(user_settings_path, "plugins", "pdf_export", plugin.get_settings())  # type: ignore[attr-defined]
 
             if not success:
                 print("Warning: Failed to persist PDF export plugin settings to user-settings.json")
@@ -1561,7 +1578,7 @@ async def update_pdf_export_settings(request: Request, settings: dict):
             return {
                 "success": True,
                 "message": "PDF export settings updated",
-                "settings": plugin.get_settings() if hasattr(plugin, "get_settings") else {},
+                "settings": plugin.get_settings() if hasattr(plugin, "get_settings") else {},  # type: ignore[attr-defined]
             }
         raise HTTPException(status_code=400, detail="Plugin does not support settings updates")
     except HTTPException:
@@ -1596,7 +1613,7 @@ async def export_note_to_pdf(request: Request, data: dict):
         if not hasattr(plugin, "export_note"):
             raise HTTPException(status_code=400, detail="Plugin does not support PDF export")
 
-        success, message, pdf_path = plugin.export_note(
+        success, message, pdf_path = plugin.export_note(  # type: ignore[attr-defined]
             note_path=note_path, content=content, output_filename=output_filename
         )
 
