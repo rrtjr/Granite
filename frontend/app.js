@@ -195,6 +195,10 @@ function noteApp() {
         unsplashUrl: '',
         unsplashPreviewError: false,
 
+        // Table of Contents state
+        showToc: false,
+        tocHeadings: [],
+
         // Homepage state
         selectedHomepageFolder: '',
         _homepageCache: {
@@ -3342,6 +3346,9 @@ function noteApp() {
                         }
                     });
                 }
+
+                // Extract headings for Table of Contents
+                this.extractTocHeadings();
             }, 0);
 
             // Prepend banner if present
@@ -4569,6 +4576,85 @@ function noteApp() {
             setTimeout(() => {
                 this.isScrolling = false;
             }, CONFIG.SCROLL_SYNC_DELAY);
+        },
+
+        // Extract headings from rendered markdown for Table of Contents
+        extractTocHeadings() {
+            const previewEl = document.querySelector('.markdown-preview');
+            if (!previewEl) {
+                this.tocHeadings = [];
+                return;
+            }
+
+            const headings = previewEl.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            const tocItems = [];
+            const usedIds = new Set();
+
+            headings.forEach((heading, index) => {
+                // Generate an ID if the heading doesn't have one
+                let id = heading.id;
+                if (!id) {
+                    // Create slug from heading text
+                    const text = heading.textContent.trim();
+                    let baseId = 'toc-' + text.toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/^-|-$/g, '')
+                        .substring(0, 50);
+
+                    // Handle duplicates
+                    id = baseId;
+                    let counter = 1;
+                    while (usedIds.has(id)) {
+                        id = `${baseId}-${counter}`;
+                        counter++;
+                    }
+                    heading.id = id;
+                }
+                usedIds.add(id);
+
+                const level = parseInt(heading.tagName.charAt(1), 10);
+                tocItems.push({
+                    id: id,
+                    text: heading.textContent.trim(),
+                    level: level
+                });
+            });
+
+            this.tocHeadings = tocItems;
+        },
+
+        // Scroll to a heading in the preview
+        scrollToHeading(headingId) {
+            const previewContainer = document.querySelector('.markdown-preview')?.parentElement;
+            const headingEl = document.getElementById(headingId);
+
+            if (!previewContainer || !headingEl) return;
+
+            // Disable scroll sync temporarily
+            this.isScrolling = true;
+
+            // Calculate position relative to the preview container
+            const containerRect = previewContainer.getBoundingClientRect();
+            const headingRect = headingEl.getBoundingClientRect();
+            const scrollOffset = headingRect.top - containerRect.top + previewContainer.scrollTop - 20;
+
+            // Scroll to heading with smooth behavior
+            previewContainer.scrollTo({
+                top: scrollOffset,
+                behavior: 'smooth'
+            });
+
+            // Brief highlight effect on the heading
+            headingEl.style.transition = 'background-color 0.3s ease';
+            headingEl.style.backgroundColor = 'var(--accent-light, rgba(124, 58, 237, 0.2))';
+            setTimeout(() => {
+                headingEl.style.backgroundColor = 'transparent';
+            }, 1500);
+
+            // Re-enable scroll sync after animation
+            setTimeout(() => {
+                this.isScrolling = false;
+            }, 500);
         },
 
         // Export current note as HTML
