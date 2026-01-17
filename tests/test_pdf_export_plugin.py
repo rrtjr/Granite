@@ -298,25 +298,21 @@ class TestPDFExportPluginUnit:
         assert "toc" in extensions
 
     def test_generate_metadata_html(self, pdf_plugin):
-        """Test metadata HTML generation"""
-        # Test with all metadata enabled
-        pdf_plugin.update_settings(
-            {"include_title": True, "include_date": True, "include_author": True, "author_name": "Test Author"}
-        )
+        """Test metadata HTML generation (title only - author/date are in page footer)"""
+        # Test with title enabled
+        pdf_plugin.update_settings({"include_title": True})
 
         html = pdf_plugin._generate_metadata_html("Test Note", "test.md")
 
         assert isinstance(html, str)
         assert "Test Note" in html
-        assert "Test Author" in html
-        assert "Generated:" in html
         assert "metadata" in html
 
-        # Test with metadata disabled
-        pdf_plugin.update_settings({"include_title": False, "include_date": False, "include_author": False})
+        # Test with title disabled
+        pdf_plugin.update_settings({"include_title": False})
 
         html = pdf_plugin._generate_metadata_html("Test Note", "test.md")
-        assert "Test Note" not in html
+        assert html == ""
 
 
 class TestPDFExportPluginIntegration:
