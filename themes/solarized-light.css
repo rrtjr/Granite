@@ -1,0 +1,36 @@
+/* Solarized Light Theme */
+/* Based on Ethan Schoonover's Solarized */
+/* @theme-type: light */
+
+:root[data-theme="solarized-light"] {
+    /* Background colors */
+    --bg-primary: #fdf6e3;
+    --bg-secondary: #eee8d5;
+    --bg-tertiary: #e4ddc8;
+    --bg-hover: #eee8d5;
+    --bg-active: #e4ddc8;
+
+    /* Text colors */
+    --text-primary: #657b83;
+    --text-secondary: #586e75;
+    --text-tertiary: #93a1a1;
+
+    /* Border colors */
+    --border-primary: #d3cbb7;
+    --border-secondary: #eee8d5;
+
+    /* Accent colors */
+    --accent-primary: #268bd2;
+    --accent-hover: #2aa198;
+    --accent-light: rgba(38, 139, 210, 0.15);
+
+    /* Status colors */
+    --success: #859900;
+    --error: #dc322f;
+    --warning: #b58900;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}

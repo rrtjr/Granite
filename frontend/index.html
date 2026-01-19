@@ -14,8 +14,7 @@
     <!-- Tailwind CSS from CDN (v3.4.17) -->
     <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 
-    <!-- Alpine.js (v3.14.1) -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+    <!-- Alpine.js is loaded at end of body after our app module -->
 
     <!-- Marked.js for Markdown parsing (v12.0.2) -->
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
@@ -1198,6 +1197,111 @@
                 display: none !important;
             }
         }
+
+        /* Table of Contents Panel Styles */
+        .toc-panel {
+            position: fixed;
+            right: 20px;
+            top: 120px;
+            width: 220px;
+            max-height: calc(100vh - 160px);
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .toc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-primary);
+            background-color: var(--bg-tertiary);
+        }
+
+        .toc-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .toc-close {
+            padding: 4px;
+            border-radius: 4px;
+            color: var(--text-tertiary);
+            transition: all 0.15s ease;
+        }
+
+        .toc-close:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .toc-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+
+        .toc-item {
+            display: block;
+            padding: 6px 12px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            border-left: 2px solid transparent;
+        }
+
+        .toc-item:hover {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+            border-left-color: var(--accent-primary);
+        }
+
+        /* Heading level indentation */
+        .toc-h1 { padding-left: 12px; font-weight: 600; color: var(--text-primary); }
+        .toc-h2 { padding-left: 20px; }
+        .toc-h3 { padding-left: 28px; font-size: 12px; }
+        .toc-h4 { padding-left: 36px; font-size: 12px; }
+        .toc-h5 { padding-left: 44px; font-size: 11px; }
+        .toc-h6 { padding-left: 52px; font-size: 11px; }
+
+        /* TOC scrollbar styling */
+        .toc-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .toc-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .toc-list::-webkit-scrollbar-thumb {
+            background-color: var(--border-secondary);
+            border-radius: 3px;
+        }
+
+        .toc-list::-webkit-scrollbar-thumb:hover {
+            background-color: var(--text-tertiary);
+        }
+
+        /* Hide TOC on mobile */
+        @media (max-width: 768px) {
+            .toc-panel {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body x-data="noteApp()" x-init="init()" style="background-color: var(--bg-primary);">
@@ -1727,6 +1831,82 @@
                                                 style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary);"
                                             />
                                             <p class="text-xs mt-1" style="color: var(--text-tertiary);">Path relative to notes folder (or absolute path)</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Date & Time Settings -->
+                                <div class="mb-4" x-data="{ datetimeExpanded: false }">
+                                    <label class="block text-xs font-medium mb-2" style="color: var(--text-secondary);">Date & Time</label>
+
+                                    <!-- Toggle button -->
+                                    <button
+                                        @click="datetimeExpanded = !datetimeExpanded"
+                                        class="w-full px-3 py-2 text-sm rounded flex items-center justify-between transition-colors"
+                                        style="background-color: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-primary);"
+                                        onmouseover="this.style.backgroundColor='var(--bg-hover)'"
+                                        onmouseout="this.style.backgroundColor='var(--bg-secondary)'"
+                                    >
+                                        <span>Timezone & Format</span>
+                                        <span x-text="datetimeExpanded ? '&#9650;' : '&#9660;'" class="text-xs"></span>
+                                    </button>
+
+                                    <!-- Collapsible content -->
+                                    <div x-show="datetimeExpanded" x-cloak class="mt-3 p-3 rounded"
+                                         style="background-color: var(--bg-secondary); border: 1px solid var(--border-primary);">
+
+                                        <!-- Timezone Selection -->
+                                        <div class="mb-3">
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Timezone</label>
+                                            <select
+                                                x-model="datetimeSettings.timezone"
+                                                @change="saveDatetimeSettings()"
+                                                class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                                style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
+                                            >
+                                                <option value="local">Local Time (System)</option>
+                                                <option value="UTC">UTC</option>
+                                                <optgroup label="Americas">
+                                                    <option value="America/New_York">Eastern Time (US)</option>
+                                                    <option value="America/Chicago">Central Time (US)</option>
+                                                    <option value="America/Denver">Mountain Time (US)</option>
+                                                    <option value="America/Los_Angeles">Pacific Time (US)</option>
+                                                    <option value="America/Sao_Paulo">Sao Paulo (Brazil)</option>
+                                                </optgroup>
+                                                <optgroup label="Europe">
+                                                    <option value="Europe/London">London (UK)</option>
+                                                    <option value="Europe/Paris">Paris (Central Europe)</option>
+                                                    <option value="Europe/Berlin">Berlin (Germany)</option>
+                                                    <option value="Europe/Moscow">Moscow (Russia)</option>
+                                                </optgroup>
+                                                <optgroup label="Asia/Pacific">
+                                                    <option value="Asia/Tokyo">Tokyo (Japan)</option>
+                                                    <option value="Asia/Shanghai">Shanghai (China)</option>
+                                                    <option value="Asia/Singapore">Singapore</option>
+                                                    <option value="Asia/Dubai">Dubai (UAE)</option>
+                                                    <option value="Asia/Kolkata">Kolkata (India)</option>
+                                                    <option value="Australia/Sydney">Sydney (Australia)</option>
+                                                </optgroup>
+                                            </select>
+                                            <p class="text-xs mt-1" style="color: var(--text-tertiary);">Used for created/modified dates in frontmatter</p>
+                                        </div>
+
+                                        <!-- Update modified on open toggle -->
+                                        <div class="mb-3">
+                                            <div class="flex items-center justify-between">
+                                                <label class="text-xs" style="color: var(--text-tertiary);">Update modified date on open</label>
+                                                <div
+                                                    @click="datetimeSettings.updateModifiedOnOpen = !datetimeSettings.updateModifiedOnOpen; saveDatetimeSettings()"
+                                                    class="relative w-10 h-5 rounded-full transition-colors cursor-pointer"
+                                                    :style="datetimeSettings.updateModifiedOnOpen ? 'background-color: var(--accent-primary)' : 'background-color: var(--bg-tertiary)'"
+                                                >
+                                                    <div
+                                                        class="absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform"
+                                                        :style="'background-color: var(--bg-primary);' + (datetimeSettings.updateModifiedOnOpen ? ' transform: translateX(20px);' : '')"
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                            <p class="text-xs mt-1" style="color: var(--text-tertiary);">When enabled, updates the 'modified' field every time a note is opened</p>
                                         </div>
                                     </div>
                                 </div>
@@ -2430,6 +2610,20 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                     </svg>
                                 </button>
+                                <div style="width: 1px; height: 20px; background-color: var(--border-primary);"></div>
+                                <button
+                                    @click="showToc = !showToc"
+                                    class="p-2 transition"
+                                    :style="showToc ? 'color: var(--accent-primary); background-color: var(--bg-secondary);' : 'color: var(--text-secondary);'"
+                                    title="Toggle Table of Contents"
+                                    @mouseenter="$el.style.backgroundColor = 'var(--bg-secondary)'"
+                                    @mouseleave="if (!showToc) $el.style.backgroundColor = 'transparent'"
+                                >
+                                    <!-- List/TOC icon -->
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                                    </svg>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -2603,6 +2797,42 @@
                                 x-html="renderedMarkdown"
                                 @click="handleInternalLink($event)"
                             ></div>
+
+                            <!-- Table of Contents Floating Panel -->
+                            <div
+                                x-show="showToc && tocHeadings.length > 0"
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0 translate-x-4"
+                                x-transition:enter-end="opacity-100 translate-x-0"
+                                x-transition:leave="transition ease-in duration-150"
+                                x-transition:leave-start="opacity-100 translate-x-0"
+                                x-transition:leave-end="opacity-0 translate-x-4"
+                                class="toc-panel"
+                            >
+                                <div class="toc-header">
+                                    <span class="toc-title">Contents</span>
+                                    <button
+                                        @click="showToc = false"
+                                        class="toc-close"
+                                        title="Close Table of Contents"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="toc-list">
+                                    <template x-for="heading in tocHeadings" :key="heading.id">
+                                        <a
+                                            @click.prevent="scrollToHeading(heading.id)"
+                                            class="toc-item"
+                                            :class="'toc-h' + heading.level"
+                                            :title="heading.text"
+                                            x-text="heading.text"
+                                        ></a>
+                                    </template>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Image Viewer -->
@@ -3444,6 +3674,32 @@
                                 style="background-color: var(--bg-secondary); color: var(--text-primary); border-color: var(--border-primary);"
                             />
                         </div>
+
+                        <!-- Remove Frontmatter -->
+                        <label class="flex items-start gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                x-model="pdfExportSettings.remove_frontmatter"
+                                class="cursor-pointer mt-1"
+                            />
+                            <div>
+                                <span style="color: var(--text-primary);">Remove frontmatter</span>
+                                <p class="text-xs" style="color: var(--text-tertiary);">Strip YAML frontmatter block from exported PDF</p>
+                            </div>
+                        </label>
+
+                        <!-- Remove Banner -->
+                        <label class="flex items-start gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                x-model="pdfExportSettings.remove_banner"
+                                class="cursor-pointer mt-1"
+                            />
+                            <div>
+                                <span style="color: var(--text-primary);">Remove banner</span>
+                                <p class="text-xs" style="color: var(--text-tertiary);">Strip banner image reference from exported PDF</p>
+                            </div>
+                        </label>
                     </div>
                 </div>
 
@@ -3778,7 +4034,8 @@
         </button>
     </nav>
 
-    <script src="/static/app.js"></script>
+    <!-- App module loads and then dynamically loads Alpine.js -->
+    <script type="module" src="/static/app-modular.js"></script>
 </body>
 </html>
 

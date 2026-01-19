@@ -110,7 +110,7 @@ note_path: <path of note to attach to>
 
 Upload an image file to the `_attachments` directory. Images are automatically organized per-folder and named with timestamps to prevent conflicts.
 
-**Supported formats:** JPG, JPEG, PNG, GIF, WEBP  
+**Supported formats:** JPG, JPEG, PNG, GIF, WEBP
 **Maximum size:** 10MB
 
 **Response:**
@@ -428,7 +428,8 @@ Settings are stored server-side in `user-settings.json` and persist across Docke
   "reading": {
     "width": "full",
     "align": "left",
-    "margins": "normal"
+    "margins": "normal",
+    "bannerOpacity": 0.5
   },
   "performance": {
     "updateDelay": 100,
@@ -440,6 +441,10 @@ Settings are stored server-side in `user-settings.json` and persist across Docke
   "paths": {
     "templatesDir": "_templates"
   },
+  "datetime": {
+    "timezone": "local",
+    "updateModifiedOnOpen": true
+  },
   "plugins": {
     "git": {
       "backup_interval": 600,
@@ -448,6 +453,10 @@ Settings are stored server-side in `user-settings.json` and persist across Docke
   }
 }
 ```
+
+**Datetime Settings:**
+- `timezone`: Timezone for date/time formatting in frontmatter. Options: `"local"` (system default), `"UTC"`, or IANA timezone name (e.g., `"America/New_York"`, `"Europe/London"`, `"Asia/Tokyo"`)
+- `updateModifiedOnOpen`: When `true`, automatically updates the `modified` field in frontmatter when a note is opened
 
 ### Update User Settings
 ```http

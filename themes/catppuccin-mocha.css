@@ -1,0 +1,36 @@
+/* Catppuccin Mocha Theme */
+/* Soothing pastel theme for the high-spirited */
+/* @theme-type: dark */
+
+:root[data-theme="catppuccin-mocha"] {
+    /* Background colors */
+    --bg-primary: #1e1e2e;
+    --bg-secondary: #181825;
+    --bg-tertiary: #313244;
+    --bg-hover: #313244;
+    --bg-active: #45475a;
+
+    /* Text colors */
+    --text-primary: #cdd6f4;
+    --text-secondary: #bac2de;
+    --text-tertiary: #6c7086;
+
+    /* Border colors */
+    --border-primary: #45475a;
+    --border-secondary: #313244;
+
+    /* Accent colors */
+    --accent-primary: #89b4fa;
+    --accent-hover: #cba6f7;
+    --accent-light: rgba(137, 180, 250, 0.15);
+
+    /* Status colors */
+    --success: #a6e3a1;
+    --error: #f38ba8;
+    --warning: #f9e2af;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}

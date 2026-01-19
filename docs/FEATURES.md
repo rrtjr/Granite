@@ -245,6 +245,33 @@ Control the banner fade effect in Settings > Reading Preferences:
 - **Responsive** - Adapts to different content width settings
 - **Unsplash picker** - Quick access to free stock photos via toolbar button
 
+## Table of Contents
+
+Navigate long notes quickly with the floating Table of Contents panel.
+
+### Features
+- **Auto-generated** - Extracts all headings (h1-h6) from your note
+- **Floating panel** - Positioned on the right side of the preview
+- **Click to navigate** - Click any heading to scroll directly to it
+- **Visual hierarchy** - Headings indented by level for easy scanning
+- **Smooth scrolling** - Animated scroll with brief highlight on target heading
+- **Toggle on/off** - Click the list icon in the toolbar to show/hide
+- **Auto-updates** - TOC refreshes when note content changes
+
+### Usage
+1. Open a note with multiple headings
+2. Click the **list icon** (☰) in the note toolbar
+3. The TOC panel appears on the right side
+4. Click any heading to jump to that section
+5. Click the X or toggle button to close
+
+### Notes
+- Only visible when the note has headings
+- Hidden on mobile devices (screen too small)
+- Works in both Split and Preview view modes
+
+---
+
 ## Search & Filtering
 
 ### Text Search

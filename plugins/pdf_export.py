@@ -15,7 +15,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-from markdown import Markdown
+from markdown import Markdown  # type: ignore[import-untyped]
 from weasyprint import CSS, HTML
 from weasyprint.text.fonts import FontConfiguration
 
@@ -55,11 +55,14 @@ class Plugin:
             # Advanced settings
             "break_tables_across_pages": False,  # If true, allows tables to span multiple pages
             "compress_tables": True,  # Use smaller font in tables to fit more content
+            # Content stripping settings
+            "remove_frontmatter": True,  # Remove YAML frontmatter from exported PDF
+            "remove_banner": True,  # Remove banner image reference from exported PDF
         }
 
     def _get_base_css(self) -> str:
         """Generate base CSS for PDF styling"""
-        # Page numbers CSS
+        # Page numbers CSS (bottom right)
         page_numbers_css = ""
         if self.settings["include_page_numbers"]:
             page_numbers_css = """
@@ -68,6 +71,25 @@ class Plugin:
                 font-size: 9pt;
                 color: #666;
             }
+            """
+
+        # Footer info CSS (bottom left) - date and author
+        footer_info_parts = []
+        if self.settings["include_date"]:
+            current_date = datetime.now(timezone.utc).strftime("%B %d, %Y")
+            footer_info_parts.append(f"Generated: {current_date}")
+        if self.settings["include_author"] and self.settings["author_name"]:
+            footer_info_parts.append(f"Author: {self.settings['author_name']}")
+
+        footer_info_css = ""
+        if footer_info_parts:
+            footer_content = " | ".join(footer_info_parts)
+            footer_info_css = f"""
+            @bottom-left {{
+                content: "{footer_content}";
+                font-size: 9pt;
+                color: #666;
+            }}
             """
 
         # Table settings
@@ -84,6 +106,7 @@ class Plugin:
             margin-left: {self.settings["margin_left"]};
             margin-right: {self.settings["margin_right"]};
             {page_numbers_css}
+            {footer_info_css}
         }}
 
         body {{
@@ -213,26 +236,160 @@ class Plugin:
         }}
 
         .metadata {{
-            margin-bottom: 2em;
-            padding-bottom: 1em;
-            border-bottom: 2px solid #333;
+            margin-bottom: 1.5em;
         }}
 
         .metadata h1 {{
-            margin-bottom: 0.2em;
+            margin-bottom: 0;
         }}
 
-        .metadata .date {{
-            color: #666;
-            font-size: 0.9em;
-            margin-bottom: 0.2em;
+        .banner {{
+            margin-bottom: 1.5em;
         }}
 
-        .metadata .author {{
-            color: #666;
-            font-size: 0.9em;
+        .banner img {{
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+        }}
+
+        .toc {{
+            padding: 1.5em;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            page-break-after: always;
+        }}
+
+        .toc h2 {{
+            margin-top: 0;
+            margin-bottom: 1em;
+            font-size: 1.4em;
+            color: {self.settings["heading_color"]};
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 0.5em;
+        }}
+
+        .toc ul {{
+            margin: 0;
+            padding-left: 1.5em;
+            list-style-type: none;
+        }}
+
+        .toc > ul {{
+            padding-left: 0;
+        }}
+
+        .toc li {{
+            margin-bottom: 0.4em;
+            line-height: 1.4;
+        }}
+
+        .toc a {{
+            color: #333;
+            text-decoration: none;
+        }}
+
+        .toc a:hover {{
+            color: #0066cc;
+        }}
+
+        .toc ul ul {{
+            margin-top: 0.3em;
+            font-size: 0.95em;
         }}
         """
+
+    def _extract_banner(self, content: str) -> str | None:
+        """
+        Extract banner URL from frontmatter.
+
+        Args:
+            content: The markdown content with potential frontmatter
+
+        Returns:
+            Banner URL if found, None otherwise
+        """
+        import re
+
+        if not content or not content.startswith("---"):
+            return None
+
+        lines = content.split("\n")
+        end_index = -1
+
+        for i, line in enumerate(lines[1:], start=1):
+            if line.strip() == "---":
+                end_index = i
+                break
+
+        if end_index > 0:
+            for line in lines[1:end_index]:
+                match = re.match(r"^\s*banner\s*:\s*[\"']?(.+?)[\"']?\s*$", line, re.IGNORECASE)
+                if match:
+                    banner_value = match.group(1).strip()
+                    # Handle Obsidian-style [[image.png]] links
+                    obsidian_match = re.match(r"\[\[(.+?)\]\]", banner_value)
+                    if obsidian_match:
+                        return obsidian_match.group(1)
+                    return banner_value
+
+        return None
+
+    def _strip_content(self, content: str) -> str:
+        """
+        Process and strip content based on settings before PDF export.
+
+        This method handles removal of various content elements based on
+        plugin settings. Add new stripping logic here as needed.
+
+        Args:
+            content: The markdown content to process
+
+        Returns:
+            Processed content with specified elements removed
+        """
+        import re
+
+        if not content:
+            return content
+
+        result = content
+        remove_frontmatter = self.settings.get("remove_frontmatter", True)
+        remove_banner = self.settings.get("remove_banner", True)
+
+        # Handle frontmatter (YAML block at start of document)
+        if result.startswith("---"):
+            lines = result.split("\n")
+            end_index = -1
+
+            # Find the closing --- delimiter
+            for i, line in enumerate(lines[1:], start=1):
+                if line.strip() == "---":
+                    end_index = i
+                    break
+
+            if end_index > 0:
+                if remove_frontmatter:
+                    # Remove entire frontmatter block
+                    result = "\n".join(lines[end_index + 1 :]).lstrip("\n")
+                elif remove_banner:
+                    # Keep frontmatter but remove banner field
+                    frontmatter_lines = []
+                    for line in lines[1:end_index]:
+                        if not re.match(r"^\s*banner\s*:", line, re.IGNORECASE):
+                            frontmatter_lines.append(line)
+
+                    if frontmatter_lines:
+                        result = "---\n" + "\n".join(frontmatter_lines) + "\n---" + "\n".join(lines[end_index + 1 :])
+                    else:
+                        # No frontmatter left after removing banner
+                        result = "\n".join(lines[end_index + 1 :]).lstrip("\n")
+
+        # Future stripping logic can be added here
+        # Example: if self.settings.get("remove_comments", False): ...
+
+        return result
 
     def _get_markdown_extensions(self) -> list:
         """Get list of markdown extensions to use"""
@@ -250,21 +407,11 @@ class Plugin:
         return extensions
 
     def _generate_metadata_html(self, title: str, note_path: str | None = None) -> str:
-        """Generate HTML for note metadata"""
-        html_parts = ['<div class="metadata">']
+        """Generate HTML for note metadata (title only - date/author are in page footer)"""
+        if not self.settings["include_title"]:
+            return ""
 
-        if self.settings["include_title"]:
-            html_parts.append(f"<h1>{title}</h1>")
-
-        if self.settings["include_date"]:
-            current_date = datetime.now(timezone.utc).strftime("%B %d, %Y")
-            html_parts.append(f'<div class="date">Generated: {current_date}</div>')
-
-        if self.settings["include_author"] and self.settings["author_name"]:
-            html_parts.append(f'<div class="author">Author: {self.settings["author_name"]}</div>')
-
-        html_parts.append("</div>")
-        return "\n".join(html_parts)
+        return f'<div class="metadata"><h1>{title}</h1></div>'
 
     def export_to_pdf(
         self,
@@ -290,6 +437,17 @@ class Plugin:
             print(f"[PDF Export] Title: {title}")
             print(f"[PDF Export] Content length: {len(content)} chars")
 
+            # Extract banner before stripping content (if we want to keep it)
+            banner_url = None
+            if not self.settings.get("remove_banner", True):
+                banner_url = self._extract_banner(content)
+                print(f"[PDF Export] Banner URL extracted: {banner_url}")
+
+            # Strip content based on settings (frontmatter, banner, etc.)
+            print("[PDF Export] Processing content (stripping frontmatter/banner if enabled)...")
+            content = self._strip_content(content)
+            print(f"[PDF Export] Content length after stripping: {len(content)} chars")
+
             # Convert markdown to HTML
             print("[PDF Export] Getting markdown extensions...")
             extensions = self._get_markdown_extensions()
@@ -301,6 +459,18 @@ class Plugin:
             print("[PDF Export] Converting markdown to HTML...")
             html_content = md.convert(content)
             print(f"[PDF Export] HTML length: {len(html_content)} chars")
+
+            # Add Table of Contents if enabled
+            toc_html = ""
+            if self.settings.get("enable_toc", False) and hasattr(md, "toc") and md.toc:
+                print("[PDF Export] Adding Table of Contents...")
+                toc_html = f'<div class="toc"><h2>Table of Contents</h2>{md.toc}</div>'
+
+            # Add banner image if available
+            banner_html = ""
+            if banner_url:
+                print(f"[PDF Export] Adding banner image: {banner_url}")
+                banner_html = f'<div class="banner"><img src="{banner_url}" alt="Banner" /></div>'
 
             # Build complete HTML document
             print("[PDF Export] Generating metadata HTML...")
@@ -315,7 +485,9 @@ class Plugin:
                 <title>{title}</title>
             </head>
             <body>
+                {banner_html}
                 {metadata_html}
+                {toc_html}
                 {html_content}
             </body>
             </html>
@@ -393,9 +565,9 @@ class Plugin:
         self.settings.update(new_settings)
         print(f"[{self.name}] Settings updated")
 
-    def get_settings(self) -> dict:
+    def get_settings(self) -> dict[str, object]:
         """Get current plugin settings"""
-        return self.settings.copy()
+        return dict(self.settings)
 
     def get_supported_page_sizes(self) -> list:
         """Get list of supported page sizes"""

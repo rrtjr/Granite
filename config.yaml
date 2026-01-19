@@ -1,3 +1,4 @@
+---
 app:
   name: Granite
   tagline: Your Self-Hosted Knowledge Base
@@ -6,12 +7,12 @@ server:
   port: 8000
   reload: false
   allowed_origins:
-  - '*'
+    - '*'
   debug: false
 storage:
   notes_dir: ./data
   plugins_dir: ./plugins
-  templates_dir: 06_Resources/Templates
+  templates_dir: custom_templates
 search:
   enabled: true
 authentication:

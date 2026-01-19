@@ -55,29 +55,34 @@ Templates support dynamic placeholders that are replaced when you create a note:
 | `{{timestamp}}` | Unix timestamp | `1732632645` |
 | `{{title}}` | Note name (without .md) | `Weekly Meeting` |
 | `{{folder}}` | Parent folder name | `Projects` |
+| `{{created}}` | Current datetime for frontmatter | `2025-11-26 14:30:45` |
+| `{{modified}}` | Current datetime for frontmatter | `2025-11-26 14:30:45` |
+
+> **Note:** Date/time placeholders use your configured timezone from **Settings → Date & Time → Timezone**.
 
 ### Example Template
 
 ```markdown
 ---
 tags: [meeting]
-date: {{date}}
+created: {{created}}
+modified: {{modified}}
 ---
 
 # Meeting Notes - {{title}}
 
-**Date:** {{datetime}}  
-**Participants:** 
-- 
+**Date:** {{datetime}}
+**Participants:**
+-
 
 ## Agenda
-- 
+-
 
 ## Discussion
 
 
 ## Action Items
-- [ ] 
+- [ ]
 
 ## Next Steps
 
@@ -89,23 +94,24 @@ When you create a note called "Team Sync" from this template, it becomes:
 ```markdown
 ---
 tags: [meeting]
-date: 2025-11-26
+created: 2025-11-26 14:30:45
+modified: 2025-11-26 14:30:45
 ---
 
 # Meeting Notes - Team Sync
 
-**Date:** 2025-11-26 14:30:45  
-**Participants:** 
-- 
+**Date:** 2025-11-26 14:30:45
+**Participants:**
+-
 
 ## Agenda
-- 
+-
 
 ## Discussion
 
 
 ## Action Items
-- [ ] 
+- [ ]
 
 ## Next Steps
 

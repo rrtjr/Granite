@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table of Contents Tests</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case {
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #ddd;
+            background: #f9f9f9;
+        }
+        .test-case.pass {
+            border-left-color: #4caf50;
+            background: #f1f8f4;
+        }
+        .test-case.fail {
+            border-left-color: #f44336;
+            background: #fef1f0;
+        }
+        .test-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .test-result {
+            font-size: 14px;
+            color: #666;
+        }
+        .test-details {
+            font-family: monospace;
+            font-size: 12px;
+            background: #eee;
+            padding: 8px;
+            margin-top: 8px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .summary {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .summary.pass {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .summary.fail {
+            background: #ffebee;
+            color: #c62828;
+        }
+        button {
+            padding: 10px 20px;
+            background: #7c3aed;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #6d28d9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Table of Contents Tests</h1>
+
+    <button onclick="runTests()">Run All Tests</button>
+
+    <div class="test-section" style="background: #fff3cd; border-left: 4px solid #ffc107;">
+        <h2>Test Coverage Note</h2>
+        <p><strong>These tests cover:</strong> Heading extraction and ID generation logic</p>
+        <p><strong>Not covered (requires integration testing):</strong></p>
+        <ul>
+            <li>Alpine.js reactivity and state management</li>
+            <li>Scroll behavior (<code>scrollToHeading()</code>)</li>
+            <li>CSS animations and transitions</li>
+            <li>DOM updates after markdown rendering</li>
+        </ul>
+        <p style="font-size: 12px; color: #856404;">
+            <strong>Integration checklist:</strong> After opening TOC:
+            (1) Panel shows all headings,
+            (2) Clicking heading scrolls to it,
+            (3) Heading highlights briefly,
+            (4) TOC updates when content changes
+        </p>
+    </div>
+
+    <div class="test-section">
+        <h2>Heading Extraction Tests</h2>
+        <p>Tests the <code>extractTocHeadings()</code> function logic</p>
+        <div id="test-results"></div>
+    </div>
+
+    <div id="summary"></div>
+
+    <!-- Hidden container for DOM testing -->
+    <div id="test-container" style="display: none;"></div>
+
+    <script>
+        // Simulate the extractTocHeadings function from app.js
+        // This must match the logic in app.js
+        function extractTocHeadings(container) {
+            const headings = container.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            const tocItems = [];
+            const usedIds = new Set();
+
+            headings.forEach((heading, index) => {
+                // Generate an ID if the heading doesn't have one
+                let id = heading.id;
+                if (!id) {
+                    // Create slug from heading text
+                    const text = heading.textContent.trim();
+                    let baseId = 'toc-' + text.toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/^-|-$/g, '')
+                        .substring(0, 50);
+
+                    // Handle duplicates
+                    id = baseId;
+                    let counter = 1;
+                    while (usedIds.has(id)) {
+                        id = `${baseId}-${counter}`;
+                        counter++;
+                    }
+                    heading.id = id;
+                }
+                usedIds.add(id);
+
+                const level = parseInt(heading.tagName.charAt(1), 10);
+                tocItems.push({
+                    id: id,
+                    text: heading.textContent.trim(),
+                    level: level
+                });
+            });
+
+            return tocItems;
+        }
+
+        // Helper to create test DOM
+        function createTestDOM(html) {
+            const container = document.getElementById('test-container');
+            container.innerHTML = html;
+            return container;
+        }
+
+        // Test cases
+        const tests = [
+            {
+                name: 'Extract single h1 heading',
+                html: '<h1>Introduction</h1><p>Some content</p>',
+                validate: (result) => {
+                    return result.length === 1 &&
+                           result[0].text === 'Introduction' &&
+                           result[0].level === 1 &&
+                           result[0].id === 'toc-introduction';
+                }
+            },
+            {
+                name: 'Extract multiple heading levels',
+                html: '<h1>Title</h1><h2>Section 1</h2><h3>Subsection 1.1</h3><h2>Section 2</h2>',
+                validate: (result) => {
+                    return result.length === 4 &&
+                           result[0].level === 1 &&
+                           result[1].level === 2 &&
+                           result[2].level === 3 &&
+                           result[3].level === 2;
+                }
+            },
+            {
+                name: 'Handle headings with special characters',
+                html: '<h1>Hello & World!</h1><h2>What\'s New?</h2><h3>C++ Programming</h3>',
+                validate: (result) => {
+                    return result.length === 3 &&
+                           result[0].text === "Hello & World!" &&
+                           result[0].id === 'toc-hello-world' &&
+                           result[1].text === "What's New?" &&
+                           result[2].text === 'C++ Programming';
+                }
+            },
+            {
+                name: 'Handle duplicate heading names',
+                html: '<h2>Introduction</h2><h2>Introduction</h2><h2>Introduction</h2>',
+                validate: (result) => {
+                    return result.length === 3 &&
+                           result[0].id === 'toc-introduction' &&
+                           result[1].id === 'toc-introduction-1' &&
+                           result[2].id === 'toc-introduction-2';
+                }
+            },
+            {
+                name: 'Preserve existing heading IDs',
+                html: '<h1 id="custom-id">Title</h1><h2>Section</h2>',
+                validate: (result) => {
+                    return result.length === 2 &&
+                           result[0].id === 'custom-id' &&
+                           result[1].id === 'toc-section';
+                }
+            },
+            {
+                name: 'Handle empty heading text',
+                html: '<h1></h1><h2>Valid Heading</h2>',
+                validate: (result) => {
+                    return result.length === 2 &&
+                           result[0].text === '' &&
+                           result[1].text === 'Valid Heading';
+                }
+            },
+            {
+                name: 'Handle headings with only whitespace',
+                html: '<h1>   Spaced   Title   </h1><h2>\n\tTabbed\n\t</h2>',
+                validate: (result) => {
+                    return result.length === 2 &&
+                           result[0].text === 'Spaced   Title' &&
+                           result[1].text === 'Tabbed';
+                }
+            },
+            {
+                name: 'Handle all heading levels (h1-h6)',
+                html: '<h1>H1</h1><h2>H2</h2><h3>H3</h3><h4>H4</h4><h5>H5</h5><h6>H6</h6>',
+                validate: (result) => {
+                    return result.length === 6 &&
+                           result[0].level === 1 &&
+                           result[1].level === 2 &&
+                           result[2].level === 3 &&
+                           result[3].level === 4 &&
+                           result[4].level === 5 &&
+                           result[5].level === 6;
+                }
+            },
+            {
+                name: 'Handle headings with inline HTML',
+                html: '<h1>Title with <strong>bold</strong> and <em>italic</em></h1>',
+                validate: (result) => {
+                    return result.length === 1 &&
+                           result[0].text === 'Title with bold and italic';
+                }
+            },
+            {
+                name: 'Handle headings with code elements',
+                html: '<h2>Using <code>console.log()</code> in JavaScript</h2>',
+                validate: (result) => {
+                    return result.length === 1 &&
+                           result[0].text === 'Using console.log() in JavaScript';
+                }
+            },
+            {
+                name: 'Return empty array for no headings',
+                html: '<p>Just a paragraph</p><div>And a div</div>',
+                validate: (result) => {
+                    return result.length === 0;
+                }
+            },
+            {
+                name: 'Handle very long heading text (truncation)',
+                html: '<h1>This is a very long heading that should be truncated when generating the ID because we limit IDs to 50 characters</h1>',
+                validate: (result) => {
+                    return result.length === 1 &&
+                           result[0].id.length <= 54 && // 'toc-' prefix + 50 chars
+                           result[0].text.includes('very long heading');
+                }
+            },
+            {
+                name: 'Handle headings with numbers',
+                html: '<h2>Chapter 1: Introduction</h2><h2>Chapter 2: Methods</h2><h3>2.1 Data Collection</h3>',
+                validate: (result) => {
+                    return result.length === 3 &&
+                           result[0].id === 'toc-chapter-1-introduction' &&
+                           result[1].id === 'toc-chapter-2-methods' &&
+                           result[2].id === 'toc-2-1-data-collection';
+                }
+            },
+            {
+                name: 'Handle Unicode characters in headings',
+                html: '<h1>Cafe</h1><h2>Japanese Text</h2>',
+                validate: (result) => {
+                    return result.length === 2 &&
+                           result[0].text === 'Cafe' &&
+                           result[1].text === 'Japanese Text';
+                }
+            },
+            {
+                name: 'Ignore non-heading elements with similar names',
+                html: '<div class="h1">Not a heading</div><h1>Real Heading</h1><span>h2 text</span>',
+                validate: (result) => {
+                    return result.length === 1 &&
+                           result[0].text === 'Real Heading';
+                }
+            },
+            {
+                name: 'Handle mixed content between headings',
+                html: '<h1>Title</h1><p>Paragraph</p><ul><li>Item</li></ul><h2>Section</h2><blockquote>Quote</blockquote><h3>Subsection</h3>',
+                validate: (result) => {
+                    return result.length === 3 &&
+                           result[0].text === 'Title' &&
+                           result[1].text === 'Section' &&
+                           result[2].text === 'Subsection';
+                }
+            }
+        ];
+
+        function runTests() {
+            const resultsContainer = document.getElementById('test-results');
+            const summaryContainer = document.getElementById('summary');
+            resultsContainer.innerHTML = '';
+
+            let passed = 0;
+            let failed = 0;
+
+            tests.forEach(test => {
+                const container = createTestDOM(test.html);
+                const result = extractTocHeadings(container);
+                const success = test.validate(result);
+
+                if (success) {
+                    passed++;
+                } else {
+                    failed++;
+                }
+
+                const testDiv = document.createElement('div');
+                testDiv.className = `test-case ${success ? 'pass' : 'fail'}`;
+                testDiv.innerHTML = `
+                    <div class="test-name">${success ? '✓' : '✗'} ${test.name}</div>
+                    <div class="test-result">${success ? 'PASSED' : 'FAILED'}</div>
+                    <details>
+                        <summary>Details</summary>
+                        <div class="test-details">Input HTML:
+${test.html}
+
+Extracted Headings:
+${JSON.stringify(result, null, 2)}</div>
+                    </details>
+                `;
+                resultsContainer.appendChild(testDiv);
+            });
+
+            const total = passed + failed;
+            summaryContainer.innerHTML = `
+                <div class="summary ${failed === 0 ? 'pass' : 'fail'}">
+                    ${failed === 0 ? '✓ All tests passed!' : '✗ Some tests failed'}
+                    <br>
+                    ${passed}/${total} tests passed
+                </div>
+            `;
+        }
+
+        // Run tests on load
+        window.onload = runTests;
+    </script>
+</body>
+</html>

@@ -402,13 +402,17 @@ class TestEdgeCases:
         if not available_plugins:
             pytest.skip("No plugins available")
 
-        # Use first available plugin
-        plugin_id = available_plugins[0]["id"]
+        # Find a plugin that has a settings endpoint (prefer git or pdf_export)
+        plugin_id = None
+        for preferred in ["git", "pdf_export"]:
+            if any(p["id"] == preferred for p in available_plugins):
+                response = client.get(f"/api/plugins/{preferred}/settings")
+                if response.status_code == 200:
+                    plugin_id = preferred
+                    break
 
-        # Check if plugin has settings endpoint
-        response = client.get(f"/api/plugins/{plugin_id}/settings")
-        if response.status_code != 200:
-            pytest.skip(f"Plugin {plugin_id} has no settings endpoint")
+        if not plugin_id:
+            pytest.skip("No plugins with settings endpoint available")
 
         # Update with empty object
         response = client.post(f"/api/plugins/{plugin_id}/settings", json={})
