@@ -179,7 +179,7 @@ export const uiMixin = {
         if (this.showNewDropdown) {
             const button = event.currentTarget;
             const rect = button.getBoundingClientRect();
-            this.newDropdownPosition = { x: rect.left, y: rect.bottom + 4 };
+            this.dropdownPosition = { top: rect.bottom + 4, left: rect.left };
         }
     },
 
