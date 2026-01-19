@@ -1,22 +1,22 @@
 ---
 tags: [meeting]
-date: {{date}}
+created: {{created}}
 ---
 
 # Meeting Notes - {{title}}
 
-**Date:** {{datetime}}  
-**Participants:** 
-- 
+**Date:** {{datetime}}
+**Participants:**
+-
 
 ## Agenda
-- 
+-
 
 ## Discussion
 
 
 ## Action Items
-- [ ] 
+- [ ]
 
 ## Next Steps
 

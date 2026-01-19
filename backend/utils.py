@@ -795,8 +795,10 @@ def apply_template_placeholders(content: str, note_path: str, user_settings: dic
 
     note = Path(note_path)
 
-    # Format datetime string for created/modified
+    # Format datetime strings
     datetime_str = local_now.strftime("%Y-%m-%d %H:%M:%S")
+    # Use the intuitive format for created/modified fields
+    frontmatter_datetime = format_datetime_for_frontmatter(tz_setting)
 
     replacements = {
         "{{date}}": local_now.strftime("%Y-%m-%d"),
@@ -805,8 +807,8 @@ def apply_template_placeholders(content: str, note_path: str, user_settings: dic
         "{{timestamp}}": str(int(local_now.timestamp())),
         "{{title}}": note.stem,
         "{{folder}}": note.parent.name if str(note.parent) != "." else "Root",
-        "{{created}}": datetime_str,
-        "{{modified}}": datetime_str,
+        "{{created}}": frontmatter_datetime,
+        "{{modified}}": frontmatter_datetime,
     }
 
     result = content

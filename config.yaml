@@ -7,12 +7,12 @@ server:
   port: 8000
   reload: false
   allowed_origins:
-    - '*'
+    - "*"
   debug: false
 storage:
   notes_dir: ./data
   plugins_dir: ./plugins
-  templates_dir: custom_templates
+  templates_dir: 06_Resources/Templates
 search:
   enabled: true
 authentication:

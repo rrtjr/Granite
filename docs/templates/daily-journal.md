@@ -1,6 +1,6 @@
 ---
 tags: [journal, daily]
-date: {{date}}
+created: {{created}}
 ---
 
 # Daily Journal - {{date}}
