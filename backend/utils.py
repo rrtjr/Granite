@@ -841,6 +841,21 @@ def get_timezone_from_setting(tz_setting: str) -> ZoneInfo | timezone | None:
         return timezone.utc  # Fallback to UTC if invalid
 
 
+def get_ordinal_suffix(day: int) -> str:
+    """
+    Get the ordinal suffix for a day number.
+
+    Args:
+        day: Day of month (1-31)
+
+    Returns:
+        Ordinal suffix (st, nd, rd, th)
+    """
+    if 11 <= day <= 13:
+        return "th"
+    return {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
+
+
 def format_datetime_for_frontmatter(tz_setting: str = "local") -> str:
     """
     Format current datetime for frontmatter according to user timezone settings.
@@ -849,18 +864,37 @@ def format_datetime_for_frontmatter(tz_setting: str = "local") -> str:
         tz_setting: Timezone setting from user settings
 
     Returns:
-        Formatted datetime string like "2026-01-17 14:30:45"
+        Formatted datetime string like "Saturday 5th April 2025 12:00:00 AM GMT+08:00"
     """
     tz = get_timezone_from_setting(tz_setting)
 
     if tz is None:
         # Local time - use system timezone
-        local_dt = datetime.now(tz=timezone.utc).astimezone()
-        return local_dt.strftime("%Y-%m-%d %H:%M:%S")
-    # Convert to specified timezone
-    now = datetime.now(timezone.utc)
-    converted = now.astimezone(tz)
-    return converted.strftime("%Y-%m-%d %H:%M:%S")
+        dt = datetime.now(tz=timezone.utc).astimezone()
+    else:
+        # Convert to specified timezone
+        now = datetime.now(timezone.utc)
+        dt = now.astimezone(tz)
+
+    # Build the formatted string
+    day_name = dt.strftime("%A")
+    day = dt.day
+    ordinal = get_ordinal_suffix(day)
+    month_name = dt.strftime("%B")
+    year = dt.year
+    time_str = dt.strftime("%I:%M:%S %p")
+
+    # Format timezone offset as GMT±HH:MM
+    utc_offset = dt.strftime("%z")  # e.g., +0800 or -0500
+    if utc_offset:
+        sign = utc_offset[0]
+        hours = utc_offset[1:3]
+        minutes = utc_offset[3:5]
+        tz_str = f"GMT{sign}{hours}:{minutes}"
+    else:
+        tz_str = "GMT+00:00"
+
+    return f"{day_name} {day}{ordinal} {month_name} {year} {time_str} {tz_str}"
 
 
 def update_frontmatter_field(content: str, field: str, value: str) -> str:
