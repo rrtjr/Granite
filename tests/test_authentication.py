@@ -21,7 +21,8 @@ from fastapi.testclient import TestClient
 # Add parent directory to path to allow backend imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from backend.main import app, auth_enabled, verify_password
+from backend.dependencies import auth_enabled, verify_password
+from backend.main import app
 
 
 @pytest.fixture
@@ -33,7 +34,7 @@ def client():
 @pytest.fixture
 def auth_disabled_client():
     """Create a test client with authentication disabled"""
-    with patch("backend.main.config", {"authentication": {"enabled": False}}):
+    with patch("backend.dependencies.config", {"authentication": {"enabled": False}}):
         return TestClient(app)
 
 
@@ -51,7 +52,7 @@ def auth_enabled_client():
         "app": {"name": "Granite", "tagline": "Test"},
         "server": {"debug": False},
     }
-    with patch("backend.main.config", test_config):
+    with patch("backend.dependencies.config", test_config):
         yield TestClient(app)
 
 
@@ -62,7 +63,7 @@ class TestPasswordVerification:
         """Test that correct password is verified successfully"""
         # Default hash in config.yaml is for "admin"
         with patch(
-            "backend.main.config",
+            "backend.dependencies.config",
             {"authentication": {"password_hash": "$2b$12$t/6PGExFzdpU2PUta0iVY.eDQwvu63kH.c/d4bEnnHaQ5CspH1yrG"}},
         ):
             assert verify_password("admin") is True
@@ -70,7 +71,7 @@ class TestPasswordVerification:
     def test_verify_incorrect_password(self):
         """Test that incorrect password fails verification"""
         with patch(
-            "backend.main.config",
+            "backend.dependencies.config",
             {"authentication": {"password_hash": "$2b$12$t/6PGExFzdpU2PUta0iVY.eDQwvu63kH.c/d4bEnnHaQ5CspH1yrG"}},
         ):
             assert verify_password("wrong_password") is False
@@ -78,19 +79,19 @@ class TestPasswordVerification:
     def test_verify_empty_password(self):
         """Test that empty password fails verification"""
         with patch(
-            "backend.main.config",
+            "backend.dependencies.config",
             {"authentication": {"password_hash": "$2b$12$t/6PGExFzdpU2PUta0iVY.eDQwvu63kH.c/d4bEnnHaQ5CspH1yrG"}},
         ):
             assert verify_password("") is False
 
     def test_verify_no_hash_configured(self):
         """Test that verification fails when no hash is configured"""
-        with patch("backend.main.config", {"authentication": {}}):
+        with patch("backend.dependencies.config", {"authentication": {}}):
             assert verify_password("admin") is False
 
     def test_verify_invalid_hash_format(self):
         """Test that verification handles invalid hash gracefully"""
-        with patch("backend.main.config", {"authentication": {"password_hash": "invalid_hash"}}):
+        with patch("backend.dependencies.config", {"authentication": {"password_hash": "invalid_hash"}}):
             assert verify_password("admin") is False
 
 
@@ -99,7 +100,7 @@ class TestAuthenticationDisabled:
 
     def test_auth_disabled_flag(self):
         """Test that auth_enabled() returns False when disabled"""
-        with patch("backend.main.config", {"authentication": {"enabled": False}}):
+        with patch("backend.dependencies.config", {"authentication": {"enabled": False}}):
             assert auth_enabled() is False
 
     def test_login_page_redirects_when_disabled(self, auth_disabled_client):
@@ -127,7 +128,7 @@ class TestAuthenticationEnabled:
 
     def test_auth_enabled_flag(self):
         """Test that auth_enabled() returns True when enabled"""
-        with patch("backend.main.config", {"authentication": {"enabled": True}}):
+        with patch("backend.dependencies.config", {"authentication": {"enabled": True}}):
             assert auth_enabled() is True
 
     def test_login_page_accessible(self, auth_enabled_client):
@@ -258,7 +259,7 @@ class TestSessionSecurity:
         client2 = TestClient(app)
 
         with patch(
-            "backend.main.config",
+            "backend.dependencies.config",
             {
                 "authentication": {
                     "enabled": True,
