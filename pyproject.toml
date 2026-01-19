@@ -16,7 +16,7 @@ dependencies = [
     "starlette>=0.47.2",
     "uvicorn[standard]>=0.32.0",
     "python-multipart>=0.0.18",
-    "filelock>=3.20.1",
+    "filelock>=3.20.3",
     # Content processing
     "markdown==3.7",
     "pyyaml==6.0.1",
