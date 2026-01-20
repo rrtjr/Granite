@@ -132,7 +132,7 @@ jobs:
           uv pip install --system playwright
 
       - name: Install Playwright browsers
-        run: playwright install chromium --with-deps
+        run: playwright install --with-deps chromium
 
       - name: Start server
         run: |
