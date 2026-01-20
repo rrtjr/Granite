@@ -3,6 +3,20 @@
 import { CONFIG } from './config.js';
 
 export const uiMixin = {
+    // Toast notification methods
+    addToast(message, type = 'info', duration = 4000) {
+        const id = this.nextToastId++;
+        this.toasts.push({ id, message, type, timestamp: Date.now() });
+        if (duration > 0) {
+            setTimeout(() => this.removeToast(id), duration);
+        }
+        return id;
+    },
+
+    removeToast(id) {
+        this.toasts = this.toasts.filter(t => t.id !== id);
+    },
+
     // Setup scroll synchronization
     setupScrollSync() {
         const editorScroller = this.editorView?.scrollDOM;

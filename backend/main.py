@@ -55,7 +55,7 @@ app.add_middleware(
     secret_key=config.get("authentication", {}).get("secret_key", "insecure_default_key_change_this"),
     max_age=config.get("authentication", {}).get("session_max_age", 604800),  # 7 days default
     same_site="lax",  # Prevents CSRF attacks
-    https_only=False,  # Set to True if using HTTPS in production
+    https_only=config.get("server", {}).get("https_only", False),  # Set via config when behind HTTPS proxy
 )
 
 # Rate limiting for demo mode

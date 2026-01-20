@@ -153,6 +153,10 @@ export const stateMixin = {
     // Mobile sidebar state
     mobileSidebarOpen: false,
 
+    // Toast notification state
+    toasts: [],
+    nextToastId: 1,
+
     // Desktop sidebar collapse state
     sidebarCollapsed: false,
 

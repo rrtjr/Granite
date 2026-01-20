@@ -17,15 +17,46 @@ export const ErrorHandler = {
      * Handle errors consistently across the app
      * @param {string} operation - The operation that failed (e.g., "load notes", "save note")
      * @param {Error} error - The error object
-     * @param {boolean} showAlert - Whether to show an alert to the user
+     * @param {boolean} showToast - Whether to show a toast notification to the user
      */
-    handle(operation, error, showAlert = true) {
+    handle(operation, error, showToast = true) {
         // Always log to console for debugging
         console.error(`Failed to ${operation}:`, error);
 
-        // Show user-friendly alert if requested
-        if (showAlert) {
-            alert(`Failed to ${operation}. Please try again.`);
+        // Show user-friendly toast notification if requested
+        if (showToast && window.noteAppInstance?.addToast) {
+            window.noteAppInstance.addToast(`Failed to ${operation}. Please try again.`, 'error', 5000);
+        }
+    },
+
+    /**
+     * Show a success message to the user
+     * @param {string} message - The success message to display
+     */
+    success(message) {
+        if (window.noteAppInstance?.addToast) {
+            window.noteAppInstance.addToast(message, 'success', 3000);
+        }
+    },
+
+    /**
+     * Show a warning message to the user
+     * @param {string} message - The warning message to display
+     */
+    warn(message) {
+        console.warn(message);
+        if (window.noteAppInstance?.addToast) {
+            window.noteAppInstance.addToast(message, 'warning', 4000);
+        }
+    },
+
+    /**
+     * Show an info message to the user
+     * @param {string} message - The info message to display
+     */
+    info(message) {
+        if (window.noteAppInstance?.addToast) {
+            window.noteAppInstance.addToast(message, 'info', 3000);
         }
     }
 };

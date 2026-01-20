@@ -7,7 +7,8 @@ console.log('[Granite] Starting module loader...');
 let CONFIG, ErrorHandler;
 let stateMixin, helpersMixin, themesMixin, tagsMixin, templatesMixin;
 let statsMixin, metadataMixin, sidebarMixin, settingsMixin, editorMixin;
-let notesMixin, foldersMixin, searchMixin, imagesMixin, pluginsMixin;
+let notesMixin, foldersMixin, folderOperationsMixin, folderRenderMixin;
+let searchMixin, imagesMixin, pluginsMixin;
 let graphMixin, markdownMixin, uiMixin, exportMixin, initMixin;
 
 async function loadModules() {
@@ -25,6 +26,8 @@ async function loadModules() {
         { name: 'editor', path: './modules/editor.js' },
         { name: 'notes', path: './modules/notes.js' },
         { name: 'folders', path: './modules/folders.js' },
+        { name: 'folder-operations', path: './modules/folder-operations.js' },
+        { name: 'folder-render', path: './modules/folder-render.js' },
         { name: 'search', path: './modules/search.js' },
         { name: 'images', path: './modules/images.js' },
         { name: 'plugins', path: './modules/plugins.js' },
@@ -63,6 +66,8 @@ async function loadModules() {
     editorMixin = loaded.editor.editorMixin;
     notesMixin = loaded.notes.notesMixin;
     foldersMixin = loaded.folders.foldersMixin;
+    folderOperationsMixin = loaded['folder-operations'].folderOperationsMixin;
+    folderRenderMixin = loaded['folder-render'].folderRenderMixin;
     searchMixin = loaded.search.searchMixin;
     imagesMixin = loaded.images.imagesMixin;
     pluginsMixin = loaded.plugins.pluginsMixin;
@@ -82,7 +87,8 @@ async function loadModules() {
     const mixins = {
         stateMixin, helpersMixin, themesMixin, tagsMixin, templatesMixin,
         statsMixin, metadataMixin, sidebarMixin, settingsMixin, editorMixin,
-        notesMixin, foldersMixin, searchMixin, imagesMixin, pluginsMixin,
+        notesMixin, foldersMixin, folderOperationsMixin, folderRenderMixin,
+        searchMixin, imagesMixin, pluginsMixin,
         graphMixin, markdownMixin, uiMixin, exportMixin, initMixin
     };
 
@@ -132,6 +138,8 @@ function noteApp() {
             editorMixin,
             notesMixin,
             foldersMixin,
+            folderOperationsMixin,
+            folderRenderMixin,
             searchMixin,
             imagesMixin,
             pluginsMixin,
