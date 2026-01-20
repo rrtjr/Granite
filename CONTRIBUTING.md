@@ -75,7 +75,7 @@ git checkout -b fix/your-bug-fix
 # Build and run
 docker-compose up --build -d
 
-# Run tests
+# Run backend tests
 docker-compose exec granite .venv/bin/pytest tests/ -v
 
 # Run linting
@@ -96,7 +96,7 @@ source .venv/bin/activate  # Linux/Mac
 # or
 .venv\Scripts\activate  # Windows
 
-# Run tests
+# Run backend tests
 pytest tests/ -v
 
 # Run linting
@@ -107,6 +107,24 @@ ruff format --check backend/ plugins/ tests/
 ruff check --fix backend/ plugins/ tests/
 ruff format backend/ plugins/ tests/
 ```
+
+**Frontend E2E Tests**
+
+Frontend is tested via Playwright E2E tests that run in a real browser. These tests run automatically in CI on every push/PR.
+
+```bash
+# Local testing (optional - CI runs these automatically)
+pip install playwright
+playwright install chromium
+
+# Run E2E tests (requires server at localhost:8000)
+pytest tests/e2e -v
+
+# With authentication enabled
+TEST_PASSWORD=yourpassword pytest tests/e2e -v
+```
+
+**Note:** E2E tests are automatically skipped in Docker (no browser). In CI, they run after unit tests pass.
 
 ### 5. Commit Your Changes
 
