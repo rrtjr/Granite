@@ -214,6 +214,70 @@ export const markdownMixin = {
         return html;
     },
 
+    // Computed property for rendered homepage content
+    get renderedHomepageContent() {
+        if (!this.homepageContent) return '';
+        if (typeof this.parseBannerFromContent !== 'function') return '';
+
+        // Parse banner from frontmatter before stripping it
+        const bannerInfo = this.parseBannerFromContent(this.homepageContent);
+
+        // Strip YAML frontmatter from content before rendering
+        let contentToRender = this.homepageContent;
+        if (contentToRender.trim().startsWith('---')) {
+            const lines = contentToRender.split('\n');
+            if (lines[0].trim() === '---') {
+                let endIdx = -1;
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim() === '---') {
+                        endIdx = i;
+                        break;
+                    }
+                }
+                if (endIdx !== -1) {
+                    contentToRender = lines.slice(endIdx + 1).join('\n').trim();
+                }
+            }
+        }
+
+        // Configure marked
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    try {
+                        return hljs.highlight(code, { language: lang }).value;
+                    } catch (err) {
+                        console.error('Highlight error:', err);
+                    }
+                }
+                return hljs.highlightAuto(code).value;
+            }
+        });
+
+        let html = marked.parse(contentToRender);
+
+        // Prepend banner if present
+        if (bannerInfo && bannerInfo.url) {
+            const safeUrl = bannerInfo.url.replace(/"/g, '%22');
+            const opacity = this.bannerOpacity;
+
+            let titleHtml = '';
+            const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/i);
+            if (h1Match) {
+                const titleText = h1Match[1];
+                titleHtml = `<h1 class="banner-title">${titleText}</h1>`;
+                html = html.replace(h1Match[0], '');
+            }
+
+            const bannerHtml = `<div class="note-banner"><div class="banner-image" style="background-image: url('${safeUrl}'); opacity: ${opacity}"></div>${titleHtml}</div>`;
+            html = bannerHtml + html;
+        }
+
+        return html;
+    },
+
     // Trigger MathJax typesetting after DOM update
     typesetMath() {
         if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {

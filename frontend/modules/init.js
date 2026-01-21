@@ -37,6 +37,9 @@ export const initMixin = {
         // Load favorites
         await this.loadFavorites();
 
+        // Load homepage content
+        await this.loadHomepageContent();
+
         // Parse URL and load specific note if provided
         this.loadNoteFromURL();
 
@@ -130,6 +133,20 @@ export const initMixin = {
             this.appConfig = data;
         } catch (error) {
             console.error('Failed to load config:', error);
+        }
+    },
+
+    // Load homepage content (configured file)
+    async loadHomepageContent() {
+        try {
+            const response = await fetch('/api/homepage');
+            if (response.ok) {
+                const data = await response.json();
+                this.homepageContent = data.content;
+                this.homepageFilePath = data.path;
+            }
+        } catch (error) {
+            console.error('Failed to load homepage content:', error);
         }
     },
 

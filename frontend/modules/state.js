@@ -25,6 +25,7 @@ export const stateMixin = {
 
     // Folders & Paths
     templatesDir: '_templates', // Templates folder path (relative to notes_dir)
+    homepageFile: '', // Homepage file path (relative to notes_dir)
 
     // Advanced performance settings (ms)
     performanceSettings: {
@@ -189,6 +190,9 @@ export const stateMixin = {
 
     // Homepage state
     selectedHomepageFolder: '',
+    homepageContent: null, // Content of the configured homepage file
+    homepageFilePath: null, // Path to the homepage file
+    homepageCardExpanded: true, // Collapsible state for homepage card
     _homepageCache: {
         folderPath: null,
         notes: null,

@@ -10,6 +10,7 @@ from backend.core.decorators import handle_errors
 from backend.core.rate_limits import RATE_LIMITS
 from backend.dependencies import get_templates_dir, limiter, require_auth
 from backend.services import (
+    get_note_content,
     load_user_settings,
     save_user_settings,
     update_config_value,
@@ -194,7 +195,24 @@ async def get_config():
         "searchEnabled": config["search"]["enabled"],
         "demoMode": DEMO_MODE,  # Expose demo mode flag to frontend
         "authentication": {"enabled": config.get("authentication", {}).get("enabled", False)},
+        "homepageFile": config["storage"].get("homepage_file", ""),
     }
+
+
+@router.get("/homepage")
+@handle_errors("Failed to load homepage content")
+async def get_homepage_content():
+    """Get the homepage file content (from user settings, fallback to config.yaml)"""
+    # Check user settings first, then fall back to config.yaml
+    settings = load_user_settings(user_settings_path)
+    homepage_file = settings.get("paths", {}).get("homepageFile", "")
+    if not homepage_file:
+        homepage_file = config["storage"].get("homepage_file", "")
+    if not homepage_file:
+        return {"content": None, "path": None}
+
+    content = get_note_content(config["storage"]["notes_dir"], homepage_file)
+    return {"content": content, "path": homepage_file}
 
 
 @router.get("/settings/templates-dir")
@@ -254,11 +272,13 @@ async def get_user_settings(request: Request):
     """
     settings = load_user_settings(user_settings_path)
 
-    # Ensure templatesDir is present, falling back to config.yaml
+    # Ensure paths are present, falling back to config.yaml
     if "paths" not in settings:
         settings["paths"] = {}
     if "templatesDir" not in settings["paths"]:
         settings["paths"]["templatesDir"] = config["storage"].get("templates_dir", "_templates")
+    if "homepageFile" not in settings["paths"]:
+        settings["paths"]["homepageFile"] = config["storage"].get("homepage_file", "")
 
     return settings
 

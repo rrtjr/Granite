@@ -14,6 +14,7 @@ storage:
   notes_dir: ./data
   plugins_dir: ./plugins
   templates_dir: 06_Resources/Templates
+  homepage_file: README.md
 search:
   enabled: true
 authentication:

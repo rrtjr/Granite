@@ -31,6 +31,7 @@ export const settingsMixin = {
                 // Apply paths
                 if (settings.paths) {
                     this.templatesDir = settings.paths.templatesDir || '_templates';
+                    this.homepageFile = settings.paths.homepageFile || '';
                 }
 
                 // Apply datetime settings
@@ -117,7 +118,8 @@ export const settingsMixin = {
                 },
                 performance: this.performanceSettings,
                 paths: {
-                    templatesDir: this.templatesDir
+                    templatesDir: this.templatesDir,
+                    homepageFile: this.homepageFile
                 },
                 datetime: this.datetimeSettings
             };
@@ -148,6 +150,11 @@ export const settingsMixin = {
 
     // Save templates path (called from UI)
     saveTemplatesPath() {
+        this.saveUserSettings();
+    },
+
+    // Save homepage file path (called from UI)
+    saveHomepageFile() {
         this.saveUserSettings();
     },
 
