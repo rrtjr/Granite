@@ -99,7 +99,6 @@ jobs:
       - name: Start server (auth enabled)
         run: |
           AUTHENTICATION_ENABLED=true \
-          AUTHENTICATION_PASSWORD_HASH='$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYWFqxRgKJjO' \
           uvicorn backend.main:app --host 0.0.0.0 --port 8000 &
           echo $! > server.pid
           sleep 5
@@ -107,7 +106,8 @@ jobs:
 
       - name: Run login E2E tests
         env:
-          TEST_PASSWORD: testpassword123
+          # Default password hash in config.yaml corresponds to "admin"
+          TEST_PASSWORD: admin
         run: |
           pytest tests/e2e/test_login.py -v -m "e2e" --tb=short
 
