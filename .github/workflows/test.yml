@@ -129,10 +129,9 @@ jobs:
       - name: Install dependencies
         run: |
           uv pip install --system .
-          uv pip install --system playwright
 
       - name: Install Playwright browsers
-        run: playwright install --with-deps chromium
+        run: python -m playwright install --with-deps chromium
 
       - name: Start server
         run: |
