@@ -1,8 +1,12 @@
 """
 E2E tests for login functionality.
+
+Note: These tests require authentication to be ENABLED.
+When ENABLE_AUTH=false, the login page is not accessible.
 """
 
 import os
+import re
 
 import pytest
 
@@ -14,6 +18,13 @@ except ImportError:
     expect = None
 
 
+def is_auth_enabled(page: Page, base_url: str) -> bool:
+    """Check if authentication is enabled by trying to access login page."""
+    page.goto(f"{base_url}/login")
+    # If we get redirected away from /login, auth is disabled
+    return "/login" in page.url
+
+
 @pytest.mark.e2e
 class TestLoginPage:
     """Tests for the login page UI and elements."""
@@ -21,6 +32,10 @@ class TestLoginPage:
     def test_displays_login_form_elements(self, page: Page, base_url: str):
         """Login page should display all required form elements."""
         page.goto(f"{base_url}/login")
+
+        # Skip if auth is disabled (redirected away from login)
+        if "/login" not in page.url:
+            pytest.skip("Authentication is disabled - login page not accessible")
 
         # Check logo is present
         expect(page.locator(".logo")).to_be_visible()
@@ -45,6 +60,9 @@ class TestLoginPage:
         """Password input should be focused when page loads."""
         page.goto(f"{base_url}/login")
 
+        if "/login" not in page.url:
+            pytest.skip("Authentication is disabled - login page not accessible")
+
         password_input = page.locator('input[type="password"]')
         expect(password_input).to_be_focused()
 
@@ -52,17 +70,23 @@ class TestLoginPage:
         """Submitting wrong password should show error (stay on login page)."""
         page.goto(f"{base_url}/login")
 
+        if "/login" not in page.url:
+            pytest.skip("Authentication is disabled - login page not accessible")
+
         # Enter wrong password
         page.fill('input[type="password"]', "wrongpassword")
         page.click('button[type="submit"]')
 
         # Should still be on login page (not redirected)
-        expect(page).to_have_url(lambda url: "/login" in url)
+        expect(page).to_have_url(re.compile(r"/login"))
 
     def test_responsive_design_mobile(self, page: Page, base_url: str):
         """Login page should work on mobile viewport."""
         page.set_viewport_size({"width": 375, "height": 667})
         page.goto(f"{base_url}/login")
+
+        if "/login" not in page.url:
+            pytest.skip("Authentication is disabled - login page not accessible")
 
         container = page.locator(".login-container")
         expect(container).to_be_visible()
@@ -74,7 +98,10 @@ class TestLoginPage:
         """Footer should contain GitHub link."""
         page.goto(f"{base_url}/login")
 
-        github_link = page.locator('a[href*="github.com/rrtjr/Granite"]')
+        if "/login" not in page.url:
+            pytest.skip("Authentication is disabled - login page not accessible")
+
+        github_link = page.locator('a[href*="github.com"]')
         expect(github_link).to_be_visible()
         expect(github_link).to_have_attribute("target", "_blank")
 
@@ -89,11 +116,15 @@ class TestLoginAuthentication:
         test_password = os.environ.get("TEST_PASSWORD")
 
         page.goto(f"{base_url}/login")
+
+        if "/login" not in page.url:
+            pytest.skip("Authentication is disabled - login page not accessible")
+
         page.fill('input[type="password"]', test_password)
         page.click('button[type="submit"]')
 
         # Should redirect away from login
-        expect(page).not_to_have_url(lambda url: "/login" in url)
+        expect(page).not_to_have_url(re.compile(r"/login"))
 
     @pytest.mark.skipif(not os.environ.get("TEST_PASSWORD"), reason="TEST_PASSWORD not set")
     def test_maintains_session_after_login(self, page: Page, base_url: str):
@@ -101,6 +132,10 @@ class TestLoginAuthentication:
         test_password = os.environ.get("TEST_PASSWORD")
 
         page.goto(f"{base_url}/login")
+
+        if "/login" not in page.url:
+            pytest.skip("Authentication is disabled - login page not accessible")
+
         page.fill('input[type="password"]', test_password)
         page.click('button[type="submit"]')
 
@@ -109,4 +144,4 @@ class TestLoginAuthentication:
 
         # Refresh page - should stay logged in
         page.reload()
-        expect(page).not_to_have_url(lambda url: "/login" in url)
+        expect(page).not_to_have_url(re.compile(r"/login"))

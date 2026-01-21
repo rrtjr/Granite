@@ -80,15 +80,40 @@ jobs:
         run: playwright install --with-deps chromium
       # ----------------------------------
 
-      - name: Start server
+      # --- PHASE 1: Main App Tests (Auth Disabled) ---
+      - name: Start server (auth disabled)
         run: |
-          ENABLE_AUTH=false uvicorn backend.main:app --host 0.0.0.0 --port 8000 &
+          AUTHENTICATION_ENABLED=false uvicorn backend.main:app --host 0.0.0.0 --port 8000 &
+          echo $! > server.pid
           sleep 5
           curl --retry 10 --retry-delay 1 --retry-connrefused http://localhost:8000/health || exit 1
 
-      - name: Run E2E tests
+      - name: Run main app E2E tests
         run: |
-          pytest tests/e2e -v -m "e2e" --tb=short
+          pytest tests/e2e/test_app.py tests/e2e/test_notes.py -v -m "e2e" --tb=short
+
+      - name: Stop server
+        run: kill $(cat server.pid) || true
+
+      # --- PHASE 2: Login Tests (Auth Enabled) ---
+      - name: Start server (auth enabled)
+        run: |
+          AUTHENTICATION_ENABLED=true \
+          AUTHENTICATION_PASSWORD_HASH='$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYWFqxRgKJjO' \
+          uvicorn backend.main:app --host 0.0.0.0 --port 8000 &
+          echo $! > server.pid
+          sleep 5
+          curl --retry 10 --retry-delay 1 --retry-connrefused http://localhost:8000/health || exit 1
+
+      - name: Run login E2E tests
+        env:
+          TEST_PASSWORD: testpassword123
+        run: |
+          pytest tests/e2e/test_login.py -v -m "e2e" --tb=short
+
+      - name: Stop server
+        if: always()
+        run: kill $(cat server.pid) || true
 
       - name: Upload Playwright traces on failure
         if: failure()
