@@ -131,7 +131,7 @@ jobs:
           uv pip install --system .
 
       - name: Install Playwright browsers
-        run: python -m playwright install --with-deps chromium
+        run: python -m playwright install --with-deps chromium chromium-headless-shell
 
       - name: Start server
         run: |
