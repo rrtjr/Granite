@@ -115,6 +115,9 @@ export const stateMixin = {
     tagsExpanded: false,
     tagReloadTimeout: null, // For debouncing tag reloads
 
+    // Favorites state
+    favoriteNotes: [], // Array of favorite note paths
+
     // Scroll sync state
     isScrolling: false,
 

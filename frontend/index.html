@@ -703,6 +703,11 @@
             opacity: 1 !important;
         }
 
+        /* Note favorite button on hover */
+        .note-item:hover .note-favorite-btn {
+            opacity: 1 !important;
+        }
+
         /* Folder hierarchy lines (Obsidian-style) */
         .folder-contents {
             position: relative;
@@ -1346,6 +1351,27 @@
                         </svg>
                     </button>
 
+                <!-- Favorites -->
+                <button
+                    class="icon-rail-btn relative"
+                    :class="{'active': activePanel === 'favorites'}"
+                    @click="activePanel = 'favorites'"
+                    title="Favorites"
+                    aria-label="Favorites panel"
+                >
+                    <svg fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                    <!-- Favorites count badge -->
+                    <span
+                        x-show="favoriteNotes.length > 0"
+                        x-cloak
+                        class="absolute -top-1 -right-1 w-4 h-4 text-[9px] font-bold rounded-full flex items-center justify-center"
+                        style="background-color: var(--accent-primary); color: white;"
+                        x-text="favoriteNotes.length > 9 ? '9+' : favoriteNotes.length"
+                    ></span>
+                </button>
+
                 <!-- Search -->
                         <button
                     class="icon-rail-btn relative"
@@ -1502,10 +1528,22 @@
                                 @mouseover="if(currentNote !== note.path && currentImage !== note.path) $el.style.backgroundColor='var(--bg-hover)'"
                                 @mouseout="if(currentNote !== note.path && currentImage !== note.path) $el.style.backgroundColor='transparent'"
                             >
-                                <span class="truncate" style="display: block; padding-right: 30px;">
+                                <span class="truncate" style="display: block; padding-right: 50px;">
                                     <template x-if="note.type === 'image'">🖼️ </template>
                                     <span x-text="note.name"></span>
                                 </span>
+                                <!-- Favorite toggle button (only for notes, not images) -->
+                                <button
+                                    x-show="note.type !== 'image'"
+                                    @click.stop="toggleFavorite(note.path)"
+                                    class="note-favorite-btn absolute right-8 top-1/2 transform -translate-y-1/2 px-1 py-0.5 text-xs rounded hover:brightness-110 transition-opacity"
+                                    :style="isFavorite(note.path) ? 'opacity: 1; color: var(--warning);' : 'opacity: 0; color: var(--text-tertiary);'"
+                                    :title="isFavorite(note.path) ? 'Remove from favorites' : 'Add to favorites'"
+                                >
+                                    <svg class="w-4 h-4" :fill="isFavorite(note.path) ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                                    </svg>
+                                </button>
                                 <button
                                     @click.stop="note.type === 'image' ? deleteImage(note.path) : deleteNote(note.path, note.name)"
                                     class="note-delete-btn absolute right-2 top-1/2 transform -translate-y-1/2 px-1 py-0.5 text-xs rounded hover:brightness-110 transition-opacity"
@@ -1528,6 +1566,63 @@
                     </div>
                 </div>
                 <!-- END FILES PANEL -->
+
+                <!-- ==================== FAVORITES PANEL ==================== -->
+                <div x-show="activePanel === 'favorites'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="flex flex-col h-full">
+                    <!-- Favorites Header -->
+                    <div class="flex-shrink-0 px-3 py-2 border-b flex items-center justify-between" style="border-color: var(--border-primary);">
+                        <span class="text-xs font-semibold uppercase tracking-wide" style="color: var(--text-tertiary);">Favorites</span>
+                        <span class="text-xs px-1.5 py-0.5 rounded" style="background-color: var(--bg-tertiary); color: var(--text-tertiary);" x-text="favoriteNotes.length"></span>
+                    </div>
+
+                    <!-- Scrollable content: Favorite Notes -->
+                    <div class="flex-1 overflow-y-auto custom-scrollbar">
+                        <!-- Favorite Notes List -->
+                        <template x-if="favoriteNotes.length > 0">
+                            <div>
+                                <template x-for="note in favoriteNotesData" :key="note.path">
+                                    <div
+                                        @click="openItem(note.path, note.type)"
+                                        class="note-item px-3 py-1.5 text-sm cursor-pointer relative group"
+                                        :style="currentNote === note.path ? 'background-color: var(--accent-light); color: var(--accent-primary);' : 'color: var(--text-primary);'"
+                                        @mouseover="if(currentNote !== note.path) $el.style.backgroundColor='var(--bg-hover)'"
+                                        @mouseout="if(currentNote !== note.path) $el.style.backgroundColor='transparent'"
+                                    >
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex-1 min-w-0 pr-6">
+                                                <span class="truncate block" x-text="note.name"></span>
+                                                <span class="text-xs truncate block" style="color: var(--text-tertiary);" x-text="note.folder || 'Root'"></span>
+                                            </div>
+                                        </div>
+                                        <!-- Remove from favorites button -->
+                                        <button
+                                            @click.stop="toggleFavorite(note.path)"
+                                            class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded hover:brightness-110 transition-opacity opacity-0 group-hover:opacity-100"
+                                            style="color: var(--warning);"
+                                            title="Remove from favorites"
+                                        >
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- Empty state -->
+                        <template x-if="favoriteNotes.length === 0">
+                            <div class="text-center py-8 px-4">
+                                <svg class="w-12 h-12 mx-auto mb-3 opacity-40" style="color: var(--text-tertiary);" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                                <p class="text-sm mb-2" style="color: var(--text-tertiary);">No favorites yet</p>
+                                <p class="text-xs" style="color: var(--text-tertiary);">Click the star icon on any note to add it to your favorites</p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <!-- END FAVORITES PANEL -->
 
                 <!-- ==================== SEARCH PANEL ==================== -->
                 <div x-show="activePanel === 'search'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="flex flex-col h-full">
@@ -3970,6 +4065,25 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
             </svg>
             <span>Files</span>
+        </button>
+        <button
+            class="mobile-bottom-tab relative"
+            :class="{'active': activePanel === 'favorites'}"
+            @click="activePanel = 'favorites'; mobileSidebarOpen = true;"
+            aria-label="Favorites"
+        >
+            <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            </svg>
+            <span>Favorites</span>
+            <!-- Favorites count badge -->
+            <span
+                x-show="favoriteNotes.length > 0"
+                x-cloak
+                class="absolute top-1 right-1/4 w-4 h-4 text-[9px] font-bold rounded-full flex items-center justify-center"
+                style="background-color: var(--accent-primary); color: white;"
+                x-text="favoriteNotes.length > 9 ? '9+' : favoriteNotes.length"
+            ></span>
         </button>
         <button
             class="mobile-bottom-tab relative"

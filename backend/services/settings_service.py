@@ -36,6 +36,7 @@ def get_default_user_settings() -> dict:
             "updateModifiedOnOpen": True,  # Update modified date when file is opened
         },
         "plugins": {},  # Plugin-specific settings
+        "favorites": [],  # Array of favorite note paths
     }
 
 

@@ -13,14 +13,16 @@ Complete guide for running and understanding Granite's test suite.
 
 ## Overview
 
-Granite has a comprehensive test suite with **70+ test cases** covering:
+Granite has a comprehensive test suite with **100+ test cases** covering:
 
 - Backend API endpoints
 - Plugin functionality (Git, PDF Export, Note Stats)
 - Settings persistence
 - User preferences
+- Favorites feature
 - Template system
 - File operations
+- Frontend UI tests (browser-based)
 
 All tests use **pytest** and can run both locally and inside Docker containers.
 
@@ -55,12 +57,17 @@ docker exec granite .venv/bin/pytest --cov=backend --cov=plugins --cov-report=ht
 
 ```
 tests/
+├── test_favorites.py                        # Favorites feature tests
 ├── test_git_plugin.py                       # Git plugin functionality
 ├── test_pdf_export_plugin.py                # PDF export plugin
 ├── test_plugin_api.py                       # Plugin API endpoints
 ├── test_plugin_settings_persistence.py      # Plugin settings (70+ tests)
 ├── test_templates.py                        # Template system
-└── test_user_settings.py                    # User settings API
+├── test_user_settings.py                    # User settings API
+├── test_favorites_ui.html                   # Frontend favorites tests (browser)
+├── test_git_plugin_ui.html                  # Frontend git plugin tests
+├── test_plugin_ui.html                      # Frontend plugin tests
+└── test_unsplash_banner.html                # Frontend banner picker tests
 ```
 
 ## Running Tests
@@ -191,6 +198,38 @@ docker exec granite .venv/bin/pytest tests/test_user_settings.py -v
 # Plugin persistence via user settings API
 docker exec granite .venv/bin/pytest tests/test_user_settings.py::TestPluginSettingsPersistence -v
 ```
+
+### Favorites Tests (`test_favorites.py`)
+
+Tests the favorites feature for quick note access.
+
+```bash
+# All favorites tests
+docker exec granite .venv/bin/pytest tests/test_favorites.py -v
+
+# Specific test classes
+docker exec granite .venv/bin/pytest tests/test_favorites.py::TestFavoritesAPI -v
+docker exec granite .venv/bin/pytest tests/test_favorites.py::TestFavoritesWithOtherSettings -v
+```
+
+**Test Classes:**
+
+- **TestFavoritesDefaultSettings** - Default settings include empty favorites array
+- **TestFavoritesAPI** - Add, update, clear, and persist favorites via API
+- **TestFavoritesWithOtherSettings** - Favorites work alongside other user settings
+- **TestFavoritesFilePersistence** - Favorites are saved to user-settings.json
+- **TestFavoritesEdgeCases** - Duplicates, special characters, large lists
+
+### Frontend Tests (Browser-based)
+
+HTML-based tests that run in the browser. Access via:
+```
+http://localhost:8000/tests/test_favorites_ui.html
+http://localhost:8000/tests/test_plugin_ui.html
+http://localhost:8000/tests/test_git_plugin_ui.html
+```
+
+**Note:** Requires `ENABLE_TESTS=true` environment variable to access test pages.
 
 ### Git Plugin Tests (`test_git_plugin.py`)
 
@@ -492,11 +531,14 @@ docker exec granite .venv/bin/pytest -n auto -v
 
 ## Summary
 
-- **70+ test cases** for plugin settings persistence
+- **100+ test cases** covering all features
+- **70+ tests** for plugin settings persistence
+- **30+ tests** for favorites, user settings, and other features
+- **Frontend HTML tests** for browser-based testing
 - **Comprehensive coverage** of all plugins
 - **Docker-first** testing approach
 - **Fast execution** with parallel support
-- **Easy to extend** for new plugins
+- **Easy to extend** for new features
 
 ## Additional Resources
 

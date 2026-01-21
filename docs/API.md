@@ -575,6 +575,97 @@ Returns all notes that have a specific tag.
 
 ---
 
+## Favorites
+
+Favorites allow quick access to frequently used notes. Favorites are stored in user settings and persist across sessions.
+
+### Get Favorites
+
+Favorites are included in the user settings response:
+
+```http
+GET /api/settings/user
+```
+
+**Response (favorites portion):**
+```json
+{
+  "favorites": ["notes/important.md", "projects/active.md"],
+  ...
+}
+```
+
+### Update Favorites
+
+Update the favorites list via the user settings endpoint:
+
+```http
+POST /api/settings/user
+Content-Type: application/json
+
+{
+  "favorites": ["notes/important.md", "projects/active.md", "daily/today.md"]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "settings": {
+    "favorites": ["notes/important.md", "projects/active.md", "daily/today.md"],
+    ...
+  },
+  "message": "User settings updated successfully"
+}
+```
+
+### Add a Single Favorite
+
+To add a note to favorites without replacing the existing list, first get the current favorites, then update:
+
+```bash
+# Get current favorites
+curl http://localhost:8000/api/settings/user | jq '.favorites'
+
+# Add new favorite (example with jq)
+curl -X POST http://localhost:8000/api/settings/user \
+  -H "Content-Type: application/json" \
+  -d '{"favorites": ["existing.md", "new-favorite.md"]}'
+```
+
+### Remove a Favorite
+
+Send the updated list without the note you want to remove:
+
+```http
+POST /api/settings/user
+Content-Type: application/json
+
+{
+  "favorites": ["remaining-note.md"]
+}
+```
+
+### Clear All Favorites
+
+```http
+POST /api/settings/user
+Content-Type: application/json
+
+{
+  "favorites": []
+}
+```
+
+**Notes:**
+- Favorites are stored as an array of note paths (relative to the notes directory)
+- The order of favorites is preserved
+- Favorites persist across browser sessions and Docker restarts
+- The frontend provides star icons on notes for easy favoriting
+
+---
+
 ## Templates
 
 ### List Templates

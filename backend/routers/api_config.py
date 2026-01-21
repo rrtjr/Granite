@@ -282,10 +282,14 @@ async def update_user_settings_endpoint(request: Request, data: dict):
 
     # Update with provided values (merge)
     for section, values in data.items():
-        if section not in current_settings:
-            current_settings[section] = {}
         if isinstance(values, dict):
+            # For dict values, merge with existing section
+            if section not in current_settings:
+                current_settings[section] = {}
             current_settings[section].update(values)
+        else:
+            # For non-dict values (like favorites array), replace directly
+            current_settings[section] = values
 
     # Save updated settings
     success = save_user_settings(user_settings_path, current_settings)

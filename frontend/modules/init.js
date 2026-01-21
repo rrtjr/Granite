@@ -34,6 +34,9 @@ export const initMixin = {
         // Load all user settings from server
         await this.loadUserSettings();
 
+        // Load favorites
+        await this.loadFavorites();
+
         // Parse URL and load specific note if provided
         this.loadNoteFromURL();
 

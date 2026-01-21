@@ -5,7 +5,7 @@ console.log('[Granite] Starting module loader...');
 
 // Use dynamic imports with error handling to identify which module fails
 let CONFIG, ErrorHandler;
-let stateMixin, helpersMixin, themesMixin, tagsMixin, templatesMixin;
+let stateMixin, helpersMixin, themesMixin, tagsMixin, favoritesMixin, templatesMixin;
 let statsMixin, metadataMixin, sidebarMixin, settingsMixin, editorMixin;
 let notesMixin, foldersMixin, folderOperationsMixin, folderRenderMixin;
 let searchMixin, imagesMixin, pluginsMixin;
@@ -18,6 +18,7 @@ async function loadModules() {
         { name: 'helpers', path: './modules/helpers.js' },
         { name: 'themes', path: './modules/themes.js' },
         { name: 'tags', path: './modules/tags.js' },
+        { name: 'favorites', path: './modules/favorites.js' },
         { name: 'templates', path: './modules/templates.js' },
         { name: 'stats', path: './modules/stats.js' },
         { name: 'metadata', path: './modules/metadata.js' },
@@ -58,6 +59,7 @@ async function loadModules() {
     helpersMixin = loaded.helpers.helpersMixin;
     themesMixin = loaded.themes.themesMixin;
     tagsMixin = loaded.tags.tagsMixin;
+    favoritesMixin = loaded.favorites.favoritesMixin;
     templatesMixin = loaded.templates.templatesMixin;
     statsMixin = loaded.stats.statsMixin;
     metadataMixin = loaded.metadata.metadataMixin;
@@ -85,7 +87,7 @@ async function loadModules() {
 
     // Verify all mixins are defined
     const mixins = {
-        stateMixin, helpersMixin, themesMixin, tagsMixin, templatesMixin,
+        stateMixin, helpersMixin, themesMixin, tagsMixin, favoritesMixin, templatesMixin,
         statsMixin, metadataMixin, sidebarMixin, settingsMixin, editorMixin,
         notesMixin, foldersMixin, folderOperationsMixin, folderRenderMixin,
         searchMixin, imagesMixin, pluginsMixin,
@@ -130,6 +132,7 @@ function noteApp() {
             helpersMixin,
             themesMixin,
             tagsMixin,
+            favoritesMixin,
             templatesMixin,
             statsMixin,
             metadataMixin,
