@@ -1,5 +1,7 @@
 // Granite Frontend - User Settings Module
 
+import { Debug } from './config.js';
+
 export const settingsMixin = {
     // Load all user settings from server (with localStorage migration)
     async loadUserSettings() {
@@ -45,7 +47,7 @@ export const settingsMixin = {
                 await this.migrateFromLocalStorage();
             }
         } catch (error) {
-            console.error('Error loading user settings:', error);
+            Debug.error('Error loading user settings:', error);
             await this.migrateFromLocalStorage();
         }
     },
@@ -99,10 +101,10 @@ export const settingsMixin = {
 
             if (hasLocalSettings) {
                 await this.saveUserSettings(localSettings);
-                console.log('Migrated settings from localStorage to server');
+                Debug.log('Migrated settings from localStorage to server');
             }
         } catch (error) {
-            console.error('Error migrating from localStorage:', error);
+            Debug.error('Error migrating from localStorage:', error);
         }
     },
 
@@ -131,14 +133,14 @@ export const settingsMixin = {
             });
 
             if (response.ok) {
-                console.log('User settings saved successfully');
+                Debug.log('User settings saved successfully');
                 return true;
             } else {
-                console.error('Failed to save user settings');
+                Debug.error('Failed to save user settings');
                 return false;
             }
         } catch (error) {
-            console.error('Error saving user settings:', error);
+            Debug.error('Error saving user settings:', error);
             return false;
         }
     },

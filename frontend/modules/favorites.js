@@ -1,6 +1,8 @@
 // Granite Frontend - Favorites Module
 // Manage favorite notes for quick access
 
+import { Debug } from './config.js';
+
 export const favoritesMixin = {
     // Load favorites from user settings
     async loadFavorites() {
@@ -11,7 +13,7 @@ export const favoritesMixin = {
                 this.favoriteNotes = settings.favorites || [];
             }
         } catch (error) {
-            console.error('Failed to load favorites:', error);
+            Debug.error('Failed to load favorites:', error);
             this.favoriteNotes = [];
         }
     },
@@ -53,10 +55,10 @@ export const favoritesMixin = {
             });
 
             if (!response.ok) {
-                console.error('Failed to save favorites');
+                Debug.error('Failed to save favorites');
             }
         } catch (error) {
-            console.error('Error saving favorites:', error);
+            Debug.error('Error saving favorites:', error);
         }
     },
 

@@ -1,6 +1,6 @@
 // Granite Frontend - Initialization Module
 
-import { CONFIG } from './config.js';
+import { CONFIG, setDebugMode, Debug } from './config.js';
 
 export const initMixin = {
     // Initialize app
@@ -131,8 +131,10 @@ export const initMixin = {
             const response = await fetch('/api/config');
             const data = await response.json();
             this.appConfig = data;
+            // Set debug mode from backend config
+            setDebugMode(data.debugMode || false);
         } catch (error) {
-            console.error('Failed to load config:', error);
+            Debug.error('Failed to load config:', error);
         }
     },
 
@@ -146,7 +148,7 @@ export const initMixin = {
                 this.homepageFilePath = data.path;
             }
         } catch (error) {
-            console.error('Failed to load homepage content:', error);
+            Debug.error('Failed to load homepage content:', error);
         }
     },
 

@@ -184,6 +184,7 @@ graph_router = APIRouter(
 async def get_graph():
     """Get graph data for note visualization with wikilink and markdown link detection"""
     notes = get_all_notes(config["storage"]["notes_dir"])
+    folders = get_all_folders(config["storage"]["notes_dir"])
     nodes = []
     edges = []
 
@@ -204,11 +205,28 @@ async def get_graph():
             note_names[name.lower()] = note["path"]
             note_names[note["name"].lower()] = note["path"]
 
+    # Build set of valid folder paths for matching
+    folder_paths = set(folders)
+    folder_paths_lower = {f.lower(): f for f in folders}
+    folder_names = {}  # Map folder name -> path for quick lookup
+    for folder in folders:
+        folder_name = folder.split("/")[-1]
+        folder_names[folder_name.lower()] = folder
+
     # Build graph structure with link detection
+    # Add notes as nodes
     for note in notes:
         if note.get("type") == "note":
-            nodes.append({"id": note["path"], "label": note["name"].replace(".md", "")})
+            nodes.append({"id": note["path"], "label": note["name"].replace(".md", ""), "type": "note"})
 
+    # Add folders as nodes
+    for folder in folders:
+        folder_name = folder.split("/")[-1]
+        nodes.append({"id": folder, "label": folder_name, "type": "folder"})
+
+    # Process notes for links
+    for note in notes:
+        if note.get("type") == "note":
             # Read note content to find links
             content = get_note_content(config["storage"]["notes_dir"], note["path"])
             if content:
@@ -224,8 +242,9 @@ async def get_graph():
                     target = target_raw.strip()
                     target_lower = target.lower()
 
-                    # Try to match target to an existing note
+                    # Try to match target to an existing note first
                     target_path = None
+                    link_type = "wikilink"
 
                     # 1. Exact path match
                     if target in note_paths:
@@ -241,9 +260,19 @@ async def get_graph():
                     # 4. Just note name (case-insensitive)
                     elif target_lower in note_names:
                         target_path = note_names[target_lower]
+                    # 5. Try to match to a folder
+                    elif target in folder_paths:
+                        target_path = target
+                        link_type = "wikilink-folder"
+                    elif target_lower in folder_paths_lower:
+                        target_path = folder_paths_lower[target_lower]
+                        link_type = "wikilink-folder"
+                    elif target_lower in folder_names:
+                        target_path = folder_names[target_lower]
+                        link_type = "wikilink-folder"
 
                     if target_path and target_path != note["path"]:
-                        edges.append({"source": note["path"], "target": target_path, "type": "wikilink"})
+                        edges.append({"source": note["path"], "target": target_path, "type": link_type})
 
                 # Process markdown links
                 for _, link_path_raw in markdown_links:
@@ -268,6 +297,7 @@ async def get_graph():
 
                     # Try to match target to an existing note
                     target_path = None
+                    link_type = "markdown"
 
                     # 1. Exact path match (with or without .md)
                     if link_path in note_paths:
@@ -292,8 +322,20 @@ async def get_graph():
                         elif filename_with_md_lower in note_names:
                             target_path = note_names[filename_with_md_lower]
 
+                    # 4. Try matching to a folder if no note matched
+                    if not target_path:
+                        if link_path in folder_paths:
+                            target_path = link_path
+                            link_type = "markdown-folder"
+                        elif link_path_lower in folder_paths_lower:
+                            target_path = folder_paths_lower[link_path_lower]
+                            link_type = "markdown-folder"
+                        elif link_path_lower in folder_names:
+                            target_path = folder_names[link_path_lower]
+                            link_type = "markdown-folder"
+
                     if target_path and target_path != note["path"]:
-                        edges.append({"source": note["path"], "target": target_path, "type": "markdown"})
+                        edges.append({"source": note["path"], "target": target_path, "type": link_type})
 
     # Remove duplicate edges
     seen = set()

@@ -1,5 +1,7 @@
 // Granite Frontend - Templates Module
 
+import { Debug } from './config.js';
+
 export const templatesMixin = {
     // Load available templates from _templates folder
     async loadTemplates() {
@@ -8,7 +10,7 @@ export const templatesMixin = {
             const data = await response.json();
             this.availableTemplates = data.templates || [];
         } catch (error) {
-            console.error('Failed to load templates:', error);
+            Debug.error('Failed to load templates:', error);
         }
     },
 
@@ -70,7 +72,7 @@ export const templatesMixin = {
             await this.loadNote(data.path);
 
         } catch (error) {
-            console.error('Failed to create note from template:', error);
+            Debug.error('Failed to create note from template:', error);
             alert('Failed to create note from template. Please try again.');
         }
     },

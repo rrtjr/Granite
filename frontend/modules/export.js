@@ -1,5 +1,7 @@
 // Granite Frontend - Export Module (HTML and PDF)
 
+import { Debug } from './config.js';
+
 export const exportMixin = {
     // Export current note as HTML
     async exportToHTML() {
@@ -30,7 +32,7 @@ export const exportMixin = {
                         renderedHTML = renderedHTML.replace(match[0], `src="${base64}"`);
                     }
                 } catch (e) {
-                    console.warn(`Failed to embed image: ${encodedPath}`, e);
+                    Debug.warn(`Failed to embed image: ${encodedPath}`, e);
                     const decodedPath = decodeURIComponent(encodedPath);
                     renderedHTML = renderedHTML.replace(match[0], `src="${decodedPath}"`);
                 }
@@ -144,7 +146,7 @@ export const exportMixin = {
                     container.innerHTML = svg;
                     pre.parentElement.replaceChild(container, pre);
                 } catch (error) {
-                    console.error('Mermaid rendering error:', error);
+                    Debug.error('Mermaid rendering error:', error);
                 }
             }
         });
@@ -196,7 +198,7 @@ export const exportMixin = {
             document.body.removeChild(a);
 
         } catch (error) {
-            console.error('HTML export failed:', error);
+            Debug.error('HTML export failed:', error);
             alert(`Failed to export HTML: ${error.message}`);
         }
     },
@@ -244,7 +246,7 @@ export const exportMixin = {
             document.body.removeChild(a);
 
         } catch (error) {
-            console.error('PDF export failed:', error);
+            Debug.error('PDF export failed:', error);
 
             if (error.message.includes('not enabled')) {
                 alert('PDF Export plugin is not enabled. Please enable it in Settings.');

@@ -1,27 +1,29 @@
 // Granite Frontend - CodeMirror Editor Module
 
+import { Debug } from './config.js';
+
 export const editorMixin = {
     // Initialize CodeMirror 6 editor
     initCodeMirror() {
         if (!window.CodeMirror || !window.CodeMirrorReady) {
-            console.log('CodeMirror not loaded yet, retrying...');
+            Debug.log('CodeMirror not loaded yet, retrying...');
             setTimeout(() => this.initCodeMirror(), 100);
             return;
         }
 
         const container = this.$refs.editorContainer || document.getElementById('note-editor');
         if (!container) {
-            console.log('Editor container not found, retrying...');
+            Debug.log('Editor container not found, retrying...');
             setTimeout(() => this.initCodeMirror(), 100);
             return;
         }
 
         if (this.editorView) {
-            console.log('CodeMirror already initialized');
+            Debug.log('CodeMirror already initialized');
             return;
         }
 
-        console.log('Initializing CodeMirror 6...');
+        Debug.log('Initializing CodeMirror 6...');
 
         const { EditorView, EditorState, markdown, basicExtensions, Compartment } = window.CodeMirror;
 
@@ -86,7 +88,7 @@ export const editorMixin = {
             parent: container
         });
 
-        console.log('CodeMirror 6 initialized successfully!');
+        Debug.log('CodeMirror 6 initialized successfully!');
     },
 
     // Update editor content (when loading a new note)

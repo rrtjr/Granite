@@ -386,25 +386,38 @@ See [PLUGIN_GIT_SYNC.md](PLUGIN_GIT_SYNC.md) and [GIT_AUTHENTICATION.md](GIT_AUT
 ```http
 GET /api/graph
 ```
-Returns the relationship graph between notes with link detection.
+Returns the relationship graph between notes and folders with link detection.
 
 **Response:**
 ```json
 {
   "nodes": [
-    { "id": "folder/note.md", "label": "note" },
-    { "id": "another.md", "label": "another" }
+    { "id": "folder/note.md", "label": "note", "type": "note" },
+    { "id": "another.md", "label": "another", "type": "note" },
+    { "id": "Projects", "label": "Projects", "type": "folder" }
   ],
   "edges": [
-    { "source": "folder/note.md", "target": "another.md", "type": "wikilink" }
+    { "source": "folder/note.md", "target": "another.md", "type": "wikilink" },
+    { "source": "folder/note.md", "target": "Projects", "type": "wikilink-folder" }
   ]
 }
 ```
 
+**Node Types:**
+- `"note"` - Markdown note files
+- `"folder"` - Directories in the notes folder
+
 **Link Detection:**
 - **Wikilinks** - `[[note]]` or `[[note|display text]]` syntax (Obsidian-style)
+- **Folder wikilinks** - `[[folder]]` links to folders
 - **Markdown links** - `[text](note.md)` standard internal links
-- **Edge types** - `"wikilink"` or `"markdown"` to distinguish link source
+- **Markdown folder links** - `[text](folder)` links to folders
+
+**Edge Types:**
+- `"wikilink"` - Wiki link to a note
+- `"wikilink-folder"` - Wiki link to a folder
+- `"markdown"` - Markdown link to a note
+- `"markdown-folder"` - Markdown link to a folder
 
 ## System
 

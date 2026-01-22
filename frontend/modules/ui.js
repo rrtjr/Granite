@@ -1,6 +1,6 @@
 // Granite Frontend - UI Utilities Module
 
-import { CONFIG } from './config.js';
+import { CONFIG, Debug } from './config.js';
 
 export const uiMixin = {
     // Toast notification methods
@@ -32,7 +32,7 @@ export const uiMixin = {
             } else {
                 // Only warn if a note is actually open (otherwise this is expected on homepage)
                 if (this.currentNote) {
-                    console.warn(`setupScrollSync: Failed to find editor/preview elements after ${CONFIG.SCROLL_SYNC_MAX_RETRIES} retries`);
+                    Debug.warn(`setupScrollSync: Failed to find editor/preview elements after ${CONFIG.SCROLL_SYNC_MAX_RETRIES} retries`);
                 }
             }
             return;

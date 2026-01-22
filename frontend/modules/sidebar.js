@@ -1,6 +1,6 @@
 // Granite Frontend - Sidebar Module
 
-import { CONFIG } from './config.js';
+import { CONFIG, Debug } from './config.js';
 
 export const sidebarMixin = {
     // Load sidebar width from localStorage
@@ -118,7 +118,7 @@ export const sidebarMixin = {
                 this.viewMode = saved;
             }
         } catch (error) {
-            console.error('Error loading view mode:', error);
+            Debug.error('Error loading view mode:', error);
         }
     },
 
@@ -127,7 +127,7 @@ export const sidebarMixin = {
         try {
             localStorage.setItem('viewMode', this.viewMode);
         } catch (error) {
-            console.error('Error saving view mode:', error);
+            Debug.error('Error saving view mode:', error);
         }
     },
 
@@ -139,7 +139,7 @@ export const sidebarMixin = {
                 this.tagsExpanded = saved === 'true';
             }
         } catch (error) {
-            console.error('Error loading tags expanded state:', error);
+            Debug.error('Error loading tags expanded state:', error);
         }
     },
 
@@ -148,7 +148,7 @@ export const sidebarMixin = {
         try {
             localStorage.setItem('tagsExpanded', this.tagsExpanded.toString());
         } catch (error) {
-            console.error('Error saving tags expanded state:', error);
+            Debug.error('Error saving tags expanded state:', error);
         }
     },
 

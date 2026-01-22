@@ -5,7 +5,7 @@ Handles app configuration and user settings endpoints.
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from backend.config import DEMO_MODE, config, config_path, user_settings_path
+from backend.config import DEBUG_MODE, DEMO_MODE, config, config_path, user_settings_path
 from backend.core.decorators import handle_errors
 from backend.core.rate_limits import RATE_LIMITS
 from backend.dependencies import get_templates_dir, limiter, require_auth
@@ -194,6 +194,7 @@ async def get_config():
         "version": config["app"]["version"],
         "searchEnabled": config["search"]["enabled"],
         "demoMode": DEMO_MODE,  # Expose demo mode flag to frontend
+        "debugMode": DEBUG_MODE,  # Expose debug mode flag to frontend
         "authentication": {"enabled": config.get("authentication", {}).get("enabled", False)},
         "homepageFile": config["storage"].get("homepage_file", ""),
     }

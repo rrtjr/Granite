@@ -1,5 +1,87 @@
 // Granite Frontend - Configuration Constants and Error Handler
 
+// Debug mode flag - will be set from backend config
+let debugModeEnabled = false;
+
+/**
+ * Set the debug mode flag (called when config is loaded from backend)
+ * @param {boolean} enabled - Whether debug mode is enabled
+ */
+export function setDebugMode(enabled) {
+    debugModeEnabled = enabled;
+    if (enabled) {
+        console.log('[Debug] Debug mode enabled - logging active');
+    }
+}
+
+/**
+ * Check if debug mode is enabled
+ * @returns {boolean} Whether debug mode is enabled
+ */
+export function isDebugMode() {
+    return debugModeEnabled;
+}
+
+/**
+ * Debug logger - only logs when debug mode is enabled
+ * Use this instead of console.log for all debug output
+ */
+export const Debug = {
+    /**
+     * Log a debug message (only when debug mode is enabled)
+     * @param {...any} args - Arguments to log
+     */
+    log(...args) {
+        if (debugModeEnabled) {
+            console.log(...args);
+        }
+    },
+
+    /**
+     * Log a warning (only when debug mode is enabled)
+     * @param {...any} args - Arguments to log
+     */
+    warn(...args) {
+        if (debugModeEnabled) {
+            console.warn(...args);
+        }
+    },
+
+    /**
+     * Log an error (only when debug mode is enabled)
+     * @param {...any} args - Arguments to log
+     */
+    error(...args) {
+        if (debugModeEnabled) {
+            console.error(...args);
+        }
+    },
+
+    /**
+     * Log debug info with a prefix (only when debug mode is enabled)
+     * @param {string} prefix - Prefix for the log message
+     * @param {...any} args - Arguments to log
+     */
+    info(prefix, ...args) {
+        if (debugModeEnabled) {
+            console.log(`[${prefix}]`, ...args);
+        }
+    },
+
+    /**
+     * Log a group of related messages (only when debug mode is enabled)
+     * @param {string} label - Group label
+     * @param {Function} callback - Function that contains console.log calls
+     */
+    group(label, callback) {
+        if (debugModeEnabled) {
+            console.group(label);
+            callback();
+            console.groupEnd();
+        }
+    }
+};
+
 // Configuration constants
 export const CONFIG = {
     AUTOSAVE_DELAY: 1000,              // ms - Delay before triggering autosave
@@ -20,8 +102,10 @@ export const ErrorHandler = {
      * @param {boolean} showToast - Whether to show a toast notification to the user
      */
     handle(operation, error, showToast = true) {
-        // Always log to console for debugging
-        console.error(`Failed to ${operation}:`, error);
+        // Only log to console when debug mode is enabled
+        if (debugModeEnabled) {
+            console.error(`Failed to ${operation}:`, error);
+        }
 
         // Show user-friendly toast notification if requested
         if (showToast && window.noteAppInstance?.addToast) {
@@ -44,7 +128,9 @@ export const ErrorHandler = {
      * @param {string} message - The warning message to display
      */
     warn(message) {
-        console.warn(message);
+        if (debugModeEnabled) {
+            console.warn(message);
+        }
         if (window.noteAppInstance?.addToast) {
             window.noteAppInstance.addToast(message, 'warning', 4000);
         }

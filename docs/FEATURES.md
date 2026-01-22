@@ -30,19 +30,37 @@
 ## Linking & Discovery
 
 ### Graph View
-- **Interactive graph** - Visualize all your notes and their connections
+- **Interactive graph** - Visualize all your notes, folders, and their connections
 - **Navigate with mouse** - Drag to pan, scroll to zoom, double-click nodes to open notes
 - **Multiple link types** - See wikilinks and markdown links distinguished by color
+- **Folder nodes** - Folders appear in the graph with links from notes that reference them
 - **Theme-aware** - Graph colors adapt to your current theme
 
 ### Internal Links
 - **Wikilinks** - `[[Note Name]]` Obsidian-style syntax for quick linking
 - **Wikilinks with display text** - `[[Note Name|Click here]]` to customize link text
-- **Broken link detection** - Non-existent note links shown dimmed
+- **Folder links** - `[[Folder Name]]` links to folders, navigates to folder view on click
+- **Broken link detection** - Non-existent note/folder links shown dimmed
 - **Markdown links** - `[Note Name](note.md)` standard syntax also supported
 - **Drag to link** - Drag notes or images into the editor to insert links
-- **Click to navigate** - Jump between notes seamlessly
+- **Click to navigate** - Jump between notes or folders seamlessly
 - **External links** - Open in new tabs automatically
+
+### Folder Wiki Links
+Link directly to folders using the same wiki-link syntax as notes:
+
+```markdown
+[[Projects]]              # Link to "Projects" folder
+[[Projects/Active]]       # Link to nested folder
+[[inbox|My Inbox]]        # Folder link with display text
+```
+
+**Features:**
+- **Case-insensitive** - `[[projects]]` matches "Projects" folder
+- **Name matching** - `[[Active]]` matches "Projects/Active" folder
+- **Note priority** - If a note and folder have the same name, note is linked first
+- **Graph visualization** - Folders appear as nodes in the knowledge graph
+- **Homepage support** - Folder links work in both note preview and homepage content
 
 ### Direct URLs
 - **Deep linking** - Open specific notes via URL (e.g., `/folder/note`)
@@ -102,6 +120,25 @@ Plugin-specific settings are automatically persisted:
 - **PDF Export Settings** - Export configuration options
 - **Settings UI** - Configure plugins through Settings panel
 - **Automatic persistence** - Plugin settings saved to `user-settings.json`
+
+### Debug Mode
+Control application logging for development and troubleshooting:
+- **Global setting** - Single config controls both backend and frontend logging
+- **No logs when disabled** - When `debug: false`, no console output appears
+- **Full logging when enabled** - When `debug: true`, all debug info is logged
+- **Environment variable override** - Set `DEBUG_MODE=true` to enable without config file changes
+
+**Configuration:**
+```yaml
+# config.yaml
+server:
+  debug: false  # Set to true to enable debug logging
+```
+
+Or use environment variable:
+```bash
+DEBUG_MODE=true docker-compose up
+```
 
 ### Automatic Migration
 First-time setup automatically migrates any existing localStorage settings to the server-side system, ensuring a seamless transition.

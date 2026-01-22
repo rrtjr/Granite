@@ -3,6 +3,8 @@ Granite - Configuration Management
 Centralizes configuration loading and environment variable handling.
 """
 
+# Configure Python logging based on DEBUG_MODE
+import logging
 import os
 from pathlib import Path
 
@@ -51,6 +53,27 @@ DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() in ("true", "1", "yes")
 
 if DEMO_MODE:
     print("DEMO MODE enabled - Rate limiting active")
+
+# Debug mode - Controls logging throughout the application
+# When DEBUG_MODE=true, enables all logging (backend and frontend)
+# When false, all logging is suppressed
+if "DEBUG_MODE" in os.environ:
+    DEBUG_MODE = os.getenv("DEBUG_MODE", "false").lower() in ("true", "1", "yes")
+else:
+    DEBUG_MODE = config.get("server", {}).get("debug", False)
+
+if DEBUG_MODE:
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    print("DEBUG MODE enabled - Logging active")
+else:
+    # Suppress all logging when debug mode is off
+    logging.basicConfig(level=logging.CRITICAL + 1)
+    # Also suppress uvicorn access logs
+    logging.getLogger("uvicorn.access").setLevel(logging.CRITICAL + 1)
+    logging.getLogger("uvicorn.error").setLevel(logging.CRITICAL + 1)
 
 # CORS configuration
 allowed_origins = config.get("server", {}).get("allowed_origins", ["*"])

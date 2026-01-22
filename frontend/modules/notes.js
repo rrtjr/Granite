@@ -461,40 +461,101 @@ export const notesMixin = {
             linkTarget = linkTarget.substring(1);
         }
 
-        // Try to find the matching note
+        // Check if this is a folder link (has data-folder-link attribute)
+        const isFolderLink = link.hasAttribute('data-folder-link');
+
+        // Try to find the matching note first (unless explicitly a folder link)
         const targetLower = linkTarget.toLowerCase();
-        const matchingNote = this.notes.find(n => {
-            if (n.type === 'image') return false;
+        let matchingNote = null;
 
-            const pathLower = n.path.toLowerCase();
-            const nameLower = n.name.toLowerCase();
+        if (!isFolderLink) {
+            matchingNote = this.notes.find(n => {
+                if (n.type === 'image') return false;
 
-            return (
-                n.path === linkTarget ||
-                n.path === linkTarget + '.md' ||
-                pathLower === targetLower ||
-                pathLower === targetLower + '.md' ||
-                n.name === linkTarget ||
-                n.name === linkTarget + '.md' ||
-                nameLower === targetLower ||
-                nameLower === targetLower + '.md' ||
-                n.path.endsWith('/' + linkTarget) ||
-                n.path.endsWith('/' + linkTarget + '.md') ||
-                pathLower.endsWith('/' + targetLower) ||
-                pathLower.endsWith('/' + targetLower + '.md')
-            );
-        });
+                const pathLower = n.path.toLowerCase();
+                const nameLower = n.name.toLowerCase();
+
+                return (
+                    n.path === linkTarget ||
+                    n.path === linkTarget + '.md' ||
+                    pathLower === targetLower ||
+                    pathLower === targetLower + '.md' ||
+                    n.name === linkTarget ||
+                    n.name === linkTarget + '.md' ||
+                    nameLower === targetLower ||
+                    nameLower === targetLower + '.md' ||
+                    n.path.endsWith('/' + linkTarget) ||
+                    n.path.endsWith('/' + linkTarget + '.md') ||
+                    pathLower.endsWith('/' + targetLower) ||
+                    pathLower.endsWith('/' + targetLower + '.md')
+                );
+            });
+        }
 
         if (matchingNote) {
             this.loadNote(matchingNote.path);
-        } else {
-            // Note doesn't exist - offer to create it
-            const createNew = confirm(`Note "${linkTarget}" doesn't exist. Create it?`);
-            if (createNew) {
-                const notePath = linkTarget.endsWith('.md') ? linkTarget : linkTarget + '.md';
-                this.createNoteFromLink(notePath);
-            }
+            return;
         }
+
+        // Try to find a matching folder
+        const allFolders = this.allFolders || [];
+        const matchingFolder = allFolders.find(f => {
+            const folderLower = f.toLowerCase();
+            const folderName = f.split('/').pop();
+            const folderNameLower = folderName.toLowerCase();
+            return (
+                f === linkTarget ||
+                folderLower === targetLower ||
+                folderName === linkTarget ||
+                folderNameLower === targetLower ||
+                f.endsWith('/' + linkTarget) ||
+                folderLower.endsWith('/' + targetLower)
+            );
+        });
+
+        if (matchingFolder) {
+            // Navigate to the folder
+            this.navigateToFolder(matchingFolder);
+            return;
+        }
+
+        // Neither note nor folder exists - offer to create a note
+        const createNew = confirm(`Note "${linkTarget}" doesn't exist. Create it?`);
+        if (createNew) {
+            const notePath = linkTarget.endsWith('.md') ? linkTarget : linkTarget + '.md';
+            this.createNoteFromLink(notePath);
+        }
+    },
+
+    // Navigate to a folder (expand it and show in homepage view)
+    navigateToFolder(folderPath) {
+        // Clear current note to show homepage view
+        this.currentNote = '';
+        this.noteContent = '';
+        this.currentNoteName = '';
+        this.currentImage = '';
+
+        // Set the homepage folder to navigate to that folder
+        this.selectedHomepageFolder = folderPath;
+
+        // Expand the folder and its parents in the sidebar
+        const parts = folderPath.split('/');
+        let currentPath = '';
+        parts.forEach((part, index) => {
+            currentPath = index === 0 ? part : `${currentPath}/${part}`;
+            this.expandedFolders.add(currentPath);
+        });
+        this.expandedFolders = new Set(this.expandedFolders);
+
+        // Update browser URL
+        window.history.pushState(
+            { homepageFolder: folderPath },
+            '',
+            '/'
+        );
+
+        // Close mobile sidebar if open
+        this.mobileSidebarOpen = false;
     },
 
     // Create a note from a clicked link

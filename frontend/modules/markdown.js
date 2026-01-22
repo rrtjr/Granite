@@ -1,6 +1,6 @@
 // Granite Frontend - Markdown Rendering Module
 
-import { CONFIG } from './config.js';
+import { CONFIG, Debug } from './config.js';
 
 export const markdownMixin = {
     // Computed property for rendered markdown (defensive for spread operation)
@@ -61,8 +61,9 @@ export const markdownMixin = {
             }
         );
 
-        // Convert Obsidian-style wikilinks
+        // Convert Obsidian-style wikilinks (supports both notes and folders)
         const notes = this.notes;
+        const allFolders = this.allFolders || [];
         contentToRender = contentToRender.replace(
             /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,
             (match, target, displayText) => {
@@ -70,6 +71,7 @@ export const markdownMixin = {
                 const linkText = displayText ? displayText.trim() : linkTarget;
                 const linkTargetLower = linkTarget.toLowerCase();
 
+                // Check if it matches a note
                 const noteExists = notes.some(n => {
                     const pathLower = n.path.toLowerCase();
                     const nameLower = n.name.toLowerCase();
@@ -89,10 +91,27 @@ export const markdownMixin = {
                     );
                 });
 
+                // Check if it matches a folder
+                const folderExists = allFolders.some(f => {
+                    const folderLower = f.toLowerCase();
+                    const folderName = f.split('/').pop();
+                    const folderNameLower = folderName.toLowerCase();
+                    return (
+                        f === linkTarget ||
+                        folderLower === linkTargetLower ||
+                        folderName === linkTarget ||
+                        folderNameLower === linkTargetLower ||
+                        f.endsWith('/' + linkTarget) ||
+                        folderLower.endsWith('/' + linkTargetLower)
+                    );
+                });
+
                 const safeHref = linkTarget.replace(/"/g, '%22');
                 const safeText = linkText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                const brokenClass = noteExists ? '' : ' class="wikilink-broken"';
-                return `<a href="${safeHref}"${brokenClass} data-wikilink="true">${safeText}</a>`;
+                const linkExists = noteExists || folderExists;
+                const brokenClass = linkExists ? '' : ' class="wikilink-broken"';
+                const folderAttr = (folderExists && !noteExists) ? ' data-folder-link="true"' : '';
+                return `<a href="${safeHref}"${brokenClass} data-wikilink="true"${folderAttr}>${safeText}</a>`;
             }
         );
 
@@ -105,7 +124,7 @@ export const markdownMixin = {
                     try {
                         return hljs.highlight(code, { language: lang }).value;
                     } catch (err) {
-                        console.error('Highlight error:', err);
+                        Debug.error('Highlight error:', err);
                     }
                 }
                 return hljs.highlightAuto(code).value;
@@ -218,6 +237,7 @@ export const markdownMixin = {
     get renderedHomepageContent() {
         if (!this.homepageContent) return '';
         if (typeof this.parseBannerFromContent !== 'function') return '';
+        if (!this.notes) return '';
 
         // Parse banner from frontmatter before stripping it
         const bannerInfo = this.parseBannerFromContent(this.homepageContent);
@@ -240,6 +260,90 @@ export const markdownMixin = {
             }
         }
 
+        // Convert Obsidian-style image embeds
+        const allImages = this.notes.filter(n => n.type === 'image');
+        contentToRender = contentToRender.replace(
+            /!\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,
+            (match, target, altText) => {
+                const imageTarget = target.trim();
+                const imageAlt = altText ? altText.trim() : imageTarget;
+                const imageTargetLower = imageTarget.toLowerCase();
+
+                const foundImage = allImages.find(img => {
+                    const nameLower = img.name.toLowerCase();
+                    return (
+                        img.name === imageTarget ||
+                        nameLower === imageTargetLower ||
+                        img.path === imageTarget ||
+                        img.path.toLowerCase() === imageTargetLower
+                    );
+                });
+
+                if (foundImage) {
+                    const encodedPath = foundImage.path.split('/').map(segment => encodeURIComponent(segment)).join('/');
+                    const safeAlt = imageAlt.replace(/"/g, '&quot;').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    return `<img src="/api/images/${encodedPath}" alt="${safeAlt}" title="${safeAlt}" />`;
+                } else {
+                    const safeTarget = imageTarget.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    return `<span class="wikilink-broken" title="Image not found">![[${safeTarget}]]</span>`;
+                }
+            }
+        );
+
+        // Convert Obsidian-style wikilinks (supports both notes and folders)
+        const notes = this.notes;
+        const allFolders = this.allFolders || [];
+        contentToRender = contentToRender.replace(
+            /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,
+            (match, target, displayText) => {
+                const linkTarget = target.trim();
+                const linkText = displayText ? displayText.trim() : linkTarget;
+                const linkTargetLower = linkTarget.toLowerCase();
+
+                // Check if it matches a note
+                const noteExists = notes.some(n => {
+                    const pathLower = n.path.toLowerCase();
+                    const nameLower = n.name.toLowerCase();
+                    return (
+                        n.path === linkTarget ||
+                        n.path === linkTarget + '.md' ||
+                        pathLower === linkTargetLower ||
+                        pathLower === linkTargetLower + '.md' ||
+                        n.name === linkTarget ||
+                        n.name === linkTarget + '.md' ||
+                        nameLower === linkTargetLower ||
+                        nameLower === linkTargetLower + '.md' ||
+                        n.path.endsWith('/' + linkTarget) ||
+                        n.path.endsWith('/' + linkTarget + '.md') ||
+                        pathLower.endsWith('/' + linkTargetLower) ||
+                        pathLower.endsWith('/' + linkTargetLower + '.md')
+                    );
+                });
+
+                // Check if it matches a folder
+                const folderExists = allFolders.some(f => {
+                    const folderLower = f.toLowerCase();
+                    const folderName = f.split('/').pop();
+                    const folderNameLower = folderName.toLowerCase();
+                    return (
+                        f === linkTarget ||
+                        folderLower === linkTargetLower ||
+                        folderName === linkTarget ||
+                        folderNameLower === linkTargetLower ||
+                        f.endsWith('/' + linkTarget) ||
+                        folderLower.endsWith('/' + linkTargetLower)
+                    );
+                });
+
+                const safeHref = linkTarget.replace(/"/g, '%22');
+                const safeText = linkText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const linkExists = noteExists || folderExists;
+                const brokenClass = linkExists ? '' : ' class="wikilink-broken"';
+                const folderAttr = (folderExists && !noteExists) ? ' data-folder-link="true"' : '';
+                return `<a href="${safeHref}"${brokenClass} data-wikilink="true"${folderAttr}>${safeText}</a>`;
+            }
+        );
+
         // Configure marked
         marked.setOptions({
             breaks: true,
@@ -249,7 +353,7 @@ export const markdownMixin = {
                     try {
                         return hljs.highlight(code, { language: lang }).value;
                     } catch (err) {
-                        console.error('Highlight error:', err);
+                        Debug.error('Highlight error:', err);
                     }
                 }
                 return hljs.highlightAuto(code).value;
@@ -285,7 +389,7 @@ export const markdownMixin = {
                 const previewContent = document.querySelector('.markdown-preview');
                 if (previewContent) {
                     MathJax.typesetPromise([previewContent]).catch((err) => {
-                        console.error('MathJax typesetting failed:', err);
+                        Debug.error('MathJax typesetting failed:', err);
                     });
                 }
             }, 10);
@@ -295,7 +399,7 @@ export const markdownMixin = {
     // Render Mermaid diagrams
     async renderMermaid() {
         if (typeof window.mermaid === 'undefined') {
-            console.warn('Mermaid not loaded yet');
+            Debug.warn('Mermaid not loaded yet');
             return;
         }
 
@@ -351,7 +455,7 @@ export const markdownMixin = {
 
                     pre.parentElement.replaceChild(container, pre);
                 } catch (error) {
-                    console.error('Mermaid rendering error:', error);
+                    Debug.error('Mermaid rendering error:', error);
                     const errorMsg = document.createElement('div');
                     errorMsg.style.cssText = 'color: var(--error); padding: 10px; border-left: 3px solid var(--error); margin-top: 10px;';
                     errorMsg.textContent = `⚠️ Mermaid diagram error: ${error.message}`;
@@ -430,7 +534,7 @@ export const markdownMixin = {
                     button.title = 'Copy to clipboard';
                 }, 2000);
             } catch (err) {
-                console.error('Failed to copy code:', err);
+                Debug.error('Failed to copy code:', err);
             }
         });
 
