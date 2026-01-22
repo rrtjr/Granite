@@ -1,0 +1,34 @@
+/* Ayu Dark Theme */
+/* @theme-type: dark */
+:root[data-theme="ayu-dark"] {
+  /* Background colors */
+  --bg-primary: #0d1017;
+  --bg-secondary: #0b0e14;
+  --bg-tertiary: #131721;
+  --bg-hover: #1a1f29;
+  --bg-active: #232834;
+
+  /* Text colors */
+  --text-primary: #bfbdb6;
+  --text-secondary: #9da5b4;
+  --text-tertiary: #565b66;
+
+  /* Border colors */
+  --border-primary: #1a1f29;
+  --border-secondary: #2d333b;
+
+  /* Accent colors */
+  --accent-primary: #e6b450;
+  --accent-hover: #ffcc66;
+  --accent-light: #1f1c14;
+
+  /* Status colors */
+  --success: #7fd962;
+  --error: #d95757;
+  --warning: #e6b450;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6);
+}
