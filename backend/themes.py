@@ -55,6 +55,9 @@ def get_available_themes(themes_dir: str) -> list[dict[str, str | bool]]:
         "github-light": "🐙",
         "github-dark": "🦑",
         "catppuccin-mocha": "☕",
+        "tokyo-night": "🌃",
+        "ayu-dark": "🌙",
+        "ayu-light": "☀️",
     }
 
     # Load all themes from themes folder
