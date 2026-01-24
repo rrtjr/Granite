@@ -5,10 +5,6 @@ Type-safe API response schemas for documentation and validation.
 
 from pydantic import BaseModel, Field
 
-# ============================================================================
-# Common Response Models
-# ============================================================================
-
 
 class SuccessResponse(BaseModel):
     """Standard success response"""
@@ -21,11 +17,6 @@ class ErrorResponse(BaseModel):
     """Standard error response"""
 
     detail: str
-
-
-# ============================================================================
-# Note Models
-# ============================================================================
 
 
 class NoteMetadata(BaseModel):
@@ -75,11 +66,6 @@ class NoteDeleteResponse(SuccessResponse):
     path: str
 
 
-# ============================================================================
-# Folder Models
-# ============================================================================
-
-
 class FolderCreateResponse(SuccessResponse):
     """Response for creating a folder"""
 
@@ -97,11 +83,6 @@ class FolderDeleteResponse(SuccessResponse):
     """Response for deleting a folder"""
 
     path: str
-
-
-# ============================================================================
-# Search Models
-# ============================================================================
 
 
 class SearchMatch(BaseModel):
@@ -127,11 +108,6 @@ class SearchResponse(BaseModel):
     query: str
 
 
-# ============================================================================
-# Graph Models
-# ============================================================================
-
-
 class GraphNode(BaseModel):
     """Node in the knowledge graph"""
 
@@ -154,11 +130,6 @@ class GraphResponse(BaseModel):
     edges: list[GraphEdge]
 
 
-# ============================================================================
-# Tag Models
-# ============================================================================
-
-
 class TagListResponse(BaseModel):
     """Response for listing all tags"""
 
@@ -171,11 +142,6 @@ class TagNotesResponse(BaseModel):
     tag: str
     count: int
     notes: list[NoteMetadata]
-
-
-# ============================================================================
-# Template Models
-# ============================================================================
 
 
 class TemplateMetadata(BaseModel):
@@ -204,11 +170,6 @@ class TemplateCreateNoteResponse(SuccessResponse):
 
     path: str
     content: str
-
-
-# ============================================================================
-# Image Models
-# ============================================================================
 
 
 class ImageMetadata(BaseModel):
@@ -241,11 +202,6 @@ class ImageDeleteResponse(SuccessResponse):
     path: str
 
 
-# ============================================================================
-# Config Models
-# ============================================================================
-
-
 class AuthConfig(BaseModel):
     """Authentication configuration"""
 
@@ -275,11 +231,6 @@ class UserSettingsResponse(SuccessResponse):
     settings: dict
 
 
-# ============================================================================
-# Plugin Models
-# ============================================================================
-
-
 class PluginInfo(BaseModel):
     """Information about a plugin"""
 
@@ -304,11 +255,6 @@ class PluginToggleResponse(SuccessResponse):
 
     plugin: str
     enabled: bool
-
-
-# ============================================================================
-# Git Plugin Models
-# ============================================================================
 
 
 class GitSettingsResponse(BaseModel):

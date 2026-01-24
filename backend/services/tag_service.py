@@ -6,8 +6,6 @@ Handles tag parsing and caching for notes.
 from datetime import datetime, timezone
 from pathlib import Path
 
-# In-memory cache for parsed tags
-# Format: {file_path: (mtime, tags)}
 _tag_cache: dict[str, tuple[float, list[str]]] = {}
 
 
@@ -37,17 +35,14 @@ def parse_tags(content: str) -> list[str]:
     """
     tags: list[str] = []
 
-    # Check if content starts with frontmatter
     if not content.strip().startswith("---"):
         return tags
 
     try:
-        # Extract frontmatter (between first two --- markers)
         lines = content.split("\n")
         if lines[0].strip() != "---":
             return tags
 
-        # Find closing ---
         end_idx = None
         for i in range(1, len(lines)):
             if lines[i].strip() == "---":
@@ -59,41 +54,32 @@ def parse_tags(content: str) -> list[str]:
 
         frontmatter_lines = lines[1:end_idx]
 
-        # Parse tags field
         in_tags_list = False
         for line in frontmatter_lines:
             stripped = line.strip()
 
-            # Check for inline array format: tags: [tag1, tag2, tag3]
             if stripped.startswith("tags:"):
                 rest = stripped[5:].strip()
                 if rest.startswith("[") and rest.endswith("]"):
-                    # Parse inline array
-                    tags_str = rest[1:-1]  # Remove [ and ]
+                    tags_str = rest[1:-1]
                     raw_tags = [t.strip() for t in tags_str.split(",")]
                     tags.extend([t.lower() for t in raw_tags if t])
                     break
                 if rest:
-                    # Single tag without brackets
                     tags.append(rest.lower())
                     break
-                # Multi-line list format
                 in_tags_list = True
             elif in_tags_list:
                 if stripped.startswith("-"):
-                    # List item
                     tag = stripped[1:].strip()
                     if tag:
                         tags.append(tag.lower())
                 elif stripped and not stripped.startswith("#"):
-                    # End of tags list
                     break
 
-        # Remove duplicates and return
         return sorted(set(tags))
 
     except Exception as e:
-        # If parsing fails, return empty list
         print(f"Error parsing tags: {e}")
         return []
 
@@ -109,28 +95,22 @@ def get_tags_cached(file_path: Path) -> list[str]:
         List of tags from the file (cached if mtime unchanged)
     """
     try:
-        # Get current modification time
         mtime = file_path.stat().st_mtime
         file_key = str(file_path)
 
-        # Check cache
         if file_key in _tag_cache:
             cached_mtime, cached_tags = _tag_cache[file_key]
             if cached_mtime == mtime:
-                # Cache hit! Return cached tags
                 return cached_tags
 
-        # Cache miss or stale - parse tags
         with file_path.open(encoding="utf-8") as f:
             content = f.read()
             tags = parse_tags(content)
 
-        # Update cache
         _tag_cache[file_key] = (mtime, tags)
         return tags
 
     except Exception:
-        # If anything fails, return empty list
         return []
 
 
@@ -178,7 +158,6 @@ def get_notes_by_tag(notes_dir: str, tag: str) -> list[dict]:
     notes_path = Path(notes_dir)
 
     for md_file in notes_path.rglob("*.md"):
-        # Get tags using cache
         tags = get_tags_cached(md_file)
 
         if tag_lower in tags:

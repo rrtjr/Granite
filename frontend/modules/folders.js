@@ -1,12 +1,9 @@
 // Granite Frontend - Folders Module
-// Folder tree building and expansion state management
 
 export const foldersMixin = {
-    // Build folder tree structure
     buildFolderTree() {
         const tree = {};
 
-        // Add ALL folders from backend (including empty ones)
         this.allFolders.forEach(folderPath => {
             const parts = folderPath.split('/');
             let current = tree;
@@ -26,7 +23,6 @@ export const foldersMixin = {
             });
         });
 
-        // Add ALL notes to their folders
         this.notes.forEach(note => {
             if (!note.folder) {
                 if (!tree['__root__']) {
@@ -60,7 +56,6 @@ export const foldersMixin = {
             }
         });
 
-        // Sort notes
         const sortNotes = (obj) => {
             if (obj.notes && obj.notes.length > 0) {
                 obj.notes = [...obj.notes].sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
@@ -80,7 +75,6 @@ export const foldersMixin = {
             }
         });
 
-        // Calculate note counts
         const calculateNoteCounts = (folderNode) => {
             const directNotes = folderNode.notes ? folderNode.notes.length : 0;
 
@@ -104,7 +98,6 @@ export const foldersMixin = {
             }
         });
 
-        // Invalidate homepage cache
         this._homepageCache = {
             folderPath: null,
             notes: null,
@@ -115,7 +108,6 @@ export const foldersMixin = {
         this.folderTree = tree;
     },
 
-    // Toggle folder expansion
     toggleFolder(folderPath) {
         if (this.expandedFolders.has(folderPath)) {
             this.expandedFolders.delete(folderPath);
@@ -125,12 +117,10 @@ export const foldersMixin = {
         this.expandedFolders = new Set(this.expandedFolders);
     },
 
-    // Check if folder is expanded
     isFolderExpanded(folderPath) {
         return this.expandedFolders.has(folderPath);
     },
 
-    // Expand all folders
     expandAllFolders() {
         this.allFolders.forEach(folder => {
             this.expandedFolders.add(folder);
@@ -138,13 +128,11 @@ export const foldersMixin = {
         this.expandedFolders = new Set(this.expandedFolders);
     },
 
-    // Collapse all folders
     collapseAllFolders() {
         this.expandedFolders.clear();
         this.expandedFolders = new Set(this.expandedFolders);
     },
 
-    // Expand folder tree to show a specific note
     expandFolderForNote(notePath) {
         const parts = notePath.split('/');
         if (parts.length <= 1) return;
@@ -160,7 +148,6 @@ export const foldersMixin = {
         this.expandedFolders = new Set(this.expandedFolders);
     },
 
-    // Scroll note into view in the sidebar
     scrollNoteIntoView(notePath) {
         setTimeout(() => {
             const sidebar = document.querySelector('.flex-1.overflow-y-auto.custom-scrollbar');
@@ -191,7 +178,6 @@ export const foldersMixin = {
         }, 200);
     },
 
-    // Get folder node by path (used by homepage and other modules)
     getFolderNode(path) {
         if (!path) {
             return this.folderTree['__root__'] || { notes: [], children: this.folderTree };

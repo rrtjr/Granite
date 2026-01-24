@@ -55,19 +55,16 @@ def load_user_settings(settings_path: Path) -> dict:
         if settings_path.exists():
             with settings_path.open("r", encoding="utf-8") as f:
                 settings = json.load(f)
-                # Merge with defaults to ensure all keys exist
                 defaults = get_default_user_settings()
                 for section in defaults:
                     if section not in settings:
                         settings[section] = defaults[section]
                     else:
-                        # Merge section-level defaults
                         for key in defaults[section]:
                             if key not in settings[section]:
                                 settings[section][key] = defaults[section][key]
                 return dict(settings)
         else:
-            # Create default settings file
             defaults = get_default_user_settings()
             save_user_settings(settings_path, defaults)
             return defaults
@@ -88,7 +85,6 @@ def save_user_settings(settings_path: Path, settings: dict) -> bool:
         True if successful, False otherwise
     """
     try:
-        # Ensure parent directory exists
         settings_path.parent.mkdir(parents=True, exist_ok=True)
 
         with settings_path.open("w", encoding="utf-8") as f:
@@ -140,11 +136,9 @@ def update_config_value(config_path: Path, key_path: str, value: str) -> bool:
         True if successful, False otherwise
     """
     try:
-        # Read current config
         with config_path.open("r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
 
-        # Navigate to the correct nested location and update
         keys = key_path.split(".")
         current = config
         for key in keys[:-1]:
@@ -152,10 +146,8 @@ def update_config_value(config_path: Path, key_path: str, value: str) -> bool:
                 current[key] = {}
             current = current[key]
 
-        # Set the value
         current[keys[-1]] = value
 
-        # Write back to file
         with config_path.open("w", encoding="utf-8") as f:
             yaml.dump(config, f, default_flow_style=False, sort_keys=False)
 

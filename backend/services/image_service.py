@@ -15,15 +15,12 @@ def sanitize_filename(filename: str) -> str:
     Sanitize a filename by removing/replacing invalid characters.
     Keeps only alphanumeric chars, dots, dashes, and underscores.
     """
-    # Get the extension first
     parts = filename.rsplit(".", 1)
     name = parts[0]
     ext = parts[1] if len(parts) > 1 else ""
 
-    # Remove/replace invalid characters
     name = re.sub(r"[^a-zA-Z0-9_-]", "_", name)
 
-    # Rejoin with extension
     return f"{name}.{ext}" if ext else name
 
 
@@ -32,7 +29,6 @@ def get_attachment_dir(notes_dir: str, note_path: str) -> Path:
     Get the attachments directory for a given note.
     Returns the root notes directory.
     """
-    # Save all images to root folder
     return Path(notes_dir)
 
 
@@ -50,37 +46,28 @@ def save_uploaded_image(notes_dir: str, note_path: str, filename: str, file_data
     Returns:
         Relative path to the saved image, or None if failed
     """
-    # Sanitize filename
     sanitized_name = sanitize_filename(filename)
 
-    # Get extension
     ext = Path(sanitized_name).suffix
     name_without_ext = Path(sanitized_name).stem
 
-    # Add timestamp to prevent collisions
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     final_filename = f"{name_without_ext}-{timestamp}{ext}"
 
-    # Get attachments directory
     attachments_dir = get_attachment_dir(notes_dir, note_path)
 
-    # Create directory if it doesn't exist
     attachments_dir.mkdir(parents=True, exist_ok=True)
 
-    # Full path to save the image
     full_path = attachments_dir / final_filename
 
-    # Security check
     if not validate_path_security(notes_dir, full_path):
         print(f"Security: Attempted to save image outside notes directory: {full_path}")
         return None
 
     try:
-        # Write the file
         with full_path.open("wb") as f:
             f.write(file_data)
 
-        # Return relative path from notes_dir
         relative_path = full_path.relative_to(Path(notes_dir))
         return str(relative_path.as_posix())
     except Exception as e:
@@ -96,10 +83,8 @@ def get_all_images(notes_dir: str) -> list[dict]:
     images = []
     notes_path = Path(notes_dir)
 
-    # Common image extensions
     image_extensions = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
 
-    # Find all image files recursively in the notes directory
     for image_file in notes_path.rglob("*"):
         if image_file.is_file() and image_file.suffix.lower() in image_extensions:
             relative_path = image_file.relative_to(notes_path)

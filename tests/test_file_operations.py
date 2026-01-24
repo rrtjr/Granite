@@ -17,7 +17,6 @@ from pathlib import Path
 
 import pytest
 
-# Add parent directory to path to allow backend imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from backend.utils import (
@@ -44,7 +43,6 @@ def temp_notes_dir():
 @pytest.fixture
 def notes_dir_with_sample_notes(temp_notes_dir):
     """Create notes directory with sample notes"""
-    # Create some sample notes
     save_note(temp_notes_dir, "note1.md", "# Note 1\nContent")
     save_note(temp_notes_dir, "note2.md", "# Note 2\nMore content")
     save_note(temp_notes_dir, "folder1/note3.md", "# Note 3\nNested content")
@@ -61,7 +59,6 @@ class TestSaveNote:
         result = save_note(temp_notes_dir, "test.md", content)
         assert result is True
 
-        # Verify file was created
         note_path = Path(temp_notes_dir) / "test.md"
         assert note_path.exists()
         assert note_path.read_text(encoding="utf-8") == content
@@ -71,7 +68,6 @@ class TestSaveNote:
         result = save_note(temp_notes_dir, "folder/subfolder/note.md", "# Content")
         assert result is True
 
-        # Verify folder structure was created
         note_path = Path(temp_notes_dir) / "folder" / "subfolder" / "note.md"
         assert note_path.exists()
         assert note_path.parent.exists()
@@ -81,21 +77,17 @@ class TestSaveNote:
         result = save_note(temp_notes_dir, "test", "# Content")
         assert result is True
 
-        # Verify .md was added
         note_path = Path(temp_notes_dir) / "test.md"
         assert note_path.exists()
 
     def test_update_existing_note(self, temp_notes_dir):
         """Test updating an existing note"""
-        # Create initial note
         save_note(temp_notes_dir, "test.md", "# Original")
 
-        # Update it
         new_content = "# Updated\nNew content"
         result = save_note(temp_notes_dir, "test.md", new_content)
         assert result is True
 
-        # Verify content was updated
         note_path = Path(temp_notes_dir) / "test.md"
         assert note_path.read_text(encoding="utf-8") == new_content
 
@@ -122,7 +114,6 @@ class TestSaveNote:
         result = save_note(temp_notes_dir, "../../../etc/passwd.md", "attack")
         assert result is False
 
-        # Verify file was NOT created outside notes dir
         attack_path = Path(temp_notes_dir).parent.parent.parent / "etc" / "passwd.md"
         assert not attack_path.exists()
 
@@ -152,7 +143,6 @@ class TestGetNoteContent:
 
     def test_get_directory_rejected(self, temp_notes_dir):
         """Test that reading a directory returns None"""
-        # Create a directory
         folder_path = Path(temp_notes_dir) / "testfolder"
         folder_path.mkdir()
 
@@ -168,7 +158,6 @@ class TestDeleteNote:
         result = delete_note(notes_dir_with_sample_notes, "note1.md")
         assert result is True
 
-        # Verify file was deleted
         note_path = Path(notes_dir_with_sample_notes) / "note1.md"
         assert not note_path.exists()
 
@@ -180,7 +169,6 @@ class TestDeleteNote:
         note_path = Path(notes_dir_with_sample_notes) / "folder1" / "note3.md"
         assert not note_path.exists()
 
-        # Verify folder still exists (doesn't auto-delete)
         folder_path = Path(notes_dir_with_sample_notes) / "folder1"
         assert folder_path.exists()
 
@@ -203,11 +191,9 @@ class TestMoveNote:
         result = move_note(notes_dir_with_sample_notes, "note1.md", "renamed.md")
         assert result is True
 
-        # Verify old path doesn't exist
         old_path = Path(notes_dir_with_sample_notes) / "note1.md"
         assert not old_path.exists()
 
-        # Verify new path exists with same content
         new_path = Path(notes_dir_with_sample_notes) / "renamed.md"
         assert new_path.exists()
         assert new_path.read_text(encoding="utf-8") == "# Note 1\nContent"
@@ -239,11 +225,9 @@ class TestMoveNote:
 
     def test_move_note_path_traversal_rejected(self, notes_dir_with_sample_notes):
         """Test that path traversal is rejected when moving"""
-        # Try to move to outside notes dir
         result = move_note(notes_dir_with_sample_notes, "note1.md", "../../../evil.md")
         assert result is False
 
-        # Verify original still exists
         original = Path(notes_dir_with_sample_notes) / "note1.md"
         assert original.exists()
 
@@ -271,11 +255,8 @@ class TestCreateFolder:
 
     def test_create_existing_folder(self, temp_notes_dir):
         """Test creating a folder that already exists"""
-        # Create once
         create_folder(temp_notes_dir, "testfolder")
-        # Create again
         result = create_folder(temp_notes_dir, "testfolder")
-        # Should succeed (mkdir with exist_ok=True)
         assert result is True
 
     def test_create_folder_path_traversal_rejected(self, temp_notes_dir):
@@ -289,7 +270,6 @@ class TestDeleteFolder:
 
     def test_delete_empty_folder(self, temp_notes_dir):
         """Test deleting an empty folder"""
-        # Create folder
         folder_path = Path(temp_notes_dir) / "testfolder"
         folder_path.mkdir()
 
@@ -305,13 +285,11 @@ class TestDeleteFolder:
         folder_path = Path(notes_dir_with_sample_notes) / "folder1"
         assert not folder_path.exists()
 
-        # Verify nested note was also deleted
         note_path = folder_path / "note3.md"
         assert not note_path.exists()
 
     def test_delete_nested_folder(self, temp_notes_dir):
         """Test deleting a nested folder"""
-        # Create nested structure
         create_folder(temp_notes_dir, "parent/child")
 
         result = delete_folder(temp_notes_dir, "parent/child")
@@ -320,7 +298,6 @@ class TestDeleteFolder:
         child_path = Path(temp_notes_dir) / "parent" / "child"
         assert not child_path.exists()
 
-        # Parent should still exist
         parent_path = Path(temp_notes_dir) / "parent"
         assert parent_path.exists()
 
@@ -349,13 +326,11 @@ class TestMoveFolder:
         new_path = Path(notes_dir_with_sample_notes) / "renamed_folder"
         assert new_path.exists()
 
-        # Verify notes moved too
         note_path = new_path / "note3.md"
         assert note_path.exists()
 
     def test_move_folder_to_nested_location(self, notes_dir_with_sample_notes):
         """Test moving a folder to a nested location"""
-        # Create target parent
         create_folder(notes_dir_with_sample_notes, "target")
 
         result = move_folder(notes_dir_with_sample_notes, "folder1", "target/folder1")
@@ -421,7 +396,6 @@ class TestSpecialCharacters:
 
     def test_note_with_special_chars(self, temp_notes_dir):
         """Test notes with special characters in filename"""
-        # Valid special characters for filenames
         content = "# Special"
         result = save_note(temp_notes_dir, "note-2024_test.md", content)
         assert result is True
@@ -441,7 +415,6 @@ class TestConcurrentOperations:
 
         assert all([result1, result2, result3])
 
-        # Verify all exist with correct content
         assert get_note_content(temp_notes_dir, "note1.md") == "Content 1"
         assert get_note_content(temp_notes_dir, "note2.md") == "Content 2"
         assert get_note_content(temp_notes_dir, "note3.md") == "Content 3"
@@ -460,7 +433,6 @@ class TestDataIntegrity:
 
     def test_large_note_content(self, temp_notes_dir):
         """Test saving and reading large notes"""
-        # Create large content (1MB)
         large_content = "# Large Note\n" + ("Content line\n" * 50000)
         result = save_note(temp_notes_dir, "large.md", large_content)
         assert result is True

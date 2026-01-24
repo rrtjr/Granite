@@ -38,11 +38,6 @@ def ensure_directories(config: dict):
         Path(dir_path).mkdir(parents=True, exist_ok=True)
 
 
-# ============================================================================
-# Timezone and Datetime Functions
-# ============================================================================
-
-
 def get_timezone_from_setting(tz_setting: str) -> ZoneInfo | timezone | None:
     """
     Convert a timezone setting string to a timezone object.
@@ -91,14 +86,11 @@ def format_datetime_for_frontmatter(tz_setting: str = "local") -> str:
     tz = get_timezone_from_setting(tz_setting)
 
     if tz is None:
-        # Local time - use system timezone
         dt = datetime.now(tz=timezone.utc).astimezone()
     else:
-        # Convert to specified timezone
         now = datetime.now(timezone.utc)
         dt = now.astimezone(tz)
 
-    # Build the formatted string
     day_name = dt.strftime("%A")
     day = dt.day
     ordinal = get_ordinal_suffix(day)
@@ -106,8 +98,7 @@ def format_datetime_for_frontmatter(tz_setting: str = "local") -> str:
     year = dt.year
     time_str = dt.strftime("%I:%M:%S %p")
 
-    # Format timezone offset as GMT±HH:MM
-    utc_offset = dt.strftime("%z")  # e.g., +0800 or -0500
+    utc_offset = dt.strftime("%z")
     if utc_offset:
         sign = utc_offset[0]
         hours = utc_offset[1:3]
@@ -146,9 +137,8 @@ def update_frontmatter_field(content: str, field: str, value: str) -> str:
             break
 
     if end_idx is None:
-        return content  # Malformed frontmatter
+        return content
 
-    # Check if field exists and update it
     field_found = False
     for i in range(1, end_idx):
         if lines[i].startswith(f"{field}:"):
@@ -156,17 +146,11 @@ def update_frontmatter_field(content: str, field: str, value: str) -> str:
             field_found = True
             break
 
-    # Add field if not found (before closing ---)
     if not field_found:
         lines.insert(end_idx, f"{field}: {value}")
 
     return "\n".join(lines)
 
-
-# ============================================================================
-# Re-exports for backward compatibility
-# ============================================================================
-# These imports allow existing code to continue using `from backend.utils import ...`
 
 from backend.services import (  # noqa: E402, F401
     apply_template_placeholders,

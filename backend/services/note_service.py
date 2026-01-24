@@ -17,25 +17,20 @@ def move_note(notes_dir: str, old_path: str, new_path: str) -> bool:
     old_full_path = Path(notes_dir) / old_path
     new_full_path = Path(notes_dir) / new_path
 
-    # Security checks
     if not validate_path_security(notes_dir, old_full_path) or not validate_path_security(notes_dir, new_full_path):
         return False
 
     if not old_full_path.exists():
         return False
 
-    # Check if target already exists (prevent overwriting)
     if new_full_path.exists():
         return False
 
-    # Invalidate cache for old path
     old_key = str(old_full_path)
     _tag_cache.pop(old_key, None)
 
-    # Create parent directory if needed
     new_full_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Move the file
     old_full_path.rename(new_full_path)
 
     return True
@@ -46,12 +41,10 @@ def get_all_notes(notes_dir: str) -> list[dict]:
     items = []
     notes_path = Path(notes_dir)
 
-    # Get all markdown notes
     for md_file in notes_path.rglob("*.md"):
         relative_path = md_file.relative_to(notes_path)
         stat = md_file.stat()
 
-        # Get tags for this note (cached)
         tags = get_tags_cached(md_file)
 
         items.append(
@@ -66,7 +59,6 @@ def get_all_notes(notes_dir: str) -> list[dict]:
             }
         )
 
-    # Get all images
     images = get_all_images(notes_dir)
     items.extend(images)
 
@@ -80,7 +72,6 @@ def get_note_content(notes_dir: str, note_path: str) -> str | None:
     if not full_path.exists() or not full_path.is_file():
         return None
 
-    # Security check: ensure the path is within notes_dir
     if not validate_path_security(notes_dir, full_path):
         return None
 
@@ -92,15 +83,12 @@ def save_note(notes_dir: str, note_path: str, content: str) -> bool:
     """Save or update a note"""
     full_path = Path(notes_dir) / note_path
 
-    # Ensure .md extension
     if not note_path.endswith(".md"):
         full_path = full_path.with_suffix(".md")
 
-    # Security check
     if not validate_path_security(notes_dir, full_path):
         return False
 
-    # Create parent directories if needed
     full_path.parent.mkdir(parents=True, exist_ok=True)
 
     with full_path.open("w", encoding="utf-8") as f:
@@ -116,11 +104,9 @@ def delete_note(notes_dir: str, note_path: str) -> bool:
     if not full_path.exists():
         return False
 
-    # Security check
     if not validate_path_security(notes_dir, full_path):
         return False
 
-    # Invalidate cache for this note
     file_key = str(full_path)
     _tag_cache.pop(file_key, None)
 
@@ -138,7 +124,6 @@ def create_note_metadata(notes_dir: str, note_path: str) -> dict:
 
     stat = full_path.stat()
 
-    # Count lines with proper file handle management
     with full_path.open(encoding="utf-8") as f:
         line_count = sum(1 for _ in f)
 

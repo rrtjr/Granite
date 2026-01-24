@@ -11,7 +11,6 @@ from pathlib import Path
 
 import pytest
 
-# Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
@@ -29,25 +28,20 @@ def preserve_user_settings():
     user_settings_path = Path(__file__).parent.parent / "user-settings.json"
     backup_path = Path(__file__).parent.parent / "user-settings.json.backup"
 
-    # Backup original settings if file exists
     original_settings = None
     if user_settings_path.exists():
         with user_settings_path.open("r") as f:
             original_settings = json.load(f)
-        # Also create a physical backup
         shutil.copy2(user_settings_path, backup_path)
         print(f"\n[conftest] Backed up user-settings.json to {backup_path}")
 
-    # Let tests run
     yield
 
-    # Restore original settings after all tests complete
     if original_settings is not None:
         with user_settings_path.open("w") as f:
             json.dump(original_settings, f, indent=2)
         print("\n[conftest] Restored original user-settings.json")
 
-        # Remove backup file
         if backup_path.exists():
             backup_path.unlink()
             print("[conftest] Removed backup file")
@@ -70,16 +64,13 @@ def preserve_user_settings_per_test():
     """
     user_settings_path = Path(__file__).parent.parent / "user-settings.json"
 
-    # Backup current settings
     original_settings = None
     if user_settings_path.exists():
         with user_settings_path.open("r") as f:
             original_settings = json.load(f)
 
-    # Let test run
     yield
 
-    # Restore settings after test
     if original_settings is not None:
         with user_settings_path.open("w") as f:
             json.dump(original_settings, f, indent=2)

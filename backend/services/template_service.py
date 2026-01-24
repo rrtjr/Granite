@@ -26,10 +26,8 @@ def get_templates(notes_dir: str, templates_dir: str | None = None) -> list[dict
     """
     templates: list[dict[str, str]] = []
 
-    # Resolve templates_dir relative to notes_dir if not absolute
     if templates_dir:
         templates_path = Path(templates_dir)
-        # If not absolute, resolve relative to notes_dir
         if not templates_path.is_absolute():
             templates_path = Path(notes_dir) / templates_dir
     else:
@@ -38,7 +36,6 @@ def get_templates(notes_dir: str, templates_dir: str | None = None) -> list[dict
     if not templates_path.exists():
         return templates
 
-    # Security check: ensure templates folder is within notes directory
     if not validate_path_security(notes_dir, templates_path):
         print(f"Security: Templates directory is outside notes directory: {templates_path}")
         return templates
@@ -46,7 +43,6 @@ def get_templates(notes_dir: str, templates_dir: str | None = None) -> list[dict
     try:
         for template_file in templates_path.glob("*.md"):
             try:
-                # Security check: ensure each template is within notes directory
                 if not validate_path_security(notes_dir, template_file):
                     print(f"Security: Skipping template outside notes directory: {template_file}")
                     continue
@@ -80,10 +76,8 @@ def get_template_content(notes_dir: str, template_name: str, templates_dir: str 
     Returns:
         Template content or None if not found
     """
-    # Resolve templates_dir relative to notes_dir if not absolute
     if templates_dir:
         templates_path = Path(templates_dir)
-        # If not absolute, resolve relative to notes_dir
         if not templates_path.is_absolute():
             templates_path = Path(notes_dir) / templates_dir
         template_path = templates_path / f"{template_name}.md"
@@ -93,7 +87,6 @@ def get_template_content(notes_dir: str, template_name: str, templates_dir: str 
     if not template_path.exists():
         return None
 
-    # Security check: ensure template is within notes directory
     if not validate_path_security(notes_dir, template_path):
         print(f"Security: Template path is outside notes directory: {template_path}")
         return None
@@ -128,28 +121,21 @@ def apply_template_placeholders(content: str, note_path: str, user_settings: dic
     Returns:
         Content with placeholders replaced
     """
-    # Get timezone setting
     tz_setting = "local"
     if user_settings and "datetime" in user_settings:
         tz_setting = user_settings["datetime"].get("timezone", "local")
 
-    # Get timezone object
     tz = get_timezone_from_setting(tz_setting)
 
-    # Calculate time based on timezone
     if tz is None:
-        # Local time - use system timezone
         local_now = datetime.now(tz=timezone.utc).astimezone()
     else:
-        # Convert UTC to specified timezone
         utc_now = datetime.now(timezone.utc)
         local_now = utc_now.astimezone(tz)
 
     note = Path(note_path)
 
-    # Format datetime strings
     datetime_str = local_now.strftime("%Y-%m-%d %H:%M:%S")
-    # Use the intuitive format for created/modified fields
     frontmatter_datetime = format_datetime_for_frontmatter(tz_setting)
 
     replacements = {

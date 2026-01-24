@@ -6,6 +6,7 @@ Plugins can hook into events like note save, delete, etc.
 import importlib.util
 import json
 from pathlib import Path
+from typing import Any, cast
 
 
 class Plugin:
@@ -33,7 +34,7 @@ class Plugin:
     def on_note_delete(self, note_path: str):
         """Called when a note is deleted"""
 
-    def on_search(self, query: str, results: list[dict]):
+    def on_search(self, query: str, results: list[dict[str, Any]]):
         """Called after a search is performed"""
 
     def on_note_create(self, note_path: str, initial_content: str) -> str:
@@ -80,8 +81,7 @@ class PluginManager:
         self.config_file = self.plugins_dir / "plugin_config.json"
         self.load_plugins()
         self._apply_saved_state()
-        # Save config to create/update the file with current states
-        if self.plugins:  # Only save if there are plugins loaded
+        if self.plugins:
             self._save_config()
 
     def load_plugins(self):
@@ -101,7 +101,6 @@ class PluginManager:
                     module = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(module)
 
-                    # Look for Plugin class in module
                     if hasattr(module, "Plugin"):
                         plugin = module.Plugin()
                         self.plugins[plugin_file.stem] = plugin
@@ -125,10 +124,6 @@ class Plugin:
         """This runs every time a note is saved"""
         print(f"Plugin: Note saved - {note_path}")
 
-        # Example: Automatically add tags to notes
-        # if '#todo' in content:
-        #     print("  → Found TODO tag!")
-
     def on_note_delete(self, note_path: str):
         """This runs when a note is deleted"""
         print(f"Plugin: Note deleted - {note_path}")
@@ -141,7 +136,7 @@ class Plugin:
         with example_path.open("w", encoding="utf-8") as f:
             f.write(example_plugin)
 
-    def list_plugins(self) -> list[dict]:
+    def list_plugins(self) -> list[dict[str, Any]]:
         """Get a list of all loaded plugins"""
         return [
             {"id": plugin_id, "name": plugin.name, "version": plugin.version, "enabled": plugin.enabled}
@@ -153,7 +148,10 @@ class Plugin:
         if self.config_file.exists():
             try:
                 with self.config_file.open(encoding="utf-8") as f:
-                    return json.load(f)
+                    data = json.load(f)
+                    # Use cast to satisfy Mypy that this Any is a dict[str, bool]
+                    if isinstance(data, dict):
+                        return cast(dict[str, bool], data)
             except Exception as e:
                 print(f"Failed to load plugin config: {e}")
         return {}
@@ -187,24 +185,9 @@ class Plugin:
             self.plugins[plugin_id].enabled = False
             self._save_config()
 
-    def run_hook(self, hook_name: str, **kwargs):
+    def run_hook(self, hook_name: str, **kwargs: Any) -> Any:
         """
         Run a hook on all enabled plugins.
-
-        For hooks that can transform content (on_note_save, on_note_load):
-        - Pass 'content' in kwargs
-        - Returns the transformed content after all plugins process it
-
-        For void hooks (on_note_delete, on_search, on_app_startup):
-        - Just executes the hooks
-        - Returns None
-
-        Args:
-            hook_name: Name of the hook to run
-            **kwargs: Arguments to pass to the hook
-
-        Returns:
-            Transformed content if 'content' in kwargs, otherwise None
         """
         result = kwargs.get("content")
 
@@ -213,13 +196,11 @@ class Plugin:
                 try:
                     method = getattr(plugin, hook_name)
 
-                    # For hooks that can transform content
                     if "content" in kwargs:
                         transformed = method(**{**kwargs, "content": result})
                         if transformed is not None:
                             result = transformed
                     else:
-                        # For void hooks (no return value)
                         method(**kwargs)
 
                 except Exception as e:
@@ -227,31 +208,18 @@ class Plugin:
 
         return result if "content" in kwargs else None
 
-    def run_hook_with_return(self, hook_name: str, **kwargs):
+    def run_hook_with_return(self, hook_name: str, **kwargs: Any) -> Any:
         """
         Run a hook that can modify and return a value (e.g., on_note_create).
-        Each plugin processes the value from the previous plugin.
-
-        The hook method should accept all kwargs and return the modified value.
-        For on_note_create: expects (note_path, initial_content) and returns modified content.
-
-        Args:
-            hook_name: Name of the hook to run
-            **kwargs: Arguments to pass to the hook (including the value to modify)
-
-        Returns:
-            Modified value after all plugins have processed it
         """
         for plugin in self.plugins.values():
             if plugin.enabled and hasattr(plugin, hook_name):
                 try:
                     method = getattr(plugin, hook_name)
                     result = method(**kwargs)
-                    # Update the modifiable value for the next plugin
                     if "initial_content" in kwargs and result is not None:
                         kwargs["initial_content"] = result
                 except Exception as e:
                     print(f"Plugin {plugin.name} error in {hook_name}: {e}")
 
-        # Return the final modified value
         return kwargs.get("initial_content", "")

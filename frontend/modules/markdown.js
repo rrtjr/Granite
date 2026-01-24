@@ -3,17 +3,13 @@
 import { CONFIG, Debug } from './config.js';
 
 export const markdownMixin = {
-    // Computed property for rendered markdown (defensive for spread operation)
     get renderedMarkdown() {
         if (!this.noteContent) return '<p style="color: var(--text-tertiary);">Nothing to preview yet...</p>';
-        // Guard against spread operation - methods from other mixins won't exist yet
         if (typeof this.parseBannerFromContent !== 'function') return '';
         if (!this.notes) return '';
 
-        // Parse banner from frontmatter before stripping it
         const bannerInfo = this.parseBannerFromContent(this.noteContent);
 
-        // Strip YAML frontmatter from content before rendering
         let contentToRender = this.noteContent;
         if (contentToRender.trim().startsWith('---')) {
             const lines = contentToRender.split('\n');
@@ -31,7 +27,6 @@ export const markdownMixin = {
             }
         }
 
-        // Convert Obsidian-style image embeds
         const allImages = this.notes.filter(n => n.type === 'image');
         contentToRender = contentToRender.replace(
             /!\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,
@@ -61,7 +56,6 @@ export const markdownMixin = {
             }
         );
 
-        // Convert Obsidian-style wikilinks (supports both notes and folders)
         const notes = this.notes;
         const allFolders = this.allFolders || [];
         contentToRender = contentToRender.replace(
@@ -71,7 +65,6 @@ export const markdownMixin = {
                 const linkText = displayText ? displayText.trim() : linkTarget;
                 const linkTargetLower = linkTarget.toLowerCase();
 
-                // Check if it matches a note
                 const noteExists = notes.some(n => {
                     const pathLower = n.path.toLowerCase();
                     const nameLower = n.name.toLowerCase();
@@ -91,7 +84,6 @@ export const markdownMixin = {
                     );
                 });
 
-                // Check if it matches a folder
                 const folderExists = allFolders.some(f => {
                     const folderLower = f.toLowerCase();
                     const folderName = f.split('/').pop();
@@ -115,7 +107,6 @@ export const markdownMixin = {
             }
         );
 
-        // Configure marked
         marked.setOptions({
             breaks: true,
             gfm: true,
@@ -131,14 +122,11 @@ export const markdownMixin = {
             }
         });
 
-        // Parse markdown
         let html = marked.parse(contentToRender);
 
-        // Post-process HTML
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = html;
 
-        // Add target="_blank" to external links
         const links = tempDiv.querySelectorAll('a');
         links.forEach(link => {
             const href = link.getAttribute('href');
@@ -154,7 +142,6 @@ export const markdownMixin = {
             }
         });
 
-        // Transform relative image paths
         const images = tempDiv.querySelectorAll('img');
         images.forEach(img => {
             const src = img.getAttribute('src');
@@ -190,11 +177,9 @@ export const markdownMixin = {
 
         html = tempDiv.innerHTML;
 
-        // Trigger MathJax and Mermaid rendering
         this.typesetMath();
         this.renderMermaid();
 
-        // Apply syntax highlighting and add copy buttons
         setTimeout(() => {
             const previewEl = this._domCache.previewContent || document.querySelector('.markdown-preview');
             if (previewEl) {
@@ -213,7 +198,6 @@ export const markdownMixin = {
             this.extractTocHeadings();
         }, 0);
 
-        // Prepend banner if present
         if (bannerInfo && bannerInfo.url) {
             const safeUrl = bannerInfo.url.replace(/"/g, '%22');
             const opacity = this.bannerOpacity;
@@ -233,16 +217,13 @@ export const markdownMixin = {
         return html;
     },
 
-    // Computed property for rendered homepage content
     get renderedHomepageContent() {
         if (!this.homepageContent) return '';
         if (typeof this.parseBannerFromContent !== 'function') return '';
         if (!this.notes) return '';
 
-        // Parse banner from frontmatter before stripping it
         const bannerInfo = this.parseBannerFromContent(this.homepageContent);
 
-        // Strip YAML frontmatter from content before rendering
         let contentToRender = this.homepageContent;
         if (contentToRender.trim().startsWith('---')) {
             const lines = contentToRender.split('\n');
@@ -260,7 +241,6 @@ export const markdownMixin = {
             }
         }
 
-        // Convert Obsidian-style image embeds
         const allImages = this.notes.filter(n => n.type === 'image');
         contentToRender = contentToRender.replace(
             /!\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,
@@ -290,7 +270,6 @@ export const markdownMixin = {
             }
         );
 
-        // Convert Obsidian-style wikilinks (supports both notes and folders)
         const notes = this.notes;
         const allFolders = this.allFolders || [];
         contentToRender = contentToRender.replace(
@@ -300,7 +279,6 @@ export const markdownMixin = {
                 const linkText = displayText ? displayText.trim() : linkTarget;
                 const linkTargetLower = linkTarget.toLowerCase();
 
-                // Check if it matches a note
                 const noteExists = notes.some(n => {
                     const pathLower = n.path.toLowerCase();
                     const nameLower = n.name.toLowerCase();
@@ -320,7 +298,6 @@ export const markdownMixin = {
                     );
                 });
 
-                // Check if it matches a folder
                 const folderExists = allFolders.some(f => {
                     const folderLower = f.toLowerCase();
                     const folderName = f.split('/').pop();
@@ -344,7 +321,6 @@ export const markdownMixin = {
             }
         );
 
-        // Configure marked
         marked.setOptions({
             breaks: true,
             gfm: true,
@@ -362,7 +338,6 @@ export const markdownMixin = {
 
         let html = marked.parse(contentToRender);
 
-        // Prepend banner if present
         if (bannerInfo && bannerInfo.url) {
             const safeUrl = bannerInfo.url.replace(/"/g, '%22');
             const opacity = this.bannerOpacity;
@@ -382,7 +357,6 @@ export const markdownMixin = {
         return html;
     },
 
-    // Trigger MathJax typesetting after DOM update
     typesetMath() {
         if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
             setTimeout(() => {
@@ -396,7 +370,6 @@ export const markdownMixin = {
         }
     },
 
-    // Render Mermaid diagrams
     async renderMermaid() {
         if (typeof window.mermaid === 'undefined') {
             Debug.warn('Mermaid not loaded yet');
@@ -465,7 +438,6 @@ export const markdownMixin = {
         });
     },
 
-    // Add copy button to code block
     addCopyButtonToCodeBlock(preElement) {
         const button = document.createElement('button');
         button.className = 'copy-code-button';

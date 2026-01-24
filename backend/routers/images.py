@@ -31,20 +31,16 @@ async def get_image(image_path: str):
     notes_dir = config["storage"]["notes_dir"]
     full_path = Path(notes_dir) / image_path
 
-    # Security: Validate path is within notes directory
     if not validate_path_security(notes_dir, full_path):
         raise HTTPException(status_code=403, detail="Access denied")
 
-    # Check file exists and is an image
     if not full_path.exists() or not full_path.is_file():
         raise HTTPException(status_code=404, detail="Image not found")
 
-    # Validate it's an image file
     allowed_extensions = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
     if full_path.suffix.lower() not in allowed_extensions:
         raise HTTPException(status_code=400, detail="Not an image file")
 
-    # Return the file
     return FileResponse(full_path)
 
 
@@ -56,11 +52,9 @@ async def upload_image(request: Request, file: UploadFile = File(...), note_path
     Upload an image file and save it to the attachments directory.
     Returns the relative path to the image for markdown linking.
     """
-    # Validate file type
     allowed_types = {"image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"}
     allowed_extensions = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
 
-    # Get file extension
     file_ext = Path(file.filename).suffix.lower() if file.filename else ""
 
     if file.content_type not in allowed_types and file_ext not in allowed_extensions:
@@ -69,18 +63,15 @@ async def upload_image(request: Request, file: UploadFile = File(...), note_path
             detail=f"Invalid file type. Allowed: jpg, jpeg, png, gif, webp. Got: {file.content_type}",
         )
 
-    # Read file data
     file_data = await file.read()
 
-    # Validate file size (10MB max)
-    max_size = 10 * 1024 * 1024  # 10MB in bytes
+    max_size = 10 * 1024 * 1024
     if len(file_data) > max_size:
         raise HTTPException(
             status_code=400,
             detail=f"File too large. Maximum size: 10MB. Uploaded: {len(file_data) / 1024 / 1024:.2f}MB",
         )
 
-    # Save the image
     image_path = save_uploaded_image(config["storage"]["notes_dir"], note_path, file.filename, file_data)
 
     if not image_path:
