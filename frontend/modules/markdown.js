@@ -179,11 +179,13 @@ export const markdownMixin = {
 
         this.typesetMath();
         this.renderMermaid();
+        this.renderSpreadsheets();
 
         setTimeout(() => {
             const previewEl = this._domCache.previewContent || document.querySelector('.markdown-preview');
             if (previewEl) {
-                previewEl.querySelectorAll('pre code:not(.language-mermaid)').forEach((block) => {
+                // Exclude mermaid and spreadsheet blocks from syntax highlighting
+                previewEl.querySelectorAll('pre code:not(.language-mermaid):not(.language-spreadsheet)').forEach((block) => {
                     if (!block.classList.contains('hljs')) {
                         hljs.highlightElement(block);
                     }
@@ -360,9 +362,10 @@ export const markdownMixin = {
     typesetMath() {
         if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
             setTimeout(() => {
-                const previewContent = document.querySelector('.markdown-preview');
-                if (previewContent) {
-                    MathJax.typesetPromise([previewContent]).catch((err) => {
+                // Query all markdown preview elements (homepage content + note preview)
+                const previewElements = document.querySelectorAll('.markdown-preview');
+                if (previewElements.length > 0) {
+                    MathJax.typesetPromise([...previewElements]).catch((err) => {
                         Debug.error('MathJax typesetting failed:', err);
                     });
                 }
@@ -377,8 +380,9 @@ export const markdownMixin = {
         }
 
         requestAnimationFrame(async () => {
-            const previewContent = document.querySelector('.markdown-preview');
-            if (!previewContent) return;
+            // Query all markdown preview elements (homepage content + note preview)
+            const previewElements = document.querySelectorAll('.markdown-preview');
+            if (previewElements.length === 0) return;
 
             const themeType = this.getThemeType();
             const mermaidTheme = themeType === 'light' ? 'default' : 'dark';
@@ -406,33 +410,36 @@ export const markdownMixin = {
                 this.lastMermaidTheme = mermaidTheme;
             }
 
-            const mermaidBlocks = previewContent.querySelectorAll('pre code.language-mermaid');
-            if (mermaidBlocks.length === 0) return;
+            let blockIndex = 0;
+            for (const previewContent of previewElements) {
+                const mermaidBlocks = previewContent.querySelectorAll('pre code.language-mermaid');
+                if (mermaidBlocks.length === 0) continue;
 
-            for (let i = 0; i < mermaidBlocks.length; i++) {
-                const block = mermaidBlocks[i];
-                const pre = block.parentElement;
+                for (let i = 0; i < mermaidBlocks.length; i++) {
+                    const block = mermaidBlocks[i];
+                    const pre = block.parentElement;
 
-                if (pre.querySelector('.mermaid-rendered')) continue;
+                    if (pre.querySelector('.mermaid-rendered')) continue;
 
-                try {
-                    const code = block.textContent;
-                    const id = `mermaid-diagram-${Date.now()}-${i}`;
-                    const { svg } = await window.mermaid.render(id, code);
+                    try {
+                        const code = block.textContent;
+                        const id = `mermaid-diagram-${Date.now()}-${blockIndex++}`;
+                        const { svg } = await window.mermaid.render(id, code);
 
-                    const container = document.createElement('div');
-                    container.className = 'mermaid-rendered';
-                    container.style.cssText = 'background-color: transparent; padding: 20px; text-align: center; overflow-x: auto;';
-                    container.innerHTML = svg;
-                    container.dataset.originalCode = code;
+                        const container = document.createElement('div');
+                        container.className = 'mermaid-rendered';
+                        container.style.cssText = 'background-color: transparent; padding: 20px; text-align: center; overflow-x: auto;';
+                        container.innerHTML = svg;
+                        container.dataset.originalCode = code;
 
-                    pre.parentElement.replaceChild(container, pre);
-                } catch (error) {
-                    Debug.error('Mermaid rendering error:', error);
-                    const errorMsg = document.createElement('div');
-                    errorMsg.style.cssText = 'color: var(--error); padding: 10px; border-left: 3px solid var(--error); margin-top: 10px;';
-                    errorMsg.textContent = `⚠️ Mermaid diagram error: ${error.message}`;
-                    pre.parentElement.insertBefore(errorMsg, pre.nextSibling);
+                        pre.parentElement.replaceChild(container, pre);
+                    } catch (error) {
+                        Debug.error('Mermaid rendering error:', error);
+                        const errorMsg = document.createElement('div');
+                        errorMsg.style.cssText = 'color: var(--error); padding: 10px; border-left: 3px solid var(--error); margin-top: 10px;';
+                        errorMsg.textContent = `⚠️ Mermaid diagram error: ${error.message}`;
+                        pre.parentElement.insertBefore(errorMsg, pre.nextSibling);
+                    }
                 }
             }
         });

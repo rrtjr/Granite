@@ -20,6 +20,11 @@ export const notesMixin = {
         try {
             this.mobileSidebarOpen = false;
 
+            // Cleanup spreadsheet instances from previous note
+            if (typeof this.cleanupSpreadsheets === 'function') {
+                this.cleanupSpreadsheets();
+            }
+
             const response = await fetch(`/api/notes/${notePath}`);
 
             if (!response.ok) {
