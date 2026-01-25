@@ -49,6 +49,8 @@ Spreadsheets support Excel-style formulas. All formulas start with `=`.
 | `B2` | Single cell (column B, row 2) |
 | `A1:A10` | Range (cells A1 through A10) |
 | `B2:D5` | Range (rectangular block) |
+| `Sheet2!A1` | Cell A1 from Sheet2 (cross-sheet reference) |
+| `Sheet1!B2:D5` | Range from Sheet1 (cross-sheet reference) |
 
 ### Basic Math
 
@@ -71,6 +73,56 @@ Spreadsheets support Excel-style formulas. All formulas start with `=`.
 | `MAX` | `=MAX(D1:D50)` | Maximum value |
 | `COUNT` | `=COUNT(E1:E20)` | Count of numbers |
 | `IF` | `=IF(A1>0,B1,C1)` | Conditional |
+
+---
+
+## Cross-Sheet References
+
+When you have multiple spreadsheets in a single note, you can reference cells from one spreadsheet in another. Each spreadsheet is assigned a sheet name (Sheet1, Sheet2, etc.) in the order they appear.
+
+### Syntax
+
+Use `SheetN!CellRef` to reference cells from another sheet:
+- `=Sheet1!A1` - Value from cell A1 in the first spreadsheet
+- `=Sheet2!B2` - Value from cell B2 in the second spreadsheet
+- `=SUM(Sheet1!A1:A10)` - Sum of a range from Sheet1
+- `=Sheet1!A1 + Sheet2!A1` - Add values from two different sheets
+
+### Example: Linked Spreadsheets
+
+````markdown
+## Income (Sheet1)
+```spreadsheet
+Source,Amount
+Salary,5000
+Freelance,1500
+Total,=SUM(B2:B3)
+```
+
+## Expenses (Sheet2)
+```spreadsheet
+Category,Amount
+Rent,1500
+Utilities,200
+Food,400
+Total,=SUM(B2:B4)
+```
+
+## Summary (Sheet3)
+```spreadsheet
+Description,Amount
+Total Income,=Sheet1!B4
+Total Expenses,=Sheet2!B5
+Net Savings,=Sheet1!B4-Sheet2!B5
+```
+````
+
+In this example, Sheet3 pulls the totals from Sheet1 and Sheet2 to calculate net savings. When you update values in the Income or Expenses sheets, the Summary sheet updates automatically.
+
+### Notes
+- Sheet names are assigned in document order (Sheet1, Sheet2, Sheet3, etc.)
+- Sheet names are shown in the spreadsheet toolbar
+- Cross-references update in real-time as you edit
 
 ---
 
@@ -174,7 +226,7 @@ Item 1,100,=B2*1.1
 Spreadsheets are powered by [HyperFormula](https://hyperformula.handsontable.com/), an open-source spreadsheet calculation engine. It supports:
 - 400+ built-in functions
 - Named expressions
-- Cross-sheet references (not yet exposed in Granite)
+- Cross-sheet references (`=Sheet1!A1` syntax)
 - Array formulas
 
 For the complete function reference, see the [HyperFormula documentation](https://hyperformula.handsontable.com/guide/built-in-functions.html).

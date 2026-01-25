@@ -7,7 +7,7 @@ packages = ["backend", "plugins"]
 
 [project]
 name = "granite"
-version = "0.1.0"
+version = "0.15.0"
 description = "A modern note-taking application built with FastAPI"
 requires-python = ">=3.10"
 dependencies = [

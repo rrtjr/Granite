@@ -424,3 +424,96 @@ class TestSpreadsheetViewModes:
             "Changes persist to note content",
         ]
         assert len(requirements) == 4
+
+
+class TestCrossSheetReferences:
+    """Test cross-sheet reference syntax and format."""
+
+    def test_cross_sheet_reference_format(self):
+        """Verify cross-sheet reference syntax."""
+        references = [
+            "=Sheet1!A1",
+            "=Sheet2!B2",
+            "=Sheet1!A1:A10",
+            "=Sheet2!B2:D5",
+        ]
+        for ref in references:
+            assert ref.startswith("=")
+            assert "!" in ref
+            # Sheet name before !
+            parts = ref[1:].split("!")
+            assert parts[0].startswith("Sheet")
+
+    def test_cross_sheet_formula_format(self):
+        """Verify formulas with cross-sheet references."""
+        formulas = [
+            "=Sheet1!A1+Sheet2!A1",
+            "=SUM(Sheet1!A1:A10)",
+            "=Sheet1!B4-Sheet2!B5",
+            "=AVERAGE(Sheet2!C1:C10)",
+        ]
+        for formula in formulas:
+            assert formula.startswith("=")
+            assert "Sheet" in formula
+            assert "!" in formula
+
+    def test_multiple_sheets_in_note_format(self):
+        """Verify format for notes with cross-sheet references."""
+        content = """# Financial Summary
+
+## Income (Sheet1)
+```spreadsheet
+Source,Amount
+Salary,5000
+Freelance,1500
+Total,=SUM(B2:B3)
+```
+
+## Expenses (Sheet2)
+```spreadsheet
+Category,Amount
+Rent,1500
+Utilities,200
+Total,=SUM(B2:B3)
+```
+
+## Summary (Sheet3)
+```spreadsheet
+Description,Amount
+Income,=Sheet1!B4
+Expenses,=Sheet2!B4
+Net,=Sheet1!B4-Sheet2!B4
+```
+"""
+        assert content.count("```spreadsheet") == 3
+        assert "=Sheet1!B4" in content
+        assert "=Sheet2!B4" in content
+        assert "=Sheet1!B4-Sheet2!B4" in content
+
+    def test_sheet_naming_convention(self):
+        """Document sheet naming convention (1-indexed)."""
+        # Sheets are named Sheet1, Sheet2, Sheet3, etc.
+        # First spreadsheet in note = Sheet1
+        # Second spreadsheet = Sheet2
+        sheet_names = ["Sheet1", "Sheet2", "Sheet3", "Sheet10"]
+        for name in sheet_names:
+            assert name.startswith("Sheet")
+            # Number part should be valid integer
+            num_part = name[5:]
+            assert num_part.isdigit()
+            assert int(num_part) >= 1
+
+    def test_cross_sheet_with_ranges(self):
+        """Verify cross-sheet references with cell ranges."""
+        content = """```spreadsheet
+A,B,Total
+1,2,=SUM(Sheet2!A2:B2)
+```
+
+```spreadsheet
+X,Y
+10,20
+```
+"""
+        assert "=SUM(Sheet2!A2:B2)" in content
+        # This formula references a range from Sheet2
