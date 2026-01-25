@@ -38,7 +38,7 @@ dependencies = [
     "pytest-cov==6.0.0",
     "pytest-playwright==0.5.2",
     # PDF Export Plugin dependencies
-    "weasyprint==63.1",
+    "weasyprint==68.0",
     "pydyf==0.11.0",
     "Pygments==2.18.0",
     # Code quality tools (development)
