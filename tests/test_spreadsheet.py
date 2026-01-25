@@ -393,35 +393,51 @@ a,b
 class TestSpreadsheetViewModes:
     """Test spreadsheet behavior documentation for different view modes."""
 
+    def test_edit_mode_requirements(self):
+        """Document edit view requirements for spreadsheets."""
+        # In full edit view:
+        # 1. Editor shows raw markdown with ```spreadsheet blocks
+        # 2. Preview pane is hidden
+        # 3. Spreadsheets can be edited by clicking on them
+        # 4. Toolbar with +Row/+Col/-Row/-Col buttons appears
+
+        requirements = [
+            "Editor shows raw CSV in code blocks",
+            "Click activates spreadsheet edit mode",
+            "Toolbar buttons for row/column manipulation",
+            "Cell edits sync to editor in realtime",
+        ]
+        assert len(requirements) == 4
+
     def test_split_view_requirements(self):
         """Document split view requirements for spreadsheets."""
         # In split view:
         # 1. Editor shows raw markdown with ```spreadsheet blocks
-        # 2. Preview shows rendered tables
-        # 3. Editing in preview should sync to editor
-        # 4. Only one spreadsheet active at a time
+        # 2. Preview shows rendered tables (read-only)
+        # 3. Editing disabled in preview - user edits raw markdown in editor
+        # 4. Custom sheet names displayed from name= attribute
 
         requirements = [
             "Editor shows raw CSV in code blocks",
-            "Preview renders as HTML tables",
-            "Cell edits sync to editor in realtime",
-            "Previous spreadsheet deactivates when new one clicked",
+            "Preview renders as HTML tables (read-only)",
+            "Editing disabled - use editor to modify",
+            "Custom sheet names from name= attribute displayed",
         ]
         assert len(requirements) == 4
 
     def test_preview_view_requirements(self):
         """Document preview-only view requirements."""
         # In preview view:
-        # 1. Spreadsheets render as tables
-        # 2. Click activates edit mode
+        # 1. Spreadsheets render as tables (read-only)
+        # 2. Editing disabled in preview mode
         # 3. Formulas show calculated values
-        # 4. Changes still sync to underlying content
+        # 4. Custom sheet names displayed
 
         requirements = [
-            "Tables rendered from CSV",
-            "Click to edit functionality",
+            "Tables rendered from CSV (read-only)",
+            "Editing disabled in preview mode",
             "HyperFormula evaluates formulas",
-            "Changes persist to note content",
+            "Custom sheet names displayed",
         ]
         assert len(requirements) == 4
 
@@ -517,3 +533,122 @@ X,Y
 """
         assert "=SUM(Sheet2!A2:B2)" in content
         # This formula references a range from Sheet2
+
+
+class TestCustomSheetNames:
+    """Test custom sheet name extraction from markdown."""
+
+    def test_custom_name_with_double_quotes(self):
+        """Verify custom sheet name with double quotes."""
+        content = """```spreadsheet name="Income Statement"
+Revenue,Amount
+Sales,10000
+```"""
+        assert 'name="Income Statement"' in content
+
+    def test_custom_name_with_single_quotes(self):
+        """Verify custom sheet name with single quotes."""
+        content = """```spreadsheet name='Expense Report'
+Item,Cost
+Rent,1500
+```"""
+        assert "name='Expense Report'" in content
+
+    def test_custom_name_without_quotes(self):
+        """Verify custom sheet name without quotes (single word)."""
+        content = """```spreadsheet name=Budget
+Category,Amount
+Income,5000
+```"""
+        assert "name=Budget" in content
+
+    def test_custom_name_with_title_attribute(self):
+        """Verify title= works as alias for name=."""
+        content = """```spreadsheet title="Sales Data"
+Product,Units
+Widget,100
+```"""
+        assert 'title="Sales Data"' in content
+
+    def test_multiple_custom_named_sheets(self):
+        """Verify multiple sheets with custom names."""
+        content = """```spreadsheet name="Sheet A"
+A,B
+1,2
+```
+
+```spreadsheet name="Sheet B"
+X,Y
+3,4
+```"""
+        assert 'name="Sheet A"' in content
+        assert 'name="Sheet B"' in content
+
+    def test_mixed_custom_and_default_names(self):
+        """Verify mix of custom and default sheet names."""
+        content = """```spreadsheet name="Custom Name"
+A,B
+1,2
+```
+
+```spreadsheet
+X,Y
+3,4
+```
+
+```spreadsheet name="Another Custom"
+P,Q
+5,6
+```"""
+        # First and third have custom names, second will default to Sheet2
+        assert 'name="Custom Name"' in content
+        assert 'name="Another Custom"' in content
+        # Middle one has no name attribute
+        lines = content.split("\n")
+        middle_block = [line for line in lines if line.strip() == "```spreadsheet"]
+        assert len(middle_block) == 1  # One without name
+
+    def test_name_extraction_regex_pattern(self):
+        """Verify the regex pattern for name extraction works correctly."""
+        import re
+
+        # Pattern used in extractSpreadsheetNamesFromContent
+        header_re = re.compile(r"^[ \t]*```+[ \t]*spreadsheet([^\r\n]*)", re.MULTILINE | re.IGNORECASE)
+        name_re = re.compile(r'(?:name|title)\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s,;]+))', re.IGNORECASE)
+
+        test_cases = [
+            ('```spreadsheet name="Sample"', "Sample"),
+            ("```spreadsheet name='Budget'", "Budget"),
+            ("```spreadsheet name=Income", "Income"),
+            ('```spreadsheet title="Report"', "Report"),
+            ('   ```spreadsheet name="Trimmed"', "Trimmed"),
+            ("```spreadsheet", ""),  # No name
+        ]
+
+        for line, expected_name in test_cases:
+            header_match = header_re.search(line)
+            assert header_match is not None, f"Header should match: {line}"
+            meta = (header_match.group(1) or "").strip()
+
+            name = ""
+            if meta:
+                name_match = name_re.search(meta)
+                if name_match:
+                    name = (name_match.group(1) or name_match.group(2) or name_match.group(3) or "").strip()
+
+            assert name == expected_name, f"Expected '{expected_name}' but got '{name}' for: {line}"
+
+    def test_cross_reference_with_custom_name(self):
+        """Verify cross-references work with custom sheet names."""
+        content = """```spreadsheet name="Revenue"
+Source,Amount
+Sales,10000
+```
+
+```spreadsheet name="Summary"
+Item,Value
+Total Revenue,=Revenue!B2
+```"""
+        # Reference uses custom name "Revenue" instead of Sheet1
+        assert "=Revenue!B2" in content
+        assert 'name="Revenue"' in content

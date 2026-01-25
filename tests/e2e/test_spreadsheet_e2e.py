@@ -69,60 +69,64 @@ Item 2,200,220
         else:
             pytest.skip("Could not find create note button")
 
-    def test_spreadsheet_shows_click_hint(self, authenticated_page: Page, base_url: str, wait_for_app):
-        """Verify spreadsheet shows 'Click to edit' hint."""
+    def test_spreadsheet_shows_sheet_name(self, authenticated_page: Page, base_url: str, wait_for_app):
+        """Verify spreadsheet displays sheet name badge."""
         page = authenticated_page
         wait_for_app()
 
-        # Look for existing spreadsheet or create one
-        hint = page.locator(".spreadsheet-hint-text, .spreadsheet-static-hint")
-        if hint.count() > 0:
-            expect(hint.first).to_contain_text("Click to edit")
+        # Look for sheet name badge
+        sheet_name = page.locator(".spreadsheet-sheet-name")
+        if sheet_name.count() > 0:
+            # Should show custom name or default Sheet1, Sheet2, etc.
+            expect(sheet_name.first).to_be_visible()
 
 
 @pytest.mark.e2e
 @pytest.mark.skipif(not PLAYWRIGHT_AVAILABLE, reason="playwright not installed")
 class TestSpreadsheetEditing:
-    """Test spreadsheet editing functionality."""
+    """Test spreadsheet editing functionality (only in full edit mode)."""
 
-    def test_click_activates_edit_mode(self, authenticated_page: Page, base_url: str, wait_for_app):
-        """Verify clicking on spreadsheet activates edit mode."""
+    def test_spreadsheet_readonly_in_preview_mode(self, authenticated_page: Page, base_url: str, wait_for_app):
+        """Verify clicking on spreadsheet does NOT activate edit mode in preview."""
         page = authenticated_page
         wait_for_app()
 
-        # Find a spreadsheet wrapper
+        # Ensure we're in preview mode
+        preview_btn = page.locator('button:has-text("Preview")')
+        if preview_btn.is_visible():
+            preview_btn.click()
+            page.wait_for_timeout(300)
+
+        # Find a spreadsheet wrapper and click it
         wrapper = page.locator(".spreadsheet-wrapper")
         if wrapper.count() > 0:
             wrapper.first.click()
             page.wait_for_timeout(500)
 
-            # Check if edit mode is active (inputs appear)
+            # Should NOT have inputs (editing disabled in preview)
             inputs = wrapper.first.locator(".spreadsheet-input")
-            if inputs.count() > 0:
-                expect(inputs.first).to_be_visible()
+            assert inputs.count() == 0, "Spreadsheet should not be editable in preview mode"
 
-            # Check if toolbar buttons appear
-            toolbar = wrapper.first.locator(".spreadsheet-toolbar")
-            if toolbar.is_visible():
-                add_row_btn = toolbar.locator('button:has-text("+ Row")')
-                if add_row_btn.count() > 0:
-                    expect(add_row_btn).to_be_visible()
-
-    def test_cell_editing(self, authenticated_page: Page, base_url: str, wait_for_app):
-        """Verify cells can be edited."""
+    def test_spreadsheet_readonly_in_split_mode(self, authenticated_page: Page, base_url: str, wait_for_app):
+        """Verify clicking on spreadsheet does NOT activate edit mode in split view."""
         page = authenticated_page
         wait_for_app()
 
-        # Find an active spreadsheet input
-        cell_input = page.locator(".spreadsheet-input").first
-        if cell_input.is_visible():
-            cell_input.click()
-            cell_input.fill("NewValue")
-            cell_input.blur()
+        # Switch to split view
+        split_btn = page.locator('button:has-text("Split")')
+        if split_btn.is_visible():
+            split_btn.click()
+            page.wait_for_timeout(300)
+
+        # Find a spreadsheet wrapper and click it
+        wrapper = page.locator(".spreadsheet-wrapper")
+        if wrapper.count() > 0:
+            wrapper.first.click()
             page.wait_for_timeout(500)
 
-            # Verify value was updated
-            expect(cell_input).to_have_value("NewValue")
+            # Should NOT have inputs (editing disabled in split view)
+            inputs = wrapper.first.locator(".spreadsheet-input")
+            assert inputs.count() == 0, "Spreadsheet should not be editable in split mode"
 
 
 @pytest.mark.e2e
@@ -290,79 +294,37 @@ class TestSpreadsheetPersistence:
 class TestMultipleSpreadsheets:
     """Test handling of multiple spreadsheets in a note."""
 
-    def test_switching_between_spreadsheets_deactivates_previous(
-        self, authenticated_page: Page, base_url: str, wait_for_app
-    ):
-        """Verify clicking a second spreadsheet deactivates the first."""
+    def test_multiple_spreadsheets_render_independently(self, authenticated_page: Page, base_url: str, wait_for_app):
+        """Verify multiple spreadsheets each render as separate tables."""
         page = authenticated_page
         wait_for_app()
 
         wrappers = page.locator(".spreadsheet-wrapper")
         if wrappers.count() >= 2:
-            # Activate first spreadsheet
-            wrappers.nth(0).click()
-            page.wait_for_timeout(500)
-
-            # First should be active
-            first_container = wrappers.nth(0).locator(".spreadsheet-container")
-            first_class = first_container.get_attribute("class") or ""
-            assert "spreadsheet-active" in first_class
-
-            # Click second spreadsheet
-            wrappers.nth(1).click()
-            page.wait_for_timeout(500)
-
-            # First should be deactivated (no spreadsheet-active class)
-            first_container = wrappers.nth(0).locator(".spreadsheet-container")
-            # Check it doesn't have the active class anymore
-            class_attr = first_container.get_attribute("class") or ""
-            assert "spreadsheet-active" not in class_attr
-
-            # Second should be active
-            second_container = wrappers.nth(1).locator(".spreadsheet-container")
-            second_class = second_container.get_attribute("class") or ""
-            assert "spreadsheet-active" in second_class
+            # Verify each wrapper is visible and has a table
+            for i in range(min(wrappers.count(), 3)):
+                wrapper = wrappers.nth(i)
+                expect(wrapper).to_be_visible()
+                table = wrapper.locator(".spreadsheet-table")
+                if table.count() > 0:
+                    expect(table.first).to_be_visible()
         else:
             pytest.skip("Need at least 2 spreadsheets for this test")
 
-    def test_deactivated_spreadsheet_shows_static_hint(self, authenticated_page: Page, base_url: str, wait_for_app):
-        """Verify deactivated spreadsheet returns to static view with hint."""
+    def test_each_spreadsheet_has_unique_sheet_name(self, authenticated_page: Page, base_url: str, wait_for_app):
+        """Verify each spreadsheet displays a unique sheet name."""
         page = authenticated_page
         wait_for_app()
 
-        wrappers = page.locator(".spreadsheet-wrapper")
-        if wrappers.count() >= 2:
-            # Activate first, then second
-            wrappers.nth(0).click()
-            page.wait_for_timeout(500)
-            wrappers.nth(1).click()
-            page.wait_for_timeout(500)
+        sheet_names = page.locator(".spreadsheet-sheet-name")
+        count = sheet_names.count()
 
-            # First spreadsheet should show "Click to edit" hint again
-            hint = wrappers.nth(0).locator(".spreadsheet-hint-text")
-            if hint.count() > 0:
-                expect(hint).to_contain_text("Click to edit")
-        else:
-            pytest.skip("Need at least 2 spreadsheets for this test")
+        if count >= 2:
+            # Collect all names
+            names = [sheet_names.nth(i).inner_text() for i in range(count)]
 
-    def test_only_one_spreadsheet_active_at_a_time(self, authenticated_page: Page, base_url: str, wait_for_app):
-        """Verify only one spreadsheet can be in edit mode at a time."""
-        page = authenticated_page
-        wait_for_app()
-
-        wrappers = page.locator(".spreadsheet-wrapper")
-        if wrappers.count() >= 2:
-            # Activate first
-            wrappers.nth(0).click()
-            page.wait_for_timeout(300)
-
-            # Activate second
-            wrappers.nth(1).click()
-            page.wait_for_timeout(300)
-
-            # Count active spreadsheets
-            active_containers = page.locator(".spreadsheet-container.spreadsheet-active")
-            assert active_containers.count() == 1
+            # All names should be unique
+            assert len(names) == len(set(names)), f"Sheet names should be unique: {names}"
         else:
             pytest.skip("Need at least 2 spreadsheets for this test")
 
@@ -444,8 +406,8 @@ class TestSpreadsheetSplitView:
             if spreadsheet.count() > 0:
                 expect(spreadsheet.first).to_be_visible()
 
-    def test_spreadsheet_editable_in_split_view(self, authenticated_page: Page, base_url: str, wait_for_app):
-        """Verify spreadsheet can be edited in split view."""
+    def test_spreadsheet_readonly_in_split_view(self, authenticated_page: Page, base_url: str, wait_for_app):
+        """Verify spreadsheet is read-only in split view (edit via editor only)."""
         page = authenticated_page
         wait_for_app()
 
@@ -460,17 +422,12 @@ class TestSpreadsheetSplitView:
             wrapper.click()
             page.wait_for_timeout(500)
 
-            # Should be able to find input cells
+            # Should NOT find input cells (editing disabled in split view)
             inputs = wrapper.locator(".spreadsheet-input")
-            if inputs.count() > 0:
-                expect(inputs.first).to_be_visible()
-                # Should be editable
-                inputs.first.click()
-                inputs.first.fill("SplitViewTest")
-                expect(inputs.first).to_have_value("SplitViewTest")
+            assert inputs.count() == 0, "Spreadsheets are read-only in split view"
 
-    def test_split_view_sync_is_realtime(self, authenticated_page: Page, base_url: str, wait_for_app):
-        """Verify changes in split view sync to editor in realtime."""
+    def test_custom_sheet_name_displayed_in_split_view(self, authenticated_page: Page, base_url: str, wait_for_app):
+        """Verify custom sheet names from name= attribute are displayed."""
         page = authenticated_page
         wait_for_app()
 
@@ -480,31 +437,27 @@ class TestSpreadsheetSplitView:
             split_btn.click()
             page.wait_for_timeout(300)
 
-        wrapper = page.locator(".spreadsheet-wrapper").first
+        # Look for sheet name badge
+        sheet_name = page.locator(".spreadsheet-sheet-name")
+        if sheet_name.count() > 0:
+            # Should display custom name or default Sheet1, Sheet2, etc.
+            name_text = sheet_name.first.inner_text()
+            # Name should not be empty
+            assert len(name_text) > 0
+
+    def test_editor_shows_csv_format(self, authenticated_page: Page, base_url: str, wait_for_app):
+        """Verify editor shows spreadsheet data in CSV format."""
+        page = authenticated_page
+        wait_for_app()
+
+        # Check editor contains spreadsheet code block
         editor = page.locator(".cm-content")
-
-        if wrapper.is_visible() and editor.is_visible():
-            # Get initial editor content
-            initial_content = editor.inner_text()
-
-            # Activate and edit spreadsheet
-            wrapper.click()
-            page.wait_for_timeout(500)
-
-            cell_input = wrapper.locator(".spreadsheet-input").first
-            if cell_input.is_visible():
-                unique_value = f"Realtime_{page.evaluate('Date.now()')}"
-                cell_input.click()
-                cell_input.fill(unique_value)
-                cell_input.blur()
-
-                # Wait for sync (debounce is 500ms)
-                page.wait_for_timeout(1000)
-
-                # Editor should now contain the new value
-                updated_content = editor.inner_text()
-                # Content should have changed
-                assert unique_value in updated_content or updated_content != initial_content
+        if editor.is_visible():
+            editor_text = editor.inner_text()
+            if "```spreadsheet" in editor_text:
+                # Should contain CSV-style content
+                assert "," in editor_text  # CSV uses commas
+                assert "```" in editor_text  # Code block markers
 
 
 @pytest.mark.e2e

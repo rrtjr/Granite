@@ -177,9 +177,14 @@ export const markdownMixin = {
 
         html = tempDiv.innerHTML;
 
+        // Transform spreadsheet blocks inline before returning HTML
+        // This ensures wrappers are part of the HTML Alpine sets, not added after
+        if (typeof this.transformSpreadsheetHtml === 'function') {
+            html = this.transformSpreadsheetHtml(html);
+        }
+
         this.typesetMath();
         this.renderMermaid();
-        this.renderSpreadsheets();
 
         setTimeout(() => {
             const previewEl = this._domCache.previewContent || document.querySelector('.markdown-preview');
@@ -419,6 +424,9 @@ export const markdownMixin = {
                     const block = mermaidBlocks[i];
                     const pre = block.parentElement;
 
+                    // Skip if structure is missing (can happen if another renderer already replaced it)
+                    if (!pre || !pre.parentElement) continue;
+
                     if (pre.querySelector('.mermaid-rendered')) continue;
 
                     try {
@@ -432,13 +440,20 @@ export const markdownMixin = {
                         container.innerHTML = svg;
                         container.dataset.originalCode = code;
 
-                        pre.parentElement.replaceChild(container, pre);
+                        // Re-check parent right before replacing (may have been detached by another renderer)
+                        const currentParent = pre.parentElement;
+                        if (currentParent) {
+                            currentParent.replaceChild(container, pre);
+                        }
                     } catch (error) {
                         Debug.error('Mermaid rendering error:', error);
                         const errorMsg = document.createElement('div');
                         errorMsg.style.cssText = 'color: var(--error); padding: 10px; border-left: 3px solid var(--error); margin-top: 10px;';
                         errorMsg.textContent = `⚠️ Mermaid diagram error: ${error.message}`;
-                        pre.parentElement.insertBefore(errorMsg, pre.nextSibling);
+                        const currentParent = pre.parentElement;
+                        if (currentParent) {
+                            currentParent.insertBefore(errorMsg, pre.nextSibling);
+                        }
                     }
                 }
             }

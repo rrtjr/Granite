@@ -14,7 +14,20 @@ Item 2,200,=B3*1.1
 ```
 ````
 
-The spreadsheet will render as an interactive table. Click on it to edit.
+The spreadsheet will render as a table with evaluated formulas. Custom sheet names are displayed, or default names (Sheet1, Sheet2, etc.) if not specified.
+
+## Custom Sheet Names
+
+You can name your spreadsheets by adding a `name=` attribute to the code fence:
+
+````markdown
+```spreadsheet name="Income"
+Source,Amount
+Salary,5000
+```
+````
+
+The name appears in the spreadsheet toolbar and can be used for cross-sheet references.
 
 ## Basic Example
 
@@ -30,9 +43,10 @@ Grand Total,,,=SUM(D2:D4)
 
 **Features:**
 - First row is treated as headers (bold)
-- Click the table to enter edit mode
-- Use `+ Row` / `+ Column` buttons to add cells
-- Use `- Row` / `- Col` buttons to remove cells
+- Custom sheet names via `name="..."` attribute
+- Formulas evaluate automatically with HyperFormula
+- Cross-sheet references (`=SheetName!A1`)
+- In Edit mode: click to edit cells, add/remove rows and columns
 - Changes auto-save to your note
 
 ---
@@ -80,6 +94,39 @@ Spreadsheets support Excel-style formulas. All formulas start with `=`.
 
 When you have multiple spreadsheets in a single note, you can reference cells from one spreadsheet in another. Each spreadsheet is assigned a sheet name (Sheet1, Sheet2, etc.) in the order they appear.
 
+### Custom Sheet Names
+
+You can customize each sheet's name by adding a name to the code fence:
+
+````markdown
+```spreadsheet name="Income"
+Source,Amount
+Salary,5000
+Freelance,1500
+Total,=SUM(B2:B3)
+```
+
+```spreadsheet name='Expenses'
+Category,Amount
+Rent,1500
+Utilities,200
+Food,400
+Total,=SUM(B2:B4)
+```
+
+```spreadsheet name=Summary
+Description,Amount
+Total Income,=Income!B4
+Total Expenses,=Expenses!B5
+Net Savings,=Income!B4-Expenses!B5
+```
+````
+
+Notes:
+- Names must be unique within the note; duplicates get a numeric suffix.
+- If a name contains spaces or special characters, quote it when referencing in formulas (e.g., `'Q1 Summary'!A1`).
+- If no name is provided, defaults are `Sheet1`, `Sheet2`, etc.
+
 ### Syntax
 
 Use `SheetN!CellRef` to reference cells from another sheet:
@@ -123,6 +170,7 @@ In this example, Sheet3 pulls the totals from Sheet1 and Sheet2 to calculate net
 - Sheet names are assigned in document order (Sheet1, Sheet2, Sheet3, etc.)
 - Sheet names are shown in the spreadsheet toolbar
 - Cross-references update in real-time as you edit
+- You can override names using the `name=` meta shown above
 
 ---
 
@@ -169,11 +217,18 @@ Total,=SUM(B2:B4),,=SUM(D2:D4),=SUM(E2:E4),=SUM(F2:F4)
 
 ## Editing Spreadsheets
 
-### Static View
-When you first view a note, spreadsheets appear as static tables with calculated values displayed.
+Spreadsheet editing is available **only in full Edit mode**. In Split view or Preview mode, spreadsheets are displayed as read-only tables with calculated values.
+
+### View Modes
+
+| Mode | Spreadsheet Behavior |
+|------|---------------------|
+| **Edit** | Click to activate edit mode with cell inputs and toolbar |
+| **Split** | Read-only rendering; edit the raw CSV in the editor pane |
+| **Preview** | Read-only rendering |
 
 ### Edit Mode
-Click anywhere on the spreadsheet to enter edit mode:
+In full Edit mode, click anywhere on the spreadsheet to enter edit mode:
 - Cell inputs appear for direct editing
 - Toolbar with row/column controls appears
 - Type formulas or values directly

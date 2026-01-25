@@ -10,6 +10,91 @@ export const spreadsheetMixin = {
     _spreadsheetIdCounter: 0,
     _sharedHF: null,           // Shared HyperFormula instance for cross-sheet references
     _sheetCount: 0,            // Number of sheets in the shared instance
+    _sheetNames: [],           // Custom or default sheet names in order
+    _spreadsheetRenderInProgress: false, // Prevent recursive/looping renders
+    _spreadsheetLastHash: null,
+    _spreadsheetLastRenderTs: 0,
+
+    // Transform spreadsheet code blocks in HTML string to rendered wrappers
+    // This runs synchronously before Alpine sets innerHTML, ensuring wrappers persist
+    transformSpreadsheetHtml(html) {
+        if (!html || !this.isHyperFormulaReady()) {
+            return html;
+        }
+
+        // Parse HTML to DOM for manipulation
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+
+        const spreadsheetBlocks = tempDiv.querySelectorAll('pre code.language-spreadsheet');
+        if (spreadsheetBlocks.length === 0) {
+            return html;
+        }
+
+        // Reset state for this render
+        this._spreadsheetIdCounter = 0;
+        this._sheetNames = [];
+        this._sheetCount = 0;
+        if (this._sharedHF) {
+            try {
+                this._sharedHF.destroy();
+            } catch (e) {
+                Debug.warn('Error destroying shared HyperFormula during transform:', e);
+            }
+            this._sharedHF = null;
+        }
+
+        // First pass: collect all spreadsheet data
+        const allSheetsData = [];
+        const blocksToProcess = [];
+
+        spreadsheetBlocks.forEach((block) => {
+            const pre = block.parentElement;
+            if (!pre) return;
+
+            const code = block.textContent;
+            const data = this.parseSpreadsheetCSV(code);
+            allSheetsData.push(data);
+            blocksToProcess.push({ block, pre, code, data });
+        });
+
+        // Extract custom sheet names from source
+        let names = [];
+        try {
+            const src = this.noteContent || '';
+            names = this.extractSpreadsheetNamesFromContent(src);
+        } catch (e) {
+            Debug.warn('Failed to extract spreadsheet names:', e);
+        }
+
+        // Ensure names array matches sheets count
+        if (!Array.isArray(names)) names = [];
+        while (names.length < allSheetsData.length) {
+            names.push('');
+        }
+        names = names.slice(0, allSheetsData.length);
+
+        // Build shared HyperFormula instance
+        this.buildSharedHyperFormula(allSheetsData, names);
+
+        // Second pass: replace pre blocks with rendered wrappers
+        blocksToProcess.forEach(({ pre, code, data }) => {
+            const spreadsheetId = String(this._spreadsheetIdCounter++);
+            const parent = pre.parentElement;
+            if (!parent) return;
+
+            // Create wrapper
+            const wrapper = document.createElement('div');
+            wrapper.className = 'spreadsheet-wrapper';
+            wrapper.dataset.originalCode = code;
+            wrapper.dataset.sheetIndex = spreadsheetId;
+            wrapper.innerHTML = this.renderStaticSpreadsheet(data, spreadsheetId);
+
+            parent.replaceChild(wrapper, pre);
+        });
+
+        return tempDiv.innerHTML;
+    },
 
     // Check if HyperFormula is loaded
     isHyperFormulaReady() {
@@ -61,8 +146,7 @@ export const spreadsheetMixin = {
     // Calculate values using HyperFormula (single sheet, standalone)
     evaluateSpreadsheet(data) {
         if (!this.isHyperFormulaReady()) {
-            Debug.warn('HyperFormula not loaded, returning raw data. Check if CDN is accessible.');
-            console.warn('[Spreadsheet] HyperFormula not loaded - formulas will display as text');
+            Debug.warn('HyperFormula not loaded, returning raw data.');
             return data;
         }
 
@@ -77,7 +161,6 @@ export const spreadsheetMixin = {
             return evaluated;
         } catch (error) {
             Debug.error('HyperFormula evaluation error:', error);
-            console.error('[Spreadsheet] Failed to evaluate formulas:', error);
             return data;
         }
     },
@@ -116,7 +199,8 @@ export const spreadsheetMixin = {
     },
 
     // Build or rebuild the shared HyperFormula instance with all sheets
-    buildSharedHyperFormula(sheetsData) {
+    // Optionally accepts explicit sheetNames (array aligned to sheetsData)
+    buildSharedHyperFormula(sheetsData, sheetNames) {
         if (!this.isHyperFormulaReady()) {
             Debug.warn('HyperFormula not loaded, cannot build shared instance');
             return;
@@ -134,14 +218,47 @@ export const spreadsheetMixin = {
 
         if (sheetsData.length === 0) {
             this._sheetCount = 0;
+            this._sheetNames = [];
             return;
         }
 
         try {
             // Build named sheets object (Sheet1, Sheet2, etc. - 1-indexed for user-friendliness)
             const namedSheets = {};
-            sheetsData.forEach((data, index) => {
-                namedSheets[`Sheet${index + 1}`] = data;
+
+            // Derive names: use provided sheetNames if valid; else default to Sheet{n}
+            const finalNames = [];
+            const used = new Set();
+
+            const sanitizeName = (name) => {
+                // Trim and limit length; allow spaces (user may need quotes in formulas)
+                let n = String(name || '').trim();
+                if (!n) return '';
+                // HyperFormula supports many chars; avoid invalid control chars
+                n = n.replace(/[\u0000-\u001F]/g, '');
+                return n.substring(0, 64);
+            };
+
+            for (let i = 0; i < sheetsData.length; i++) {
+                let candidate = sanitizeName(sheetNames && sheetNames[i]);
+                if (!candidate) candidate = `Sheet${i + 1}`;
+
+                // Ensure uniqueness
+                let unique = candidate;
+                let counter = 2;
+                while (used.has(unique)) {
+                    unique = `${candidate} (${counter++})`;
+                }
+                used.add(unique);
+                finalNames.push(unique);
+            }
+
+            // Persist names for UI/toolbars
+            this._sheetNames = finalNames;
+            Debug.log(`[Spreadsheet] Final sheet names: ${finalNames.join(', ')}`);
+
+            finalNames.forEach((name, index) => {
+                namedSheets[name] = sheetsData[index];
             });
 
             this._sharedHF = HyperFormula.buildFromSheets(namedSheets, {
@@ -154,6 +271,7 @@ export const spreadsheetMixin = {
             Debug.error('Failed to build shared HyperFormula:', error);
             this._sharedHF = null;
             this._sheetCount = 0;
+            this._sheetNames = [];
         }
     },
 
@@ -183,12 +301,11 @@ export const spreadsheetMixin = {
             : this.evaluateSpreadsheet(data);
 
         // Show sheet name hint for cross-references
-        const sheetName = `Sheet${sheetIndex + 1}`;
+        const sheetName = this._sheetNames[sheetIndex] || `Sheet${sheetIndex + 1}`;
 
         let html = `<div class="spreadsheet-container" data-spreadsheet-id="${spreadsheetId}">`;
-        html += '<div class="spreadsheet-toolbar spreadsheet-static-hint">';
+        html += '<div class="spreadsheet-toolbar">';
         html += `<span class="spreadsheet-sheet-name">${sheetName}</span>`;
-        html += '<span class="spreadsheet-hint-text">Click to edit</span>';
         html += '</div>';
         html += '<table class="spreadsheet-table">';
 
@@ -233,7 +350,7 @@ export const spreadsheetMixin = {
         if (wrapper) {
             const data = this.parseSpreadsheetCSV(wrapper.dataset.originalCode || '');
             const sheetIndex = parseInt(spreadsheetId);
-            const sheetName = `Sheet${sheetIndex + 1}`;
+            const sheetName = this._sheetNames[sheetIndex] || `Sheet${sheetIndex + 1}`;
 
             // Use shared instance for evaluation if available
             const evaluated = this._sharedHF
@@ -241,9 +358,8 @@ export const spreadsheetMixin = {
                 : this.evaluateSpreadsheet(data);
 
             // Build static table HTML
-            let tableHtml = '<div class="spreadsheet-toolbar spreadsheet-static-hint">';
+            let tableHtml = '<div class="spreadsheet-toolbar">';
             tableHtml += `<span class="spreadsheet-sheet-name">${sheetName}</span>`;
-            tableHtml += '<span class="spreadsheet-hint-text">Click to edit</span>';
             tableHtml += '</div>';
             tableHtml += '<table class="spreadsheet-table">';
             evaluated.forEach((row, rowIdx) => {
@@ -275,6 +391,11 @@ export const spreadsheetMixin = {
 
     // Activate spreadsheet for editing
     activateSpreadsheetEditor(container) {
+        // Disable spreadsheet editing when not in full edit mode (e.g., preview/split)
+        if (this.viewMode !== 'edit') {
+            Debug.log('Spreadsheet edit blocked: viewMode is not edit');
+            return;
+        }
         if (!this.isHyperFormulaReady()) {
             Debug.error('Cannot activate spreadsheet: HyperFormula not loaded');
             return;
@@ -332,7 +453,7 @@ export const spreadsheetMixin = {
         if (!instance) return;
 
         const sheetIndex = parseInt(spreadsheetId);
-        const sheetName = `Sheet${sheetIndex + 1}`;
+        const sheetName = this._sheetNames[sheetIndex] || `Sheet${sheetIndex + 1}`;
 
         let html = '<div class="spreadsheet-toolbar">';
         html += `<span class="spreadsheet-sheet-name spreadsheet-sheet-name-active">${sheetName}</span>`;
@@ -689,7 +810,9 @@ export const spreadsheetMixin = {
         const content = this.getEditorContent();
 
         // Find and replace the nth spreadsheet code block
-        const regex = /```spreadsheet\n([\s\S]*?)\n```/g;
+        // Capture optional meta after language (e.g., ```spreadsheet name="Income")
+        // Robust to Windows newlines and optional trailing newline before closing fence
+        const regex = /```+[ \t]*spreadsheet([^\r\n]*)?\r?\n([\s\S]*?)\r?\n?```+/g;
         let match;
         let currentId = 0;
         let result = content;
@@ -698,7 +821,8 @@ export const spreadsheetMixin = {
         let found = false;
         while ((match = regex.exec(content)) !== null) {
             if (String(currentId) === String(spreadsheetId)) {
-                const newBlock = '```spreadsheet\n' + newCsv + '\n```';
+                const openingMeta = match[1] || '';
+                const newBlock = '```spreadsheet' + openingMeta + '\n' + newCsv + '\n```';
                 const start = match.index + offset;
                 const end = start + match[0].length;
                 result = result.substring(0, start) + newBlock + result.substring(end);
@@ -715,15 +839,18 @@ export const spreadsheetMixin = {
         }
 
         if (result !== content && typeof this.updateEditorContent === 'function') {
-            // Update without triggering a full re-render
-            // Keep the flag true until after Alpine's reactive update completes
+            // Update without triggering an immediate recursive render; re-enable rendering after DOM updates
             this._skipSpreadsheetRender = true;
             this.noteContent = result;
             this.updateEditorContent(result);
 
-            // Use requestAnimationFrame to reset flag after DOM updates
+            // Allow the note content/preview to update, then rerender spreadsheets
             requestAnimationFrame(() => {
                 this._skipSpreadsheetRender = false;
+                // Trigger a fresh spreadsheet render after the preview updates
+                requestAnimationFrame(() => {
+                    this.renderSpreadsheets();
+                });
             });
             Debug.log(`Spreadsheet #${spreadsheetId} synced to editor`);
         }
@@ -731,60 +858,131 @@ export const spreadsheetMixin = {
 
     // Render all spreadsheets in preview (called after marked.parse)
     renderSpreadsheets() {
-        if (this._skipSpreadsheetRender) return;
+        // Prevent runaway recursive renders
+        if (this._spreadsheetRenderInProgress) {
+            return;
+        }
 
-        requestAnimationFrame(() => {
-            // Target the note preview specifically (has .note-preview class)
-            // This ensures spreadsheet IDs match the editor content
-            const notePreview = document.querySelector('.markdown-preview.note-preview');
-            if (!notePreview) return;
+        // Lightweight debounce: if the source hash is identical and last render was < 400ms ago, skip
+        const srcForHash = (typeof this.getEditorContent === 'function' ? this.getEditorContent() : '') || (this.noteContent || '');
+        const hashKey = `${srcForHash.length}:${srcForHash.slice(0, 64)}`;
+        const now = Date.now();
+        if (this._spreadsheetLastHash === hashKey && now - this._spreadsheetLastRenderTs < 400) {
+            return;
+        }
 
-            const spreadsheetBlocks = notePreview.querySelectorAll('pre code.language-spreadsheet');
-            if (spreadsheetBlocks.length === 0) return;
+        this._spreadsheetLastHash = hashKey;
+        this._spreadsheetLastRenderTs = now;
 
-            Debug.log(`Found ${spreadsheetBlocks.length} spreadsheet blocks to render`);
+        this._spreadsheetRenderInProgress = true;
 
-            // First pass: collect all spreadsheet data for cross-sheet references
-            const allSheetsData = [];
-            const blocksToProcess = [];
+        if (this._skipSpreadsheetRender) {
+            this._spreadsheetRenderInProgress = false;
+            return;
+        }
 
-            spreadsheetBlocks.forEach((block) => {
-                const pre = block.parentElement;
-                if (!pre || pre.parentElement?.classList.contains('spreadsheet-wrapper')) return;
+        // Reset counters/state so re-renders within the same note stay aligned
+        this._spreadsheetIdCounter = 0;
+        this._sheetNames = [];
+        this._sheetCount = 0;
+        if (this._sharedHF) {
+            try {
+                this._sharedHF.destroy();
+            } catch (e) {
+                Debug.warn('Error destroying shared HyperFormula during re-render:', e);
+            }
+            this._sharedHF = null;
+        }
 
-                const code = block.textContent;
-                const data = this.parseSpreadsheetCSV(code);
-                allSheetsData.push(data);
-                blocksToProcess.push({ block, pre, code, data });
-            });
+        // Use setTimeout(0) instead of requestAnimationFrame to run after the current
+        // call stack completes but before Alpine re-renders from any reactive update
+        setTimeout(() => {
+            try {
+                // Target the note preview specifically (has .note-preview class)
+                // This ensures spreadsheet IDs match the editor content
+                const notePreview = document.querySelector('.markdown-preview.note-preview');
+                if (!notePreview) {
+                    return;
+                }
 
-            // Build shared HyperFormula instance with all sheets
-            this.buildSharedHyperFormula(allSheetsData);
+                const spreadsheetBlocks = notePreview.querySelectorAll('pre code.language-spreadsheet');
+                if (spreadsheetBlocks.length === 0) {
+                    return;
+                }
 
-            // Second pass: render each spreadsheet using the shared instance
-            blocksToProcess.forEach(({ pre, code, data }) => {
-                const spreadsheetId = String(this._spreadsheetIdCounter++);
+                Debug.log(`Found ${spreadsheetBlocks.length} spreadsheet blocks to render`);
 
-                // Create wrapper
-                const wrapper = document.createElement('div');
-                wrapper.className = 'spreadsheet-wrapper';
-                wrapper.dataset.originalCode = code;
-                wrapper.dataset.sheetIndex = spreadsheetId;
-                wrapper.innerHTML = this.renderStaticSpreadsheet(data, spreadsheetId);
+                // First pass: collect all spreadsheet data for cross-sheet references
+                const allSheetsData = [];
+                const blocksToProcess = [];
 
-                // Add click handler for activation
-                wrapper.addEventListener('click', (e) => {
-                    // Don't activate if clicking on an input or button
-                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+                spreadsheetBlocks.forEach((block) => {
+                    const pre = block.parentElement;
+                    if (!pre || pre.parentElement?.classList.contains('spreadsheet-wrapper')) return;
 
-                    const container = wrapper.querySelector('.spreadsheet-container');
-                    if (container && !container.classList.contains('spreadsheet-active')) {
-                        this.activateSpreadsheetEditor(container);
-                    }
+                    const code = block.textContent;
+                    const data = this.parseSpreadsheetCSV(code);
+                    allSheetsData.push(data);
+                    blocksToProcess.push({ block, pre, code, data });
                 });
 
-                pre.parentElement.replaceChild(wrapper, pre);
-            });
+                // Extract custom sheet names from editor content, aligned by order
+                let names = [];
+                try {
+                    const srcFromEditor = typeof this.getEditorContent === 'function' ? this.getEditorContent() : '';
+                    const src = (srcFromEditor && srcFromEditor.trim().length > 0) ? srcFromEditor : (this.noteContent || '');
+                    names = this.extractSpreadsheetNamesFromContent(src);
+                } catch (e) {
+                    Debug.warn('Failed to extract spreadsheet names from content:', e);
+                }
+
+                // Ensure names array is the correct length, preserving extracted names and filling Sheet{n} for missing ones
+                if (!Array.isArray(names)) {
+                    names = [];
+                }
+                while (names.length < allSheetsData.length) {
+                    names.push(''); // Empty string will be replaced with Sheet{n} in buildSharedHyperFormula
+                }
+                names = names.slice(0, allSheetsData.length); // Trim if there are extras
+
+                // Build shared HyperFormula instance with all sheets and names
+                this.buildSharedHyperFormula(allSheetsData, names);
+
+                // Second pass: render each spreadsheet using the shared instance
+                blocksToProcess.forEach(({ pre, code, data }) => {
+                    const spreadsheetId = String(this._spreadsheetIdCounter++);
+
+                    // Re-check parent exists (may have been detached by another renderer)
+                    const parent = pre.parentElement;
+                    if (!parent) {
+                        return;
+                    }
+
+                    // Create wrapper
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'spreadsheet-wrapper';
+                    wrapper.dataset.originalCode = code;
+                    wrapper.dataset.sheetIndex = spreadsheetId;
+                    wrapper.innerHTML = this.renderStaticSpreadsheet(data, spreadsheetId);
+
+                    // Add click handler for activation only in edit mode
+                    if (this.viewMode === 'edit') {
+                        wrapper.addEventListener('click', (e) => {
+                            // Don't activate if clicking on an input or button
+                            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+
+                            const container = wrapper.querySelector('.spreadsheet-container');
+                            if (container && !container.classList.contains('spreadsheet-active')) {
+                                this.activateSpreadsheetEditor(container);
+                            }
+                        });
+                    }
+
+                    parent.replaceChild(wrapper, pre);
+                });
+            } finally {
+                this._spreadsheetRenderInProgress = false;
+            }
         });
     },
 
@@ -810,6 +1008,7 @@ export const spreadsheetMixin = {
             }
             this._sharedHF = null;
             this._sheetCount = 0;
+            this._sheetNames = [];
         }
 
         this.spreadsheetInstances = {};
@@ -822,5 +1021,36 @@ export const spreadsheetMixin = {
         }
 
         Debug.log('Spreadsheet instances cleaned up');
+    },
+
+    // Helper: extract custom spreadsheet names from markdown content
+    // Supports: ```spreadsheet name="Income" or ```spreadsheet name='Income' or ```spreadsheet name=Income
+    // Extract custom spreadsheet names from markdown content
+    // Supports: ```spreadsheet name="SheetName" or name='SheetName' or name=SheetName
+    extractSpreadsheetNamesFromContent(content) {
+        if (!content) {
+            return [];
+        }
+        const names = [];
+
+        // Robust header-only scanning: match lines starting with ```spreadsheet
+        // This avoids complex multiline matching issues which can fail on line endings or large content
+        const headerRe = /^[ \t]*```+[ \t]*spreadsheet([^\r\n]*)/gmi;
+
+        let m;
+        while ((m = headerRe.exec(content)) !== null) {
+            const meta = (m[1] || '').trim();
+            let name = '';
+            if (meta) {
+                // Try name=... or title=... with flexible quoting
+                const nameMatch = meta.match(/(?:name|title)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s,;]+))/i);
+                if (nameMatch) {
+                    name = (nameMatch[1] || nameMatch[2] || nameMatch[3] || '').trim();
+                }
+            }
+            names.push(name);
+        }
+
+        return names;
     },
 };
