@@ -9,7 +9,7 @@
   [![Docker Publish](https://github.com/rrtjr/Granite/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/rrtjr/Granite/actions/workflows/docker-publish.yml)
   [![Python 3.10+](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12-blue.svg)](https://www.python.org/downloads/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-  [![Version](https://img.shields.io/badge/version-0.12.0-green.svg)](VERSION)
+  [![Version](https://img.shields.io/badge/version-0.16.0-green.svg)](VERSION)
 </div>
 
 A lightweight, self-hosted note-taking app with markdown support, wikilinks, tags, themes, and plugins. Your notes stay on your server as plain markdown files.
