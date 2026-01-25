@@ -1,8 +1,22 @@
 // Granite Frontend - UI Utilities Module
 
-import { CONFIG } from './config.js';
+import { CONFIG, Debug } from './config.js';
 
 export const uiMixin = {
+    // Toast notification methods
+    addToast(message, type = 'info', duration = 4000) {
+        const id = this.nextToastId++;
+        this.toasts.push({ id, message, type, timestamp: Date.now() });
+        if (duration > 0) {
+            setTimeout(() => this.removeToast(id), duration);
+        }
+        return id;
+    },
+
+    removeToast(id) {
+        this.toasts = this.toasts.filter(t => t.id !== id);
+    },
+
     // Setup scroll synchronization
     setupScrollSync() {
         const editorScroller = this.editorView?.scrollDOM;
@@ -18,7 +32,7 @@ export const uiMixin = {
             } else {
                 // Only warn if a note is actually open (otherwise this is expected on homepage)
                 if (this.currentNote) {
-                    console.warn(`setupScrollSync: Failed to find editor/preview elements after ${CONFIG.SCROLL_SYNC_MAX_RETRIES} retries`);
+                    Debug.warn(`setupScrollSync: Failed to find editor/preview elements after ${CONFIG.SCROLL_SYNC_MAX_RETRIES} retries`);
                 }
             }
             return;
@@ -179,7 +193,7 @@ export const uiMixin = {
         if (this.showNewDropdown) {
             const button = event.currentTarget;
             const rect = button.getBoundingClientRect();
-            this.newDropdownPosition = { x: rect.left, y: rect.bottom + 4 };
+            this.dropdownPosition = { top: rect.bottom + 4, left: rect.left };
         }
     },
 

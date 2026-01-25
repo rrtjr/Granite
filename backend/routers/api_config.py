@@ -5,9 +5,12 @@ Handles app configuration and user settings endpoints.
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from backend.config import DEMO_MODE, config, config_path, user_settings_path
+from backend.config import DEBUG_MODE, DEMO_MODE, config, config_path, user_settings_path
+from backend.core.decorators import handle_errors
+from backend.core.rate_limits import RATE_LIMITS
 from backend.dependencies import get_templates_dir, limiter, require_auth
-from backend.utils import (
+from backend.services import (
+    get_note_content,
     load_user_settings,
     save_user_settings,
     update_config_value,
@@ -191,19 +194,39 @@ async def get_config():
         "version": config["app"]["version"],
         "searchEnabled": config["search"]["enabled"],
         "demoMode": DEMO_MODE,  # Expose demo mode flag to frontend
+        "debugMode": DEBUG_MODE,  # Expose debug mode flag to frontend
         "authentication": {"enabled": config.get("authentication", {}).get("enabled", False)},
+        "homepageFile": config["storage"].get("homepage_file", ""),
     }
 
 
+@router.get("/homepage")
+@handle_errors("Failed to load homepage content")
+async def get_homepage_content():
+    """Get the homepage file content (from user settings, fallback to config.yaml)"""
+    # Check user settings first, then fall back to config.yaml
+    settings = load_user_settings(user_settings_path)
+    homepage_file = settings.get("paths", {}).get("homepageFile", "")
+    if not homepage_file:
+        homepage_file = config["storage"].get("homepage_file", "")
+    if not homepage_file:
+        return {"content": None, "path": None}
+
+    content = get_note_content(config["storage"]["notes_dir"], homepage_file)
+    return {"content": content, "path": homepage_file}
+
+
 @router.get("/settings/templates-dir")
-@limiter.limit("60/minute")
+@limiter.limit(RATE_LIMITS["write"])
+@handle_errors("Failed to get templates directory")
 async def get_templates_dir_setting(request: Request):
     """Get the current templates directory path (relative to notes_dir)"""
     return {"templatesDir": get_templates_dir()}
 
 
 @router.post("/settings/templates-dir")
-@limiter.limit("30/minute")
+@limiter.limit(RATE_LIMITS["write_moderate"])
+@handle_errors("Failed to update templates directory")
 async def update_templates_dir(request: Request, data: dict):
     """
     Update the templates directory path.
@@ -215,59 +238,55 @@ async def update_templates_dir(request: Request, data: dict):
     Returns:
         Success status and new path
     """
-    try:
-        templates_dir = data.get("templatesDir", "")
+    templates_dir = data.get("templatesDir", "")
 
-        if not templates_dir:
-            raise HTTPException(status_code=400, detail="Templates directory path is required")
+    if not templates_dir:
+        raise HTTPException(status_code=400, detail="Templates directory path is required")
 
-        # Update in-memory config (hot-swap - no restart needed)
-        config["storage"]["templates_dir"] = templates_dir
+    # Update in-memory config (hot-swap - no restart needed)
+    config["storage"]["templates_dir"] = templates_dir
 
-        # Update config.yaml for persistence
-        success = update_config_value(config_path, "storage.templates_dir", templates_dir)
+    # Update config.yaml for persistence
+    success = update_config_value(config_path, "storage.templates_dir", templates_dir)
 
-        if not success:
-            raise HTTPException(status_code=500, detail="Failed to update config file")
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to update config file")
 
-        # Also update user-settings.json to keep them in sync
-        current_user_settings = load_user_settings(user_settings_path)
-        if "paths" not in current_user_settings:
-            current_user_settings["paths"] = {}
-        current_user_settings["paths"]["templatesDir"] = templates_dir
-        save_user_settings(user_settings_path, current_user_settings)
+    # Also update user-settings.json to keep them in sync
+    current_user_settings = load_user_settings(user_settings_path)
+    if "paths" not in current_user_settings:
+        current_user_settings["paths"] = {}
+    current_user_settings["paths"]["templatesDir"] = templates_dir
+    save_user_settings(user_settings_path, current_user_settings)
 
-        return {"success": True, "templatesDir": templates_dir, "message": "Templates directory updated successfully"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update templates directory: {e!r}") from e
+    return {"success": True, "templatesDir": templates_dir, "message": "Templates directory updated successfully"}
 
 
 @router.get("/settings/user")
-@limiter.limit("120/minute")
+@limiter.limit(RATE_LIMITS["read"])
+@handle_errors("Failed to load user settings")
 async def get_user_settings(request: Request):
     """
     Get all user settings (reading preferences, performance settings, paths).
     Settings are stored in user-settings.json at root level.
     Falls back to config.yaml for templatesDir if not in user settings.
     """
-    try:
-        settings = load_user_settings(user_settings_path)
+    settings = load_user_settings(user_settings_path)
 
-        # Ensure templatesDir is present, falling back to config.yaml
-        if "paths" not in settings:
-            settings["paths"] = {}
-        if "templatesDir" not in settings["paths"]:
-            settings["paths"]["templatesDir"] = config["storage"].get("templates_dir", "_templates")
+    # Ensure paths are present, falling back to config.yaml
+    if "paths" not in settings:
+        settings["paths"] = {}
+    if "templatesDir" not in settings["paths"]:
+        settings["paths"]["templatesDir"] = config["storage"].get("templates_dir", "_templates")
+    if "homepageFile" not in settings["paths"]:
+        settings["paths"]["homepageFile"] = config["storage"].get("homepage_file", "")
 
-        return settings
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to load user settings: {e!r}") from e
+    return settings
 
 
 @router.post("/settings/user")
-@limiter.limit("60/minute")
+@limiter.limit(RATE_LIMITS["write"])
+@handle_errors("Failed to update user settings")
 async def update_user_settings_endpoint(request: Request, data: dict):
     """
     Update user settings. Accepts partial updates.
@@ -279,31 +298,30 @@ async def update_user_settings_endpoint(request: Request, data: dict):
       "paths": {"templatesDir": "my_templates"}
     }
     """
-    try:
-        # Load current settings
-        current_settings = load_user_settings(user_settings_path)
+    # Load current settings
+    current_settings = load_user_settings(user_settings_path)
 
-        # Update with provided values (merge)
-        for section, values in data.items():
+    # Update with provided values (merge)
+    for section, values in data.items():
+        if isinstance(values, dict):
+            # For dict values, merge with existing section
             if section not in current_settings:
                 current_settings[section] = {}
-            if isinstance(values, dict):
-                current_settings[section].update(values)
+            current_settings[section].update(values)
+        else:
+            # For non-dict values (like favorites array), replace directly
+            current_settings[section] = values
 
-        # Save updated settings
-        success = save_user_settings(user_settings_path, current_settings)
+    # Save updated settings
+    success = save_user_settings(user_settings_path, current_settings)
 
-        if not success:
-            raise HTTPException(status_code=500, detail="Failed to save user settings")
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to save user settings")
 
-        # Update in-memory config for templates_dir if changed
-        if "paths" in data and "templatesDir" in data["paths"]:
-            config["storage"]["templates_dir"] = data["paths"]["templatesDir"]
-            # Also update config.yaml for persistence
-            update_config_value(config_path, "storage.templates_dir", data["paths"]["templatesDir"])
+    # Update in-memory config for templates_dir if changed
+    if "paths" in data and "templatesDir" in data["paths"]:
+        config["storage"]["templates_dir"] = data["paths"]["templatesDir"]
+        # Also update config.yaml for persistence
+        update_config_value(config_path, "storage.templates_dir", data["paths"]["templatesDir"])
 
-        return {"success": True, "settings": current_settings, "message": "User settings updated successfully"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update user settings: {e!r}") from e
+    return {"success": True, "settings": current_settings, "message": "User settings updated successfully"}

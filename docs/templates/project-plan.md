@@ -1,6 +1,6 @@
 ---
 tags: [project]
-created: {{datetime}}
+created: {{created}}
 folder: {{folder}}
 ---
 

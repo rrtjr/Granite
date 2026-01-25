@@ -1,5 +1,7 @@
 // Granite Frontend - Tags Module
 
+import { Debug } from './config.js';
+
 export const tagsMixin = {
     // Load all tags
     async loadTags() {
@@ -8,7 +10,7 @@ export const tagsMixin = {
             const data = await response.json();
             this.allTags = data.tags || {};
         } catch (error) {
-            console.error('Failed to load tags:', error);
+            Debug.error('Failed to load tags:', error);
         }
     },
 
@@ -117,7 +119,7 @@ export const tagsMixin = {
 
             return [...new Set(tags)].sort();
         } catch (e) {
-            console.error('Error parsing tags:', e);
+            Debug.error('Error parsing tags:', e);
             return [];
         }
     },

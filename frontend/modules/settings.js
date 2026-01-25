@@ -1,5 +1,7 @@
 // Granite Frontend - User Settings Module
 
+import { Debug } from './config.js';
+
 export const settingsMixin = {
     // Load all user settings from server (with localStorage migration)
     async loadUserSettings() {
@@ -31,6 +33,7 @@ export const settingsMixin = {
                 // Apply paths
                 if (settings.paths) {
                     this.templatesDir = settings.paths.templatesDir || '_templates';
+                    this.homepageFile = settings.paths.homepageFile || '';
                 }
 
                 // Apply datetime settings
@@ -44,7 +47,7 @@ export const settingsMixin = {
                 await this.migrateFromLocalStorage();
             }
         } catch (error) {
-            console.error('Error loading user settings:', error);
+            Debug.error('Error loading user settings:', error);
             await this.migrateFromLocalStorage();
         }
     },
@@ -98,10 +101,10 @@ export const settingsMixin = {
 
             if (hasLocalSettings) {
                 await this.saveUserSettings(localSettings);
-                console.log('Migrated settings from localStorage to server');
+                Debug.log('Migrated settings from localStorage to server');
             }
         } catch (error) {
-            console.error('Error migrating from localStorage:', error);
+            Debug.error('Error migrating from localStorage:', error);
         }
     },
 
@@ -117,7 +120,8 @@ export const settingsMixin = {
                 },
                 performance: this.performanceSettings,
                 paths: {
-                    templatesDir: this.templatesDir
+                    templatesDir: this.templatesDir,
+                    homepageFile: this.homepageFile
                 },
                 datetime: this.datetimeSettings
             };
@@ -129,14 +133,14 @@ export const settingsMixin = {
             });
 
             if (response.ok) {
-                console.log('User settings saved successfully');
+                Debug.log('User settings saved successfully');
                 return true;
             } else {
-                console.error('Failed to save user settings');
+                Debug.error('Failed to save user settings');
                 return false;
             }
         } catch (error) {
-            console.error('Error saving user settings:', error);
+            Debug.error('Error saving user settings:', error);
             return false;
         }
     },
@@ -148,6 +152,11 @@ export const settingsMixin = {
 
     // Save templates path (called from UI)
     saveTemplatesPath() {
+        this.saveUserSettings();
+    },
+
+    // Save homepage file path (called from UI)
+    saveHomepageFile() {
         this.saveUserSettings();
     },
 

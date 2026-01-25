@@ -25,6 +25,7 @@ export const stateMixin = {
 
     // Folders & Paths
     templatesDir: '_templates', // Templates folder path (relative to notes_dir)
+    homepageFile: '', // Homepage file path (relative to notes_dir)
 
     // Advanced performance settings (ms)
     performanceSettings: {
@@ -115,6 +116,9 @@ export const stateMixin = {
     tagsExpanded: false,
     tagReloadTimeout: null, // For debouncing tag reloads
 
+    // Favorites state
+    favoriteNotes: [], // Array of favorite note paths
+
     // Scroll sync state
     isScrolling: false,
 
@@ -153,6 +157,10 @@ export const stateMixin = {
     // Mobile sidebar state
     mobileSidebarOpen: false,
 
+    // Toast notification state
+    toasts: [],
+    nextToastId: 1,
+
     // Desktop sidebar collapse state
     sidebarCollapsed: false,
 
@@ -182,6 +190,9 @@ export const stateMixin = {
 
     // Homepage state
     selectedHomepageFolder: '',
+    homepageContent: null, // Content of the configured homepage file
+    homepageFilePath: null, // Path to the homepage file
+    homepageCardExpanded: true, // Collapsible state for homepage card
     _homepageCache: {
         folderPath: null,
         notes: null,

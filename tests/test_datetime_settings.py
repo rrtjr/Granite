@@ -9,7 +9,7 @@ Run with: pytest tests/test_datetime_settings.py
 import shutil
 import sys
 import tempfile
-from datetime import datetime, timezone
+from datetime import timezone
 from pathlib import Path
 
 import pytest
@@ -22,6 +22,7 @@ from backend.main import app
 from backend.utils import (
     format_datetime_for_frontmatter,
     get_default_user_settings,
+    get_ordinal_suffix,
     get_timezone_from_setting,
     update_frontmatter_field,
 )
@@ -79,40 +80,57 @@ class TestFormatDatetimeForFrontmatter:
     """Test format_datetime_for_frontmatter function"""
 
     def test_returns_correct_format(self):
-        """Test that datetime is formatted as YYYY-MM-DD HH:MM:SS"""
+        """Test that datetime is formatted as 'Saturday 5th April 2025 12:00:00 AM GMT+08:00'"""
+        import re
+
         result = format_datetime_for_frontmatter("local")
-        # Should match pattern like "2026-01-17 14:30:45"
-        assert len(result) == 19
-        assert result[4] == "-"
-        assert result[7] == "-"
-        assert result[10] == " "
-        assert result[13] == ":"
-        assert result[16] == ":"
+        # Should match pattern like "Saturday 5th April 2025 12:00:00 AM GMT+08:00"
+        pattern = r"^[A-Z][a-z]+ \d{1,2}(st|nd|rd|th) [A-Z][a-z]+ \d{4} \d{2}:\d{2}:\d{2} (AM|PM) GMT[+-]\d{2}:\d{2}$"
+        assert re.match(pattern, result), f"Format mismatch: {result}"
 
     def test_local_timezone_format(self):
         """Test formatting with local timezone"""
+        import re
+
         result = format_datetime_for_frontmatter("local")
-        # Just verify it returns a valid datetime string
-        parsed = datetime.strptime(result, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
-        assert parsed is not None
+        # Verify it matches the expected format
+        pattern = r"^[A-Z][a-z]+ \d{1,2}(st|nd|rd|th) [A-Z][a-z]+ \d{4} \d{2}:\d{2}:\d{2} (AM|PM) GMT[+-]\d{2}:\d{2}$"
+        assert re.match(pattern, result), f"Format mismatch: {result}"
 
     def test_utc_timezone_format(self):
         """Test formatting with UTC timezone"""
         result = format_datetime_for_frontmatter("UTC")
-        parsed = datetime.strptime(result, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
-        assert parsed is not None
+        assert "GMT+00:00" in result
 
     def test_iana_timezone_format(self):
         """Test formatting with IANA timezone"""
+        import re
+
         result = format_datetime_for_frontmatter("America/New_York")
-        parsed = datetime.strptime(result, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
-        assert parsed is not None
+        pattern = r"^[A-Z][a-z]+ \d{1,2}(st|nd|rd|th) [A-Z][a-z]+ \d{4} \d{2}:\d{2}:\d{2} (AM|PM) GMT[+-]\d{2}:\d{2}$"
+        assert re.match(pattern, result), f"Format mismatch: {result}"
 
     def test_default_is_local(self):
         """Test that default timezone is local"""
+        import re
+
         result = format_datetime_for_frontmatter()
-        parsed = datetime.strptime(result, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
-        assert parsed is not None
+        pattern = r"^[A-Z][a-z]+ \d{1,2}(st|nd|rd|th) [A-Z][a-z]+ \d{4} \d{2}:\d{2}:\d{2} (AM|PM) GMT[+-]\d{2}:\d{2}$"
+        assert re.match(pattern, result), f"Format mismatch: {result}"
+
+    def test_ordinal_suffixes(self):
+        """Test that ordinal suffixes are correctly applied"""
+        assert get_ordinal_suffix(1) == "st"
+        assert get_ordinal_suffix(2) == "nd"
+        assert get_ordinal_suffix(3) == "rd"
+        assert get_ordinal_suffix(4) == "th"
+        assert get_ordinal_suffix(11) == "th"
+        assert get_ordinal_suffix(12) == "th"
+        assert get_ordinal_suffix(13) == "th"
+        assert get_ordinal_suffix(21) == "st"
+        assert get_ordinal_suffix(22) == "nd"
+        assert get_ordinal_suffix(23) == "rd"
+        assert get_ordinal_suffix(31) == "st"
 
 
 class TestUpdateFrontmatterField:

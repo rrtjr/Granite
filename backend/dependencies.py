@@ -12,10 +12,6 @@ from .config import DEMO_MODE, config, user_settings_path
 from .plugins import PluginManager
 from .utils import ensure_directories, load_user_settings
 
-# ============================================================================
-# Security Helpers
-# ============================================================================
-
 
 def safe_error_message(error: Exception, user_message: str = "An error occurred") -> str:
     """
@@ -31,29 +27,18 @@ def safe_error_message(error: Exception, user_message: str = "An error occurred"
         Safe error message string
     """
     error_details = f"{type(error).__name__}: {error!s}"
-
-    # Always log the full error server-side
     print(f"[ERROR] {error_details}")
 
-    # In debug mode, return detailed error to help with development
     if config.get("server", {}).get("debug", False):
         return error_details
 
-    # In production, return generic message (full details already logged)
     return user_message
 
 
-# ============================================================================
-# Rate Limiter
-# ============================================================================
-
-
 if DEMO_MODE:
-    # Enable rate limiting for demo deployments
     limiter = Limiter(key_func=get_remote_address, default_limits=["200/hour"])
 else:
-    # Production/self-hosted mode - no restrictions
-    # Create a dummy limiter that doesn't actually limit
+
     class DummyLimiter:
         def limit(self, *args, **kwargs):
             def decorator(func):
@@ -64,16 +49,7 @@ else:
     limiter = DummyLimiter()  # type: ignore[assignment]
 
 
-# ============================================================================
-# Directory Setup
-# ============================================================================
-
 ensure_directories(config)
-
-
-# ============================================================================
-# Runtime Settings Helper
-# ============================================================================
 
 
 def get_templates_dir() -> str:
@@ -90,19 +66,13 @@ def get_templates_dir() -> str:
         if templates_dir:
             return str(templates_dir)
     except Exception:  # nosec B110
-        pass  # Intentional fallback to config.yaml on any error
+        pass
 
-    # Fall back to config.yaml
     return str(config["storage"].get("templates_dir", "_templates"))
 
 
-# ============================================================================
-# Plugin Manager
-# ============================================================================
-
 plugin_manager = PluginManager(config["storage"]["plugins_dir"])
 
-# Load plugin settings from user-settings.json and apply them
 _user_settings = load_user_settings(user_settings_path)
 _plugins = _user_settings.get("plugins")
 if _plugins:
@@ -112,13 +82,7 @@ if _plugins:
             plugin.update_settings(plugin_settings)
             print(f"Loaded settings for plugin: {plugin_name}")
 
-# Run app startup hooks
 plugin_manager.run_hook("on_app_startup")
-
-
-# ============================================================================
-# Authentication Helpers
-# ============================================================================
 
 
 def auth_enabled() -> bool:
@@ -129,10 +93,9 @@ def auth_enabled() -> bool:
 async def require_auth(request: Request):
     """Dependency to require authentication on protected routes"""
     if not auth_enabled():
-        return  # Auth disabled, allow all
+        return
 
     if not request.session.get("authenticated"):
-        # Always raise exception - route handlers will catch and redirect as needed
         raise HTTPException(status_code=401, detail="Not authenticated")
 
 

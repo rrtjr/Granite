@@ -1,27 +1,28 @@
 // Granite Frontend - CodeMirror Editor Module
 
+import { Debug } from './config.js';
+
 export const editorMixin = {
-    // Initialize CodeMirror 6 editor
     initCodeMirror() {
         if (!window.CodeMirror || !window.CodeMirrorReady) {
-            console.log('CodeMirror not loaded yet, retrying...');
+            Debug.log('CodeMirror not loaded yet, retrying...');
             setTimeout(() => this.initCodeMirror(), 100);
             return;
         }
 
         const container = this.$refs.editorContainer || document.getElementById('note-editor');
         if (!container) {
-            console.log('Editor container not found, retrying...');
+            Debug.log('Editor container not found, retrying...');
             setTimeout(() => this.initCodeMirror(), 100);
             return;
         }
 
         if (this.editorView) {
-            console.log('CodeMirror already initialized');
+            Debug.log('CodeMirror already initialized');
             return;
         }
 
-        console.log('Initializing CodeMirror 6...');
+        Debug.log('Initializing CodeMirror 6...');
 
         const { EditorView, EditorState, markdown, basicExtensions, Compartment } = window.CodeMirror;
 
@@ -29,7 +30,6 @@ export const editorMixin = {
 
         const self = this;
 
-        // Update listener for content changes
         const updateListener = EditorView.updateListener.of((update) => {
             if (update.docChanged) {
                 if (self.updateTimeout) {
@@ -48,7 +48,6 @@ export const editorMixin = {
             }
         });
 
-        // Paste/drop handler for images
         const pasteHandler = EditorView.domEventHandlers({
             paste: (event) => {
                 const shouldHandle = self.shouldHandleImagePaste(event);
@@ -63,7 +62,6 @@ export const editorMixin = {
             }
         });
 
-        // Create editor state
         const startState = EditorState.create({
             doc: this.noteContent,
             extensions: [
@@ -80,16 +78,14 @@ export const editorMixin = {
             ]
         });
 
-        // Create editor view
         this.editorView = new EditorView({
             state: startState,
             parent: container
         });
 
-        console.log('CodeMirror 6 initialized successfully!');
+        Debug.log('CodeMirror 6 initialized successfully!');
     },
 
-    // Update editor content (when loading a new note)
     updateEditorContent(content) {
         if (!this.editorView) return;
 
@@ -105,19 +101,16 @@ export const editorMixin = {
         });
     },
 
-    // Get current editor content
     getEditorContent() {
         if (!this.editorView) return '';
         return this.editorView.state.doc.toString();
     },
 
-    // Get cursor position
     getCursorPosition() {
         if (!this.editorView) return 0;
         return this.editorView.state.selection.main.head;
     },
 
-    // Set cursor position
     setCursorPosition(pos) {
         if (!this.editorView) return;
         const { EditorSelection } = window.CodeMirror.EditorState;
@@ -126,21 +119,18 @@ export const editorMixin = {
         });
     },
 
-    // Get selected text
     getSelectedText() {
         if (!this.editorView) return '';
         const selection = this.editorView.state.selection.main;
         return this.editorView.state.doc.sliceString(selection.from, selection.to);
     },
 
-    // Get selection range
     getSelectionRange() {
         if (!this.editorView) return { from: 0, to: 0 };
         const selection = this.editorView.state.selection.main;
         return { from: selection.from, to: selection.to };
     },
 
-    // Set selection range
     setSelectionRange(from, to) {
         if (!this.editorView) return;
         const { EditorSelection } = window.CodeMirror.EditorState;
@@ -150,7 +140,6 @@ export const editorMixin = {
         this.editorView.focus();
     },
 
-    // Insert text at cursor
     insertTextAtCursor(text) {
         if (!this.editorView) return;
         const pos = this.getCursorPosition();
@@ -159,7 +148,6 @@ export const editorMixin = {
         });
     },
 
-    // Replace selection with text
     replaceSelection(text) {
         if (!this.editorView) return;
         const selection = this.editorView.state.selection.main;
@@ -169,14 +157,12 @@ export const editorMixin = {
         });
     },
 
-    // Focus editor
     focusEditor() {
         if (this.editorView) {
             this.editorView.focus();
         }
     },
 
-    // Markdown formatting: wrap selection
     wrapSelection(before, after, placeholder) {
         if (!this.editorView) return;
 
@@ -195,7 +181,6 @@ export const editorMixin = {
         this.editorView.focus();
     },
 
-    // Insert link
     insertLink() {
         if (!this.editorView) return;
 
@@ -215,7 +200,6 @@ export const editorMixin = {
         this.editorView.focus();
     },
 
-    // Insert a markdown table
     insertTable() {
         if (!this.editorView) return;
 

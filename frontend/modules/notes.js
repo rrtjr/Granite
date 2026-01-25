@@ -3,7 +3,6 @@
 import { CONFIG, ErrorHandler } from './config.js';
 
 export const notesMixin = {
-    // Load all notes
     async loadNotes() {
         try {
             const response = await fetch('/api/notes');
@@ -17,10 +16,14 @@ export const notesMixin = {
         }
     },
 
-    // Load a specific note
     async loadNote(notePath, updateHistory = true, searchQuery = '') {
         try {
             this.mobileSidebarOpen = false;
+
+            // Cleanup spreadsheet instances from previous note
+            if (typeof this.cleanupSpreadsheets === 'function') {
+                this.cleanupSpreadsheets();
+            }
 
             const response = await fetch(`/api/notes/${notePath}`);
 
@@ -44,11 +47,9 @@ export const notesMixin = {
             this.currentImage = '';
             this.lastSaved = false;
 
-            // Initialize undo/redo history
             this.undoHistory = [data.content];
             this.redoHistory = [];
 
-            // Update browser URL
             if (updateHistory) {
                 const pathWithoutExtension = notePath.replace('.md', '');
                 const encodedPath = pathWithoutExtension.split('/').map(segment => encodeURIComponent(segment)).join('/');
@@ -63,22 +64,18 @@ export const notesMixin = {
                 );
             }
 
-            // Calculate stats if plugin enabled
             if (this.statsPluginEnabled) {
                 this.calculateStats();
             }
 
-            // Parse frontmatter metadata
             this.parseMetadata();
 
-            // Store search query for highlighting
             if (searchQuery) {
                 this.currentSearchHighlight = searchQuery;
             } else {
                 this.currentSearchHighlight = '';
             }
 
-            // Expand folder tree to show the loaded note
             this.expandFolderForNote(notePath);
 
             this.$nextTick(() => {
@@ -102,7 +99,6 @@ export const notesMixin = {
         }
     },
 
-    // Load note from URL path
     loadNoteFromURL() {
         let path = window.location.pathname;
 
@@ -134,7 +130,6 @@ export const notesMixin = {
         }
     },
 
-    // Auto-save with debounce
     autoSave() {
         if (this.saveTimeout) {
             clearTimeout(this.saveTimeout);
@@ -142,7 +137,6 @@ export const notesMixin = {
 
         this.lastSaved = false;
 
-        // Debounce undo history
         if (!this.isUndoRedo) {
             if (this.historyTimeout) {
                 clearTimeout(this.historyTimeout);
@@ -152,7 +146,6 @@ export const notesMixin = {
             }, this.performanceSettings.historyDelay);
         }
 
-        // Debounce stats
         if (this.statsPluginEnabled) {
             if (this.statsTimeout) {
                 clearTimeout(this.statsTimeout);
@@ -162,7 +155,6 @@ export const notesMixin = {
             }, this.performanceSettings.statsDelay);
         }
 
-        // Debounce metadata
         if (this.metadataTimeout) {
             clearTimeout(this.metadataTimeout);
         }
@@ -170,13 +162,11 @@ export const notesMixin = {
             this.parseMetadata();
         }, this.performanceSettings.metadataDelay);
 
-        // Debounce save
         this.saveTimeout = setTimeout(() => {
             this.saveNote();
         }, this.performanceSettings.autosaveDelay);
     },
 
-    // Push current content to undo history
     pushToHistory() {
         if (this.undoHistory.length > 0 &&
             this.undoHistory[this.undoHistory.length - 1] === this.noteContent) {
@@ -192,7 +182,6 @@ export const notesMixin = {
         this.redoHistory = [];
     },
 
-    // Undo last change
     undo() {
         if (!this.currentNote || this.undoHistory.length <= 1) return;
 
@@ -215,7 +204,6 @@ export const notesMixin = {
         });
     },
 
-    // Redo last undone change
     redo() {
         if (!this.currentNote || this.redoHistory.length === 0) return;
 
@@ -236,7 +224,6 @@ export const notesMixin = {
         });
     },
 
-    // Save current note
     async saveNote() {
         if (!this.currentNote) return;
 
@@ -278,7 +265,6 @@ export const notesMixin = {
         }
     },
 
-    // Rename current note
     async renameNote() {
         if (!this.currentNote) return;
 
@@ -321,13 +307,11 @@ export const notesMixin = {
         }
     },
 
-    // Delete current note
     async deleteCurrentNote() {
         if (!this.currentNote) return;
         await this.deleteNote(this.currentNote, this.currentNoteName);
     },
 
-    // Delete any note
     async deleteNote(notePath, noteName) {
         if (!confirm(`Delete "${noteName}"?`)) return;
 
@@ -352,7 +336,6 @@ export const notesMixin = {
         }
     },
 
-    // Create a new note
     async createNote(folderPath = null) {
         let targetFolder;
         if (folderPath !== null) {
@@ -411,7 +394,6 @@ export const notesMixin = {
         }
     },
 
-    // Copy current note link to clipboard
     async copyNoteLink() {
         if (!this.currentNote) return;
 
@@ -436,7 +418,6 @@ export const notesMixin = {
         }, 1500);
     },
 
-    // Handle clicks on internal links (wikilinks and markdown links) in the preview
     handleInternalLink(event) {
         const link = event.target.closest('a');
         if (!link) return;
@@ -444,60 +425,104 @@ export const notesMixin = {
         const href = link.getAttribute('href');
         if (!href) return;
 
-        // Check if it's an external link
         if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('//')) {
-            // Let external links open normally
             return;
         }
 
-        // Prevent default navigation
         event.preventDefault();
 
-        // Decode the href (it may be URL encoded)
         let linkTarget = decodeURIComponent(href);
 
-        // Remove leading slash if present
         if (linkTarget.startsWith('/')) {
             linkTarget = linkTarget.substring(1);
         }
 
-        // Try to find the matching note
+        const isFolderLink = link.hasAttribute('data-folder-link');
+
         const targetLower = linkTarget.toLowerCase();
-        const matchingNote = this.notes.find(n => {
-            if (n.type === 'image') return false;
+        let matchingNote = null;
 
-            const pathLower = n.path.toLowerCase();
-            const nameLower = n.name.toLowerCase();
+        if (!isFolderLink) {
+            matchingNote = this.notes.find(n => {
+                if (n.type === 'image') return false;
 
-            return (
-                n.path === linkTarget ||
-                n.path === linkTarget + '.md' ||
-                pathLower === targetLower ||
-                pathLower === targetLower + '.md' ||
-                n.name === linkTarget ||
-                n.name === linkTarget + '.md' ||
-                nameLower === targetLower ||
-                nameLower === targetLower + '.md' ||
-                n.path.endsWith('/' + linkTarget) ||
-                n.path.endsWith('/' + linkTarget + '.md') ||
-                pathLower.endsWith('/' + targetLower) ||
-                pathLower.endsWith('/' + targetLower + '.md')
-            );
-        });
+                const pathLower = n.path.toLowerCase();
+                const nameLower = n.name.toLowerCase();
+
+                return (
+                    n.path === linkTarget ||
+                    n.path === linkTarget + '.md' ||
+                    pathLower === targetLower ||
+                    pathLower === targetLower + '.md' ||
+                    n.name === linkTarget ||
+                    n.name === linkTarget + '.md' ||
+                    nameLower === targetLower ||
+                    nameLower === targetLower + '.md' ||
+                    n.path.endsWith('/' + linkTarget) ||
+                    n.path.endsWith('/' + linkTarget + '.md') ||
+                    pathLower.endsWith('/' + targetLower) ||
+                    pathLower.endsWith('/' + targetLower + '.md')
+                );
+            });
+        }
 
         if (matchingNote) {
             this.loadNote(matchingNote.path);
-        } else {
-            // Note doesn't exist - offer to create it
-            const createNew = confirm(`Note "${linkTarget}" doesn't exist. Create it?`);
-            if (createNew) {
-                const notePath = linkTarget.endsWith('.md') ? linkTarget : linkTarget + '.md';
-                this.createNoteFromLink(notePath);
-            }
+            return;
+        }
+
+        const allFolders = this.allFolders || [];
+        const matchingFolder = allFolders.find(f => {
+            const folderLower = f.toLowerCase();
+            const folderName = f.split('/').pop();
+            const folderNameLower = folderName.toLowerCase();
+            return (
+                f === linkTarget ||
+                folderLower === targetLower ||
+                folderName === linkTarget ||
+                folderNameLower === targetLower ||
+                f.endsWith('/' + linkTarget) ||
+                folderLower.endsWith('/' + targetLower)
+            );
+        });
+
+        if (matchingFolder) {
+            this.navigateToFolder(matchingFolder);
+            return;
+        }
+
+        const createNew = confirm(`Note "${linkTarget}" doesn't exist. Create it?`);
+        if (createNew) {
+            const notePath = linkTarget.endsWith('.md') ? linkTarget : linkTarget + '.md';
+            this.createNoteFromLink(notePath);
         }
     },
 
-    // Create a note from a clicked link
+    navigateToFolder(folderPath) {
+        this.currentNote = '';
+        this.noteContent = '';
+        this.currentNoteName = '';
+        this.currentImage = '';
+
+        this.selectedHomepageFolder = folderPath;
+
+        const parts = folderPath.split('/');
+        let currentPath = '';
+        parts.forEach((part, index) => {
+            currentPath = index === 0 ? part : `${currentPath}/${part}`;
+            this.expandedFolders.add(currentPath);
+        });
+        this.expandedFolders = new Set(this.expandedFolders);
+
+        window.history.pushState(
+            { homepageFolder: folderPath },
+            '',
+            '/'
+        );
+
+        this.mobileSidebarOpen = false;
+    },
+
     async createNoteFromLink(notePath) {
         try {
             const response = await fetch(`/api/notes/${notePath}`, {

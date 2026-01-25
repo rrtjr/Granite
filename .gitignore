@@ -55,6 +55,9 @@ Thumbs.db
 coverage.xml
 htmlcov/
 .pytest_cache/
+coverage/
+test-results/
+playwright-report/
 
 # Environment
 .env

@@ -5,10 +5,12 @@ console.log('[Granite] Starting module loader...');
 
 // Use dynamic imports with error handling to identify which module fails
 let CONFIG, ErrorHandler;
-let stateMixin, helpersMixin, themesMixin, tagsMixin, templatesMixin;
+let stateMixin, helpersMixin, themesMixin, tagsMixin, favoritesMixin, templatesMixin;
 let statsMixin, metadataMixin, sidebarMixin, settingsMixin, editorMixin;
-let notesMixin, foldersMixin, searchMixin, imagesMixin, pluginsMixin;
+let notesMixin, foldersMixin, folderOperationsMixin, folderRenderMixin;
+let searchMixin, imagesMixin, pluginsMixin;
 let graphMixin, markdownMixin, uiMixin, exportMixin, initMixin;
+let spreadsheetMixin;
 
 async function loadModules() {
     const modules = [
@@ -17,6 +19,7 @@ async function loadModules() {
         { name: 'helpers', path: './modules/helpers.js' },
         { name: 'themes', path: './modules/themes.js' },
         { name: 'tags', path: './modules/tags.js' },
+        { name: 'favorites', path: './modules/favorites.js' },
         { name: 'templates', path: './modules/templates.js' },
         { name: 'stats', path: './modules/stats.js' },
         { name: 'metadata', path: './modules/metadata.js' },
@@ -25,6 +28,8 @@ async function loadModules() {
         { name: 'editor', path: './modules/editor.js' },
         { name: 'notes', path: './modules/notes.js' },
         { name: 'folders', path: './modules/folders.js' },
+        { name: 'folder-operations', path: './modules/folder-operations.js' },
+        { name: 'folder-render', path: './modules/folder-render.js' },
         { name: 'search', path: './modules/search.js' },
         { name: 'images', path: './modules/images.js' },
         { name: 'plugins', path: './modules/plugins.js' },
@@ -33,6 +38,7 @@ async function loadModules() {
         { name: 'ui', path: './modules/ui.js' },
         { name: 'export', path: './modules/export.js' },
         { name: 'init', path: './modules/init.js' },
+        { name: 'spreadsheet', path: './modules/spreadsheet.js' },
     ];
 
     const loaded = {};
@@ -55,6 +61,7 @@ async function loadModules() {
     helpersMixin = loaded.helpers.helpersMixin;
     themesMixin = loaded.themes.themesMixin;
     tagsMixin = loaded.tags.tagsMixin;
+    favoritesMixin = loaded.favorites.favoritesMixin;
     templatesMixin = loaded.templates.templatesMixin;
     statsMixin = loaded.stats.statsMixin;
     metadataMixin = loaded.metadata.metadataMixin;
@@ -63,6 +70,8 @@ async function loadModules() {
     editorMixin = loaded.editor.editorMixin;
     notesMixin = loaded.notes.notesMixin;
     foldersMixin = loaded.folders.foldersMixin;
+    folderOperationsMixin = loaded['folder-operations'].folderOperationsMixin;
+    folderRenderMixin = loaded['folder-render'].folderRenderMixin;
     searchMixin = loaded.search.searchMixin;
     imagesMixin = loaded.images.imagesMixin;
     pluginsMixin = loaded.plugins.pluginsMixin;
@@ -71,6 +80,7 @@ async function loadModules() {
     uiMixin = loaded.ui.uiMixin;
     exportMixin = loaded.export.exportMixin;
     initMixin = loaded.init.initMixin;
+    spreadsheetMixin = loaded.spreadsheet.spreadsheetMixin;
 
     // Make CONFIG and ErrorHandler available globally
     window.CONFIG = CONFIG;
@@ -80,10 +90,12 @@ async function loadModules() {
 
     // Verify all mixins are defined
     const mixins = {
-        stateMixin, helpersMixin, themesMixin, tagsMixin, templatesMixin,
+        stateMixin, helpersMixin, themesMixin, tagsMixin, favoritesMixin, templatesMixin,
         statsMixin, metadataMixin, sidebarMixin, settingsMixin, editorMixin,
-        notesMixin, foldersMixin, searchMixin, imagesMixin, pluginsMixin,
-        graphMixin, markdownMixin, uiMixin, exportMixin, initMixin
+        notesMixin, foldersMixin, folderOperationsMixin, folderRenderMixin,
+        searchMixin, imagesMixin, pluginsMixin,
+        graphMixin, markdownMixin, uiMixin, exportMixin, initMixin,
+        spreadsheetMixin
     };
 
     for (const [name, mixin] of Object.entries(mixins)) {
@@ -124,6 +136,7 @@ function noteApp() {
             helpersMixin,
             themesMixin,
             tagsMixin,
+            favoritesMixin,
             templatesMixin,
             statsMixin,
             metadataMixin,
@@ -132,6 +145,8 @@ function noteApp() {
             editorMixin,
             notesMixin,
             foldersMixin,
+            folderOperationsMixin,
+            folderRenderMixin,
             searchMixin,
             imagesMixin,
             pluginsMixin,
@@ -140,6 +155,7 @@ function noteApp() {
             uiMixin,
             exportMixin,
             initMixin,
+            spreadsheetMixin,
         );
         console.log('[Granite] noteApp() built successfully with', Object.keys(result).length, 'properties');
         return result;

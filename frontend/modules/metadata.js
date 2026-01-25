@@ -1,5 +1,7 @@
 // Granite Frontend - Metadata (Frontmatter) Module
 
+import { Debug } from './config.js';
+
 export const metadataMixin = {
     // Parse YAML frontmatter metadata from note content
     parseMetadata() {
@@ -75,7 +77,7 @@ export const metadataMixin = {
             this.noteMetadata = Object.keys(metadata).length > 0 ? metadata : null;
 
         } catch (error) {
-            console.error('Failed to parse frontmatter:', error);
+            Debug.error('Failed to parse frontmatter:', error);
             this.noteMetadata = null;
             this._lastFrontmatter = null;
         }

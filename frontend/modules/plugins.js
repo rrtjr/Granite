@@ -1,6 +1,6 @@
 // Granite Frontend - Plugins Module
 
-import { ErrorHandler } from './config.js';
+import { Debug, ErrorHandler } from './config.js';
 
 export const pluginsMixin = {
     // Load all available plugins and update their states
@@ -46,7 +46,7 @@ export const pluginsMixin = {
 
     // Open git settings modal
     async openGitSettings() {
-        console.log('[Git Settings] Opening modal...');
+        Debug.info('Git Settings', 'Opening modal...');
         try {
             this.gitSettings = null;
             this.gitStatus = null;
@@ -88,7 +88,7 @@ export const pluginsMixin = {
             if (data.success) {
                 this.gitSettings = data.settings;
                 this.showGitSettingsModal = false;
-                console.log('Git settings saved successfully');
+                Debug.log('Git settings saved successfully');
             }
         } catch (error) {
             ErrorHandler.handle('save git settings', error, true);
@@ -97,7 +97,7 @@ export const pluginsMixin = {
 
     // Manual git backup
     async manualGitBackup() {
-        console.log('[Git Plugin] Manual backup triggered');
+        Debug.info('Git Plugin', 'Manual backup triggered');
         try {
             const response = await fetch('/api/plugins/git/manual-backup', {
                 method: 'POST',
@@ -106,28 +106,28 @@ export const pluginsMixin = {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('[Git Plugin] Backup failed:', response.status, errorText);
+                Debug.error('[Git Plugin] Backup failed:', response.status, errorText);
                 throw new Error(`Failed to trigger git backup: ${response.statusText}`);
             }
 
             const data = await response.json();
-            console.log('[Git Plugin] Backup response:', data);
+            Debug.info('Git Plugin', 'Backup response:', data);
             if (data.success) {
-                console.log('[Git Plugin] Backup completed successfully');
+                Debug.info('Git Plugin', 'Backup completed successfully');
                 alert('Git backup completed! Check Docker logs for details.');
                 await this.openGitSettings();
             } else {
-                console.warn('[Git Plugin] Backup returned success=false');
+                Debug.warn('[Git Plugin] Backup returned success=false');
             }
         } catch (error) {
-            console.error('[Git Plugin] Backup error:', error);
+            Debug.error('[Git Plugin] Backup error:', error);
             ErrorHandler.handle('manual git backup', error, true);
         }
     },
 
     // Manual git pull
     async manualGitPull() {
-        console.log('[Git Plugin] Manual pull triggered');
+        Debug.info('Git Plugin', 'Manual pull triggered');
         try {
             const response = await fetch('/api/plugins/git/manual-pull', {
                 method: 'POST',
@@ -136,36 +136,36 @@ export const pluginsMixin = {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('[Git Plugin] Pull failed:', response.status, errorText);
+                Debug.error('[Git Plugin] Pull failed:', response.status, errorText);
                 throw new Error(`Failed to trigger git pull: ${response.statusText}`);
             }
 
             const data = await response.json();
-            console.log('[Git Plugin] Pull response:', data);
+            Debug.info('Git Plugin', 'Pull response:', data);
             if (data.success) {
-                console.log('[Git Plugin] Pull completed successfully');
+                Debug.info('Git Plugin', 'Pull completed successfully');
                 alert('Git pull completed! Check Docker logs for details.');
                 await this.loadNotes();
             } else {
-                console.warn('[Git Plugin] Pull returned success=false');
+                Debug.warn('[Git Plugin] Pull returned success=false');
             }
         } catch (error) {
-            console.error('[Git Plugin] Pull error:', error);
+            Debug.error('[Git Plugin] Pull error:', error);
             ErrorHandler.handle('manual git pull', error, true);
         }
     },
 
     // Open PDF Export settings modal
     async openPdfExportSettings() {
-        console.log('[PDF Export Settings] Opening modal...');
+        Debug.info('PDF Export Settings', 'Opening modal...');
         try {
             const response = await fetch('/api/plugins/pdf_export/settings');
             if (response.ok) {
                 const data = await response.json();
                 this.pdfExportSettings = data.settings || this.pdfExportSettings;
-                console.log('[PDF Export Settings] Loaded settings:', this.pdfExportSettings);
+                Debug.info('PDF Export Settings', 'Loaded settings:', this.pdfExportSettings);
             } else {
-                console.warn('[PDF Export Settings] Failed to load settings');
+                Debug.warn('[PDF Export Settings] Failed to load settings');
             }
 
             this.showPdfExportSettingsModal = true;
@@ -176,7 +176,7 @@ export const pluginsMixin = {
 
     // Save PDF Export settings
     async savePdfExportSettings() {
-        console.log('[PDF Export Settings] Saving settings...');
+        Debug.info('PDF Export Settings', 'Saving settings...');
         try {
             const response = await fetch('/api/plugins/pdf_export/settings', {
                 method: 'POST',
@@ -192,7 +192,7 @@ export const pluginsMixin = {
             if (data.success) {
                 this.pdfExportSettings = data.settings;
                 this.showPdfExportSettingsModal = false;
-                console.log('[PDF Export Settings] Settings saved successfully');
+                Debug.info('PDF Export Settings', 'Settings saved successfully');
                 alert('PDF export settings saved successfully!');
             } else {
                 throw new Error(data.message || 'Failed to save settings');

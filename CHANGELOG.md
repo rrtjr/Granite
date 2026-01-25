@@ -5,6 +5,28 @@ All notable changes to Granite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0] - 2026-01-19
+
+### Added
+- **Banner Support** - Added support for note banners with Unsplash integration for visually rich notes ([65bbf64](https://github.com/rrtjr/granite/commit/65bbf64), [fe73bd1](https://github.com/rrtjr/granite/commit/fe73bd1))
+- **Table of Contents** - Added table of contents feature for better note navigation ([d346b55](https://github.com/rrtjr/granite/commit/d346b55))
+- **New Themes** - Added new themes for enhanced customization options ([21e720d](https://github.com/rrtjr/granite/commit/21e720d))
+- **Automatic Frontmatter Updates** - Automating update for created and modified frontmatter metadata ([e4138da](https://github.com/rrtjr/granite/commit/e4138da))
+
+### Fixed
+- Fixed TOC and banner not showing on PDF export ([4346a31](https://github.com/rrtjr/granite/commit/4346a31))
+- Fixed Unsplash banner not updating code editor content ([1bff97d](https://github.com/rrtjr/granite/commit/1bff97d))
+- Fixed template folder not being populated ([3a3de3f](https://github.com/rrtjr/granite/commit/3a3de3f))
+
+### Security
+- Fixed vulnerability CVE-2026-22701 ([0b9dbdf](https://github.com/rrtjr/granite/commit/0b9dbdf))
+
+### Changed
+- **Modular Architecture** - Refactored monolithic design to respective modules for better maintainability ([9b3130b](https://github.com/rrtjr/granite/commit/9b3130b))
+- Added pre-commit hook to pre-solve lint issues ([d5ebb25](https://github.com/rrtjr/granite/commit/d5ebb25))
+- Added autofixes for code quality ([8aea5b8](https://github.com/rrtjr/granite/commit/8aea5b8))
+- Updated documentation to reflect new changes ([b293f68](https://github.com/rrtjr/granite/commit/b293f68))
+
 ## [0.12.0] - 2026-01-04
 
 ### Added
@@ -64,6 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[0.15.0]: https://github.com/rrtjr/granite/compare/v0.12.0...v0.15.0
 [0.12.0]: https://github.com/rrtjr/granite/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/rrtjr/granite/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/rrtjr/granite/compare/v0.9.0...v0.10.0

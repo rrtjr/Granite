@@ -1,6 +1,6 @@
 // Granite Frontend - Images Module
 
-import { ErrorHandler } from './config.js';
+import { Debug, ErrorHandler } from './config.js';
 
 export const imagesMixin = {
     // Handle note drag start
@@ -355,7 +355,7 @@ export const imagesMixin = {
 
             return null;
         } catch (e) {
-            console.error('Error parsing banner:', e);
+            Debug.error('Error parsing banner:', e);
             return null;
         }
     },
@@ -428,7 +428,7 @@ export const imagesMixin = {
                     alert(`Failed to move ${isImage ? 'image' : 'note'}.`);
                 }
             } catch (error) {
-                console.error(`Failed to move ${isImage ? 'image' : 'note'}:`, error);
+                Debug.error(`Failed to move ${isImage ? 'image' : 'note'}:`, error);
                 alert(`Failed to move ${isImage ? 'image' : 'note'}.`);
             }
 
@@ -472,7 +472,7 @@ export const imagesMixin = {
                     alert('Failed to move folder.');
                 }
             } catch (error) {
-                console.error('Failed to move folder:', error);
+                Debug.error('Failed to move folder:', error);
                 alert('Failed to move folder.');
             }
 

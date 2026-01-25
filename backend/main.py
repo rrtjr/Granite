@@ -33,14 +33,12 @@ from .routers import (
 from .routers.notes import graph_router, search_router
 from .themes import get_theme_css
 
-# Initialize app
 app = FastAPI(
     title=config["app"]["name"],
     description=config["app"]["tagline"],
     version=config["app"]["version"],
 )
 
-# CORS middleware configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -49,38 +47,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Session middleware for authentication
 app.add_middleware(
     SessionMiddleware,
     secret_key=config.get("authentication", {}).get("secret_key", "insecure_default_key_change_this"),
     max_age=config.get("authentication", {}).get("session_max_age", 604800),  # 7 days default
     same_site="lax",  # Prevents CSRF attacks
-    https_only=False,  # Set to True if using HTTPS in production
+    https_only=config.get("server", {}).get("https_only", False),  # Set via config when behind HTTPS proxy
 )
 
-# Rate limiting for demo mode
 if DEMO_MODE:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 
-# Custom exception handlers
 app.add_exception_handler(HTTPException, http_exception_handler)
 
-# Mount static files
 app.mount("/static", StaticFiles(directory=static_path), name="static")
 
-# Mount tests directory (only in development/testing mode)
 if os.getenv("ENABLE_TESTS", "false").lower() == "true":
     tests_path = Path(__file__).parent.parent / "tests"
     if tests_path.exists():
         app.mount("/tests", StaticFiles(directory=tests_path), name="tests")
         print("WARNING: Tests are enabled and accessible at /tests/")
         print("   Set ENABLE_TESTS=false in production!")
-
-
-# ============================================================================
-# Theme route (no auth required - allows theme loading before login)
-# ============================================================================
 
 
 @app.get("/api/themes/{theme_id}")
@@ -95,25 +83,13 @@ async def get_theme(theme_id: str):
     return {"css": css, "theme_id": theme_id}
 
 
-# ============================================================================
-# Health check (no auth required)
-# ============================================================================
-
-
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "app": config["app"]["name"], "version": config["app"]["version"]}
 
 
-# ============================================================================
-# Register Routers
-# ============================================================================
-
-# Authentication routes (no prefix, public)
 app.include_router(auth_router)
-
-# API routes (all require auth via router dependencies)
 app.include_router(api_config_router)
 app.include_router(themes_router)
 app.include_router(folders_router)
@@ -126,9 +102,7 @@ app.include_router(graph_router)
 app.include_router(plugins_router)
 app.include_router(plugins_git_router)
 app.include_router(plugins_pdf_router)
-
-# Page routes (SPA catch-all - must be last)
-app.include_router(pages_router)
+app.include_router(pages_router)  # SPA catch-all - must be last
 
 
 if __name__ == "__main__":

@@ -63,6 +63,7 @@ Requires Python 3.10+. Access at [http://localhost:8000](http://localhost:8000)
 - **Tags & search** - YAML frontmatter tags with combined filtering
 - **Themes** - 8 built-in themes plus custom theme support
 - **Math & diagrams** - LaTeX/MathJax and Mermaid support
+- **Spreadsheets** - Excel-like tables with formulas
 - **Graph view** - Visualize note connections
 - **Plugins** - Git Sync, PDF Export, Note Statistics
 - **Templates** - Reusable note templates

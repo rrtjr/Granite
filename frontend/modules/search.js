@@ -1,5 +1,7 @@
 // Granite Frontend - Search Module
 
+import { Debug } from './config.js';
+
 export const searchMixin = {
     // Search notes by text
     async searchNotes() {
@@ -53,7 +55,7 @@ export const searchMixin = {
                     });
                 }
             } catch (error) {
-                console.error('Search failed:', error);
+                Debug.error('Search failed:', error);
             }
         }
     },

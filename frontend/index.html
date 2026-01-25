@@ -66,6 +66,9 @@
     <!-- vis-network for graph visualization (v9.1.9) -->
     <script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
 
+    <!-- HyperFormula for spreadsheet calculations (v2.7.1) -->
+    <script src="https://cdn.jsdelivr.net/npm/hyperformula@2.7.1/dist/hyperformula.full.min.js"></script>
+
     <!-- CodeMirror 6 - Local bundle (guaranteed single @codemirror/state instance) -->
     <script src="/static/codemirror6.bundle.js"></script>
 
@@ -497,6 +500,125 @@
             height: auto;
         }
 
+        /* Spreadsheet styles */
+        .spreadsheet-wrapper {
+            margin: 1rem 0;
+        }
+
+        .spreadsheet-container {
+            border: 1px solid var(--border-primary);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background: var(--bg-secondary);
+        }
+
+        .spreadsheet-toolbar {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-primary);
+            flex-wrap: wrap;
+        }
+
+        .spreadsheet-static-hint {
+            cursor: pointer;
+        }
+
+        .spreadsheet-hint-text {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            transition: color 0.2s;
+        }
+
+        .spreadsheet-static-hint:hover .spreadsheet-hint-text {
+            color: var(--accent-primary);
+        }
+
+        .spreadsheet-sheet-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.125rem 0.5rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: 0.25rem;
+            color: var(--text-secondary);
+            margin-right: auto;
+        }
+
+        .spreadsheet-sheet-name-active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: white;
+        }
+
+        .spreadsheet-btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border: 1px solid var(--border-primary);
+            border-radius: 0.25rem;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .spreadsheet-btn:hover {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        .spreadsheet-btn-danger:hover {
+            background: var(--error);
+            border-color: var(--error);
+        }
+
+        .spreadsheet-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .spreadsheet-table th,
+        .spreadsheet-table td {
+            border: 1px solid var(--border-primary);
+            padding: 0.5rem;
+            text-align: left;
+            min-width: 80px;
+        }
+
+        .spreadsheet-table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+        }
+
+        .spreadsheet-cell {
+            padding: 0 !important;
+            position: relative;
+        }
+
+        .spreadsheet-input {
+            width: 100%;
+            height: 100%;
+            padding: 0.5rem;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: inherit;
+            color: var(--text-primary);
+        }
+
+        .spreadsheet-input:focus {
+            outline: 2px solid var(--accent-primary);
+            outline-offset: -2px;
+            background: var(--bg-primary);
+        }
+
+        .spreadsheet-active {
+            box-shadow: 0 0 0 2px var(--accent-primary);
+        }
+
         /* Reading Preferences - Content Width */
         .markdown-preview.reading-width-narrow {
             max-width: 650px;
@@ -700,6 +822,11 @@
 
         /* Note delete button on hover */
         .note-item:hover .note-delete-btn {
+            opacity: 1 !important;
+        }
+
+        /* Note favorite button on hover */
+        .note-item:hover .note-favorite-btn {
             opacity: 1 !important;
         }
 
@@ -1346,6 +1473,27 @@
                         </svg>
                     </button>
 
+                <!-- Favorites -->
+                <button
+                    class="icon-rail-btn relative"
+                    :class="{'active': activePanel === 'favorites'}"
+                    @click="activePanel = 'favorites'"
+                    title="Favorites"
+                    aria-label="Favorites panel"
+                >
+                    <svg fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                    <!-- Favorites count badge -->
+                    <span
+                        x-show="favoriteNotes.length > 0"
+                        x-cloak
+                        class="absolute -top-1 -right-1 w-4 h-4 text-[9px] font-bold rounded-full flex items-center justify-center"
+                        style="background-color: var(--accent-primary); color: white;"
+                        x-text="favoriteNotes.length > 9 ? '9+' : favoriteNotes.length"
+                    ></span>
+                </button>
+
                 <!-- Search -->
                         <button
                     class="icon-rail-btn relative"
@@ -1502,10 +1650,22 @@
                                 @mouseover="if(currentNote !== note.path && currentImage !== note.path) $el.style.backgroundColor='var(--bg-hover)'"
                                 @mouseout="if(currentNote !== note.path && currentImage !== note.path) $el.style.backgroundColor='transparent'"
                             >
-                                <span class="truncate" style="display: block; padding-right: 30px;">
+                                <span class="truncate" style="display: block; padding-right: 50px;">
                                     <template x-if="note.type === 'image'">🖼️ </template>
                                     <span x-text="note.name"></span>
                                 </span>
+                                <!-- Favorite toggle button (only for notes, not images) -->
+                                <button
+                                    x-show="note.type !== 'image'"
+                                    @click.stop="toggleFavorite(note.path)"
+                                    class="note-favorite-btn absolute right-8 top-1/2 transform -translate-y-1/2 px-1 py-0.5 text-xs rounded hover:brightness-110 transition-opacity"
+                                    :style="isFavorite(note.path) ? 'opacity: 1; color: var(--warning);' : 'opacity: 0; color: var(--text-tertiary);'"
+                                    :title="isFavorite(note.path) ? 'Remove from favorites' : 'Add to favorites'"
+                                >
+                                    <svg class="w-4 h-4" :fill="isFavorite(note.path) ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                                    </svg>
+                                </button>
                                 <button
                                     @click.stop="note.type === 'image' ? deleteImage(note.path) : deleteNote(note.path, note.name)"
                                     class="note-delete-btn absolute right-2 top-1/2 transform -translate-y-1/2 px-1 py-0.5 text-xs rounded hover:brightness-110 transition-opacity"
@@ -1528,6 +1688,63 @@
                     </div>
                 </div>
                 <!-- END FILES PANEL -->
+
+                <!-- ==================== FAVORITES PANEL ==================== -->
+                <div x-show="activePanel === 'favorites'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="flex flex-col h-full">
+                    <!-- Favorites Header -->
+                    <div class="flex-shrink-0 px-3 py-2 border-b flex items-center justify-between" style="border-color: var(--border-primary);">
+                        <span class="text-xs font-semibold uppercase tracking-wide" style="color: var(--text-tertiary);">Favorites</span>
+                        <span class="text-xs px-1.5 py-0.5 rounded" style="background-color: var(--bg-tertiary); color: var(--text-tertiary);" x-text="favoriteNotes.length"></span>
+                    </div>
+
+                    <!-- Scrollable content: Favorite Notes -->
+                    <div class="flex-1 overflow-y-auto custom-scrollbar">
+                        <!-- Favorite Notes List -->
+                        <template x-if="favoriteNotes.length > 0">
+                            <div>
+                                <template x-for="note in favoriteNotesData" :key="note.path">
+                                    <div
+                                        @click="openItem(note.path, note.type)"
+                                        class="note-item px-3 py-1.5 text-sm cursor-pointer relative group"
+                                        :style="currentNote === note.path ? 'background-color: var(--accent-light); color: var(--accent-primary);' : 'color: var(--text-primary);'"
+                                        @mouseover="if(currentNote !== note.path) $el.style.backgroundColor='var(--bg-hover)'"
+                                        @mouseout="if(currentNote !== note.path) $el.style.backgroundColor='transparent'"
+                                    >
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex-1 min-w-0 pr-6">
+                                                <span class="truncate block" x-text="note.name"></span>
+                                                <span class="text-xs truncate block" style="color: var(--text-tertiary);" x-text="note.folder || 'Root'"></span>
+                                            </div>
+                                        </div>
+                                        <!-- Remove from favorites button -->
+                                        <button
+                                            @click.stop="toggleFavorite(note.path)"
+                                            class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded hover:brightness-110 transition-opacity opacity-0 group-hover:opacity-100"
+                                            style="color: var(--warning);"
+                                            title="Remove from favorites"
+                                        >
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- Empty state -->
+                        <template x-if="favoriteNotes.length === 0">
+                            <div class="text-center py-8 px-4">
+                                <svg class="w-12 h-12 mx-auto mb-3 opacity-40" style="color: var(--text-tertiary);" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                                <p class="text-sm mb-2" style="color: var(--text-tertiary);">No favorites yet</p>
+                                <p class="text-xs" style="color: var(--text-tertiary);">Click the star icon on any note to add it to your favorites</p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <!-- END FAVORITES PANEL -->
 
                 <!-- ==================== SEARCH PANEL ==================== -->
                 <div x-show="activePanel === 'search'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="flex flex-col h-full">
@@ -1831,6 +2048,20 @@
                                                 style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary);"
                                             />
                                             <p class="text-xs mt-1" style="color: var(--text-tertiary);">Path relative to notes folder (or absolute path)</p>
+                                        </div>
+
+                                        <!-- Homepage File -->
+                                        <div class="mb-3">
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Homepage File</label>
+                                            <input
+                                                type="text"
+                                                x-model="homepageFile"
+                                                @change="saveHomepageFile()"
+                                                placeholder="README.md"
+                                                class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                                style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary);"
+                                            />
+                                            <p class="text-xs mt-1" style="color: var(--text-tertiary);">Note to display on homepage (e.g., README.md)</p>
                                         </div>
                                     </div>
                                 </div>
@@ -2253,42 +2484,84 @@
                     <!-- Grid View - Show when app has content -->
                     <template x-if="!isAppEmpty">
                         <div class="max-w-7xl mx-auto p-6 md:p-8">
-                            <!-- Header -->
-                            <div class="mb-6">
-                                <h1 class="text-3xl font-bold mb-2" style="color: var(--text-primary);" x-text="appName"></h1>
-                                <p class="text-lg" style="color: var(--text-secondary);" x-text="appTagline"></p>
-                                <!-- Demo Mode Warning Banner -->
-                                <div x-data="{ showDemoBanner: false }" x-init="fetch('/api/config').then(r => r.json()).then(d => showDemoBanner = d.demoMode || false)" x-show="showDemoBanner" class="mt-4 flex items-center px-4 py-2.5 text-sm rounded-lg" style="background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%); color: white; font-weight: 500;">
-                                    <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                                    </svg>
-                                    <span><strong>DEMO MODE:</strong> Contents reset daily. Changes may be overwritten by other users.</span>
-                                </div>
-                            </div>
+                            <!-- Header - Hide when homepage content is shown at root -->
+                            <template x-if="selectedHomepageFolder !== '' || !homepageContent">
+                                <div class="mb-6">
+                                    <h1 class="text-3xl font-bold mb-2" style="color: var(--text-primary);" x-text="appName"></h1>
+                                    <p class="text-lg" style="color: var(--text-secondary);" x-text="appTagline"></p>
 
-                            <!-- Breadcrumb Navigation -->
-                            <div class="mb-4 flex items-center gap-2 text-sm" style="color: var(--text-secondary);">
-                                <template x-if="Array.isArray(homepageBreadcrumb())">
-                                    <template x-for="(crumb, index) in homepageBreadcrumb()" :key="index">
-                                        <div class="flex items-center gap-2">
+                                    <!-- Favorites Quick Access -->
+                                    <template x-if="favoriteNotes.length > 0">
+                                        <div class="mt-4 flex flex-wrap items-center gap-2">
+                                            <svg class="w-4 h-4 flex-shrink-0" style="color: var(--accent-primary);" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                            </svg>
+                                            <template x-for="note in favoriteNotesData.slice(0, 8)" :key="note.path">
+                                                <button
+                                                    @click="openItem(note.path, note.type)"
+                                                    class="px-3 py-1 text-sm rounded-full transition-colors truncate max-w-[200px]"
+                                                    style="background-color: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-primary);"
+                                                    onmouseover="this.style.borderColor='var(--accent-primary)'; this.style.backgroundColor='var(--bg-hover)'"
+                                                    onmouseout="this.style.borderColor='var(--border-primary)'; this.style.backgroundColor='var(--bg-secondary)'"
+                                                    x-text="note.name"
+                                                    :title="note.name"
+                                                ></button>
+                                            </template>
                                             <span
-                                                x-show="index > 0"
-                                                class="text-xs"
-                                                style="color: var(--text-tertiary);"
-                                            >/</span>
-                                            <span
-                                                @click="goToHomepageFolder(crumb.path)"
-                                                class="cursor-pointer hover:underline"
-                                                :style="crumb.path === selectedHomepageFolder ? 'color: var(--accent-primary); font-weight: 600;' : 'color: var(--text-secondary);'"
-                                                x-text="crumb.name"
+                                                x-show="favoriteNotes.length > 8"
+                                                class="text-xs px-2 py-1 rounded-full"
+                                                style="color: var(--text-tertiary); background-color: var(--bg-tertiary);"
+                                                x-text="'+' + (favoriteNotes.length - 8) + ' more'"
                                             ></span>
-                </div>
-            </template>
-                                </template>
-                            </div>
+                                        </div>
+                                    </template>
 
-                            <!-- Stats Bar - Only show when there are notes or folders -->
-                            <template x-if="homepageNotes().length > 0 || homepageFolders().length > 0">
+                                    <!-- Demo Mode Warning Banner -->
+                                    <div x-data="{ showDemoBanner: false }" x-init="fetch('/api/config').then(r => r.json()).then(d => showDemoBanner = d.demoMode || false)" x-show="showDemoBanner" class="mt-4 flex items-center px-4 py-2.5 text-sm rounded-lg" style="background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%); color: white; font-weight: 500;">
+                                        <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                        </svg>
+                                        <span><strong>DEMO MODE:</strong> Contents reset daily. Changes may be overwritten by other users.</span>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Homepage Content Section -->
+                            <template x-if="homepageContent && selectedHomepageFolder === ''">
+                                <div class="mb-6">
+                                    <div
+                                        class="markdown-preview"
+                                        x-html="renderedHomepageContent"
+                                        @click="handleInternalLink($event)"
+                                    ></div>
+                                </div>
+                            </template>
+
+                            <!-- Breadcrumb Navigation - Hide when homepage content is shown at root -->
+                            <template x-if="selectedHomepageFolder !== '' || !homepageContent">
+                                <div class="mb-4 flex items-center gap-2 text-sm" style="color: var(--text-secondary);">
+                                    <template x-if="Array.isArray(homepageBreadcrumb())">
+                                        <template x-for="(crumb, index) in homepageBreadcrumb()" :key="index">
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    x-show="index > 0"
+                                                    class="text-xs"
+                                                    style="color: var(--text-tertiary);"
+                                                >/</span>
+                                                <span
+                                                    @click="goToHomepageFolder(crumb.path)"
+                                                    class="cursor-pointer hover:underline"
+                                                    :style="crumb.path === selectedHomepageFolder ? 'color: var(--accent-primary); font-weight: 600;' : 'color: var(--text-secondary);'"
+                                                    x-text="crumb.name"
+                                                ></span>
+                                            </div>
+                                        </template>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <!-- Stats Bar - Hide when homepage content is shown at root -->
+                            <template x-if="(homepageNotes().length > 0 || homepageFolders().length > 0) && (selectedHomepageFolder !== '' || !homepageContent)">
                                 <div class="mb-6 p-4 rounded-lg" style="background-color: var(--bg-secondary); border: 1px solid var(--border-primary);">
                                     <div class="flex flex-wrap items-center gap-4 text-sm" style="color: var(--text-secondary);">
                                         <span class="font-semibold" style="color: var(--text-primary);">
@@ -2312,8 +2585,8 @@
                                 </div>
                             </template>
 
-                            <!-- Empty State (for folder view) -->
-                            <template x-if="homepageNotes().length === 0 && homepageFolders().length === 0">
+                            <!-- Empty State (for folder view) - Hide when homepage content is shown at root -->
+                            <template x-if="homepageNotes().length === 0 && homepageFolders().length === 0 && (selectedHomepageFolder !== '' || !homepageContent)">
                                 <div class="flex flex-col items-center justify-center py-16 text-center">
                                     <svg class="mx-auto h-24 w-24 mb-4" style="color: var(--text-tertiary); opacity: 0.5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -2332,8 +2605,8 @@
                                 </div>
                             </template>
 
-                            <!-- Folders and Notes Grid -->
-                            <template x-if="homepageNotes().length > 0 || homepageFolders().length > 0">
+                            <!-- Folders and Notes Grid - Hide when homepage content is shown at root -->
+                            <template x-if="(homepageNotes().length > 0 || homepageFolders().length > 0) && (selectedHomepageFolder !== '' || !homepageContent)">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                     <!-- Folders First -->
                                     <template x-for="folder in homepageFolders()" :key="folder.path">
@@ -2779,7 +3052,7 @@
                             </div>
 
                             <div
-                                class="markdown-preview"
+                                class="markdown-preview note-preview"
                                 :class="{
                                     'pt-2': getHasMetadata() && currentNote,
                                     'reading-width-narrow': readingWidth === 'narrow',
@@ -3973,6 +4246,25 @@
         </button>
         <button
             class="mobile-bottom-tab relative"
+            :class="{'active': activePanel === 'favorites'}"
+            @click="activePanel = 'favorites'; mobileSidebarOpen = true;"
+            aria-label="Favorites"
+        >
+            <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            </svg>
+            <span>Favorites</span>
+            <!-- Favorites count badge -->
+            <span
+                x-show="favoriteNotes.length > 0"
+                x-cloak
+                class="absolute top-1 right-1/4 w-4 h-4 text-[9px] font-bold rounded-full flex items-center justify-center"
+                style="background-color: var(--accent-primary); color: white;"
+                x-text="favoriteNotes.length > 9 ? '9+' : favoriteNotes.length"
+            ></span>
+        </button>
+        <button
+            class="mobile-bottom-tab relative"
             :class="{'active': activePanel === 'search'}"
             @click="activePanel = 'search'; mobileSidebarOpen = true;"
             aria-label="Search"
@@ -4033,6 +4325,59 @@
             <span>Settings</span>
         </button>
     </nav>
+
+    <!-- Toast Notification Container -->
+    <div x-show="toasts.length > 0"
+         class="fixed bottom-4 right-4 z-[2000] flex flex-col gap-2"
+         style="pointer-events: none;">
+        <template x-for="toast in toasts" :key="toast.id">
+            <div x-show="true"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 transform translate-x-full"
+                 x-transition:enter-end="opacity-100 transform translate-x-0"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 min-w-[300px] max-w-md"
+                 :class="{
+                     'bg-green-600 text-white': toast.type === 'success',
+                     'bg-red-600 text-white': toast.type === 'error',
+                     'bg-yellow-500 text-white': toast.type === 'warning',
+                     'bg-gray-700 text-white': toast.type === 'info'
+                 }"
+                 style="pointer-events: auto;">
+                <!-- Icon based on type -->
+                <span class="flex-shrink-0">
+                    <template x-if="toast.type === 'success'">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </template>
+                    <template x-if="toast.type === 'error'">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </template>
+                    <template x-if="toast.type === 'warning'">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </template>
+                    <template x-if="toast.type === 'info'">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </template>
+                </span>
+                <span x-text="toast.message" class="flex-1 text-sm"></span>
+                <button @click="removeToast(toast.id)" class="opacity-70 hover:opacity-100 flex-shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </template>
+    </div>
 
     <!-- App module loads and then dynamically loads Alpine.js -->
     <script type="module" src="/static/app-modular.js"></script>

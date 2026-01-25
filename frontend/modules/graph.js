@@ -1,10 +1,12 @@
 // Granite Frontend - Graph View Module
 
+import { Debug } from './config.js';
+
 export const graphMixin = {
     // Initialize the graph visualization
     async initGraph() {
         if (typeof vis === 'undefined') {
-            console.error('vis-network library not loaded');
+            Debug.error('vis-network library not loaded');
             return;
         }
 
@@ -233,7 +235,7 @@ export const graphMixin = {
             this.addGraphLegend(container, accentPrimary, borderColor, textSecondary);
 
         } catch (error) {
-            console.error('Failed to initialize graph:', error);
+            Debug.error('Failed to initialize graph:', error);
             this.graphLoaded = true;
         }
     },

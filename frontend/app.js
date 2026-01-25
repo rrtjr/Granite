@@ -6,6 +6,7 @@ import { stateMixin } from './modules/state.js';
 import { helpersMixin } from './modules/helpers.js';
 import { themesMixin } from './modules/themes.js';
 import { tagsMixin } from './modules/tags.js';
+import { favoritesMixin } from './modules/favorites.js';
 import { templatesMixin } from './modules/templates.js';
 import { statsMixin } from './modules/stats.js';
 import { metadataMixin } from './modules/metadata.js';
@@ -19,6 +20,7 @@ import { imagesMixin } from './modules/images.js';
 import { pluginsMixin } from './modules/plugins.js';
 import { graphMixin } from './modules/graph.js';
 import { markdownMixin } from './modules/markdown.js';
+import { spreadsheetMixin } from './modules/spreadsheet.js';
 import { uiMixin } from './modules/ui.js';
 import { exportMixin } from './modules/export.js';
 import { initMixin } from './modules/init.js';
@@ -38,6 +40,7 @@ function noteApp() {
         ...helpersMixin,
         ...themesMixin,
         ...tagsMixin,
+        ...favoritesMixin,
         ...templatesMixin,
         ...statsMixin,
         ...metadataMixin,
@@ -51,6 +54,7 @@ function noteApp() {
         ...pluginsMixin,
         ...graphMixin,
         ...markdownMixin,
+        ...spreadsheetMixin,
         ...uiMixin,
         ...exportMixin,
         ...initMixin,

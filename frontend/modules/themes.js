@@ -1,5 +1,7 @@
 // Granite Frontend - Theme Management
 
+import { Debug } from './config.js';
+
 export const themesMixin = {
     // Load available themes from backend
     async loadThemes() {
@@ -10,7 +12,7 @@ export const themesMixin = {
             // Use theme names directly from backend (already include emojis)
             this.availableThemes = data.themes;
         } catch (error) {
-            console.error('Failed to load themes:', error);
+            Debug.error('Failed to load themes:', error);
             // Fallback to default themes
             this.availableThemes = [
                 { id: 'light', name: '🌞 Light' },
@@ -95,7 +97,7 @@ export const themesMixin = {
                 setTimeout(() => this.initGraph(), 300);
             }
         } catch (error) {
-            console.error('Failed to load theme:', error);
+            Debug.error('Failed to load theme:', error);
         }
     },
 
