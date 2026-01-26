@@ -57,10 +57,10 @@ export const tiptapMixin = {
             `;
             document.body.appendChild(bubbleMenuElement);
 
-            // Add click handlers
+            // Add mousedown handlers (mousedown prevents focus loss unlike click)
             bubbleMenuElement.querySelectorAll('button').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
+                btn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();  // Prevents button from stealing focus
                     e.stopPropagation();
                     const action = btn.dataset.action;
                     this.executeBubbleMenuAction(action);
@@ -166,26 +166,27 @@ export const tiptapMixin = {
     executeBubbleMenuAction(action) {
         if (!this.tiptapEditor) return;
 
-        const chain = this.tiptapEditor.chain().focus();
+        // Use commands directly instead of chaining to avoid transaction issues
+        const editor = this.tiptapEditor;
 
         switch (action) {
             case 'bold':
-                chain.toggleBold().run();
+                editor.commands.toggleBold();
                 break;
             case 'italic':
-                chain.toggleItalic().run();
+                editor.commands.toggleItalic();
                 break;
             case 'underline':
-                chain.toggleUnderline().run();
+                editor.commands.toggleUnderline();
                 break;
             case 'strike':
-                chain.toggleStrike().run();
+                editor.commands.toggleStrike();
                 break;
             case 'highlight':
-                chain.toggleHighlight({ color: '#fef08a' }).run();
+                editor.commands.toggleHighlight({ color: '#fef08a' });
                 break;
             case 'code':
-                chain.toggleCode().run();
+                editor.commands.toggleCode();
                 break;
         }
     },
