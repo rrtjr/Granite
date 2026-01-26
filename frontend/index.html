@@ -981,11 +981,23 @@
 
         /* Text Alignment for Tiptap */
         .tiptap-editor-content.align-left {
-            text-align: left;
+            text-align: left !important;
+        }
+
+        .tiptap-editor-content.align-left p,
+        .tiptap-editor-content.align-left ul,
+        .tiptap-editor-content.align-left ol {
+            text-align: left !important;
         }
 
         .tiptap-editor-content.align-center {
-            text-align: center;
+            text-align: center !important;
+        }
+
+        .tiptap-editor-content.align-center p,
+        .tiptap-editor-content.align-center ul,
+        .tiptap-editor-content.align-center ol {
+            text-align: center !important;
         }
 
         .tiptap-editor-content.align-center h1,
@@ -994,11 +1006,17 @@
         .tiptap-editor-content.align-center h4,
         .tiptap-editor-content.align-center h5,
         .tiptap-editor-content.align-center h6 {
-            text-align: center;
+            text-align: center !important;
         }
 
         .tiptap-editor-content.align-justified {
-            text-align: justify;
+            text-align: justify !important;
+        }
+
+        .tiptap-editor-content.align-justified p,
+        .tiptap-editor-content.align-justified ul,
+        .tiptap-editor-content.align-justified ol {
+            text-align: justify !important;
         }
 
         .tiptap-editor-content.align-justified h1,
@@ -1007,13 +1025,16 @@
         .tiptap-editor-content.align-justified h4,
         .tiptap-editor-content.align-justified h5,
         .tiptap-editor-content.align-justified h6 {
-            text-align: left;
+            text-align: left !important;
         }
 
         /* Content Spacing for Tiptap */
         .tiptap-editor-content.margins-compact {
             padding: 1rem 1.5rem !important;
-            line-height: 1.6;
+        }
+
+        .tiptap-editor-content.margins-compact p {
+            line-height: 1.6 !important;
         }
 
         .tiptap-editor-content.margins-normal {
@@ -1022,12 +1043,18 @@
 
         .tiptap-editor-content.margins-relaxed {
             padding: 2rem 3rem !important;
-            line-height: 2;
+        }
+
+        .tiptap-editor-content.margins-relaxed p {
+            line-height: 2 !important;
         }
 
         .tiptap-editor-content.margins-extra-relaxed {
             padding: 3rem 4rem !important;
-            line-height: 2.2;
+        }
+
+        .tiptap-editor-content.margins-extra-relaxed p {
+            line-height: 2.2 !important;
         }
 
         /* CodeMirror Editor styling */
