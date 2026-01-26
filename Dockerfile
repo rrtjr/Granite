@@ -15,11 +15,20 @@ RUN apt-get update && \
 COPY scripts/build/package.json scripts/build/codemirror-bundle-entry.js scripts/build/build-codemirror.js ./scripts/build/
 COPY scripts/build-tiptap/package.json scripts/build-tiptap/package-lock.json scripts/build-tiptap/tiptap-bundle-entry.js scripts/build-tiptap/build-tiptap.js ./scripts/build-tiptap/
 COPY frontend ./frontend
-RUN npm install --prefix scripts/build && \
-    npm run build --prefix scripts/build && \
-    npm install --prefix scripts/build-tiptap && \
-    npm run build --prefix scripts/build-tiptap && \
-    ls -lh frontend/codemirror6.bundle.js frontend/tiptap.bundle.js && \
+
+# Build CodeMirror
+RUN cd /app/scripts/build && \
+    npm install && \
+    npm run build && \
+    echo "[OK] CodeMirror 6 bundle built" && \
+    ls -lh /app/frontend/codemirror6.bundle.js
+
+# Build Tiptap
+RUN cd /app/scripts/build-tiptap && \
+    npm install && \
+    npm run build && \
+    echo "[OK] Tiptap bundle built" && \
+    ls -lh /app/frontend/tiptap.bundle.js && \
     echo "Editor bundles built successfully!"
 
 # Install uv for fast Python package management
