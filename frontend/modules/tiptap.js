@@ -288,10 +288,23 @@ export const tiptapMixin = {
     htmlToMarkdown(html) {
         if (!html) return '';
 
+        // Replace MathJax-rendered nodes with original TeX from aria-label
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        temp.querySelectorAll('mjx-container').forEach((node) => {
+            const tex = node.getAttribute('aria-label') || '';
+            const display = node.getAttribute('display') === 'true';
+            const replacement = display ? `$$${tex}$$` : `$${tex}$`;
+            const textNode = document.createTextNode(replacement);
+            node.replaceWith(textNode);
+        });
+
+        const cleanedHtml = temp.innerHTML;
+
         const { TurndownService } = window.Tiptap;
         if (!TurndownService) {
             Debug.error('TurndownService not available');
-            return html;
+            return cleanedHtml;
         }
 
         const turndown = new TurndownService({
@@ -305,7 +318,7 @@ export const tiptapMixin = {
         // Add custom rules for our extensions
         this.addTurndownRules(turndown);
 
-        let markdown = turndown.turndown(html);
+        let markdown = turndown.turndown(cleanedHtml);
 
         // Clean up extra whitespace
         markdown = markdown.replace(/\n{3,}/g, '\n\n');
@@ -437,12 +450,21 @@ export const tiptapMixin = {
 
         this._tiptapUpdating = true;
 
-        // Extract frontmatter
-        const { frontmatter, content } = this.extractFrontmatter(markdown || '');
-        this._frontmatter = frontmatter;
+        try {
+            // Extract frontmatter
+            const { frontmatter, content } = this.extractFrontmatter(markdown || '');
+            this._frontmatter = frontmatter;
 
-        const htmlWithBanner = this.addBannerToHtml(markdown, this.markdownToHtml(content));
-        this.tiptapEditor.commands.setContent(htmlWithBanner);
+            const htmlWithBanner = this.addBannerToHtml(markdown, this.markdownToHtml(content));
+            this.tiptapEditor.commands.setContent(htmlWithBanner, false);
+        } catch (err) {
+            Debug.error('updateTiptapContent failed, rebuilding editor:', err);
+            this._tiptapUpdating = false;
+            // Rebuild the editor to recover from a mismatched transaction
+            this.destroyTiptap();
+            this.$nextTick(() => this.initTiptap());
+            return;
+        }
 
         this.$nextTick(() => {
             this._tiptapUpdating = false;
@@ -548,7 +570,7 @@ export const tiptapMixin = {
             }
         });
 
-        // Render MathJax equations
+        // Render MathJax equations (delay to allow DOM settle)
         if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
             setTimeout(() => {
                 const tiptapContent = document.querySelector('.tiptap-editor-content');
@@ -557,7 +579,7 @@ export const tiptapMixin = {
                         Debug.error('MathJax typesetting failed in Tiptap:', err);
                     });
                 }
-            }, 50);
+            }, 100);
         }
     },
 
