@@ -162,16 +162,20 @@ export const tiptapMixin = {
         if (!this.tiptapEditor || !this.tiptapReady) return;
 
         const opacity = Math.max(0, Math.min(1, parseFloat(this.bannerOpacity) || 0));
-        const { state, view } = this.tiptapEditor;
-        let tr = state.tr;
+        const { view } = this.tiptapEditor;
+        if (!view || !view.state) return;
 
-        state.doc.descendants((node, pos) => {
+        let tr = view.state.tr;
+        let updated = false;
+
+        view.state.doc.descendants((node, pos) => {
             if (node.type.name === 'noteBanner') {
                 tr = tr.setNodeMarkup(pos, node.type, { ...node.attrs, opacity });
+                updated = true;
             }
         });
 
-        if (tr.docChanged) {
+        if (updated && tr.docChanged) {
             view.dispatch(tr);
         }
 
