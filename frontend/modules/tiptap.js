@@ -176,10 +176,13 @@ export const tiptapMixin = {
         }
 
         // Ensure immediate visual update in the DOM
-        const bannerImages = document.querySelectorAll('.tiptap-editor-content .note-banner .banner-image');
-        bannerImages.forEach((img) => {
-            // Preserve background image set by tiptap while adjusting opacity
-            img.style.opacity = String(opacity);
+        const banners = document.querySelectorAll('.tiptap-editor-content .note-banner');
+        banners.forEach((banner) => {
+            banner.dataset.bannerOpacity = String(opacity);
+            const img = banner.querySelector('.banner-image');
+            if (img) {
+                img.style.opacity = String(opacity);
+            }
         });
     },
 
