@@ -35,7 +35,8 @@ export const tiptapMixin = {
         const {
             Editor, StarterKit, Placeholder, Link, Image,
             CodeBlockLowlight, Table, TableRow, TableCell,
-            TableHeader, TaskList, TaskItem, lowlight
+            TableHeader, TaskList, TaskItem, Typography,
+            Underline, Highlight, CharacterCount, lowlight
         } = window.Tiptap;
 
         const self = this;
@@ -79,6 +80,11 @@ export const tiptapMixin = {
                 TableHeader,
                 TaskList,
                 TaskItem.configure({ nested: true }),
+                // New extensions
+                Typography,  // Smart quotes, dashes, ellipses
+                Underline,   // Underline formatting
+                Highlight.configure({ multicolor: true }),  // Text highlighting
+                CharacterCount.configure({ limit: null }),  // Word/character count
                 // Custom extensions
                 this.createBannerExtension(),
                 this.createWikilinkExtension(),
@@ -119,7 +125,93 @@ export const tiptapMixin = {
             this.updateTiptapReadingPreferences();
             this.updateTiptapBannerOpacity();
             this.renderTiptapSpecialBlocks();
+            this.initBubbleMenu();
         });
+    },
+
+    // Initialize bubble menu for text selection
+    initBubbleMenu() {
+        if (!this.tiptapEditor) return;
+
+        const { BubbleMenu } = window.Tiptap;
+        if (!BubbleMenu) return;
+
+        // Check if bubble menu container exists
+        let menuContainer = document.getElementById('tiptap-bubble-menu');
+        if (!menuContainer) {
+            // Create bubble menu container
+            menuContainer = document.createElement('div');
+            menuContainer.id = 'tiptap-bubble-menu';
+            menuContainer.className = 'tiptap-bubble-menu';
+            menuContainer.innerHTML = `
+                <button type="button" data-action="bold" title="Bold (Ctrl+B)"><strong>B</strong></button>
+                <button type="button" data-action="italic" title="Italic (Ctrl+I)"><em>I</em></button>
+                <button type="button" data-action="underline" title="Underline (Ctrl+U)"><u>U</u></button>
+                <button type="button" data-action="strike" title="Strikethrough"><s>S</s></button>
+                <button type="button" data-action="highlight" title="Highlight"><mark>H</mark></button>
+                <button type="button" data-action="code" title="Code"><code>&lt;/&gt;</code></button>
+            `;
+            document.body.appendChild(menuContainer);
+
+            // Add click handlers
+            menuContainer.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const action = btn.dataset.action;
+                    this.executeBubbleMenuAction(action);
+                });
+            });
+        }
+
+        // Register bubble menu with Tiptap
+        this.tiptapEditor.registerPlugin(
+            BubbleMenu.configure({
+                element: menuContainer,
+                tippyOptions: {
+                    duration: 100,
+                    placement: 'top',
+                },
+            }).options.plugins[0]
+        );
+    },
+
+    // Execute bubble menu formatting action
+    executeBubbleMenuAction(action) {
+        if (!this.tiptapEditor) return;
+
+        const chain = this.tiptapEditor.chain().focus();
+
+        switch (action) {
+            case 'bold':
+                chain.toggleBold().run();
+                break;
+            case 'italic':
+                chain.toggleItalic().run();
+                break;
+            case 'underline':
+                chain.toggleUnderline().run();
+                break;
+            case 'strike':
+                chain.toggleStrike().run();
+                break;
+            case 'highlight':
+                chain.toggleHighlight({ color: '#fef08a' }).run();
+                break;
+            case 'code':
+                chain.toggleCode().run();
+                break;
+        }
+    },
+
+    // Get character/word count from Tiptap
+    getTiptapStats() {
+        if (!this.tiptapEditor) return { characters: 0, words: 0 };
+
+        const storage = this.tiptapEditor.storage.characterCount;
+        return {
+            characters: storage?.characters() || 0,
+            words: storage?.words() || 0,
+        };
     },
 
     // Destroy Tiptap editor
@@ -239,6 +331,9 @@ export const tiptapMixin = {
             const altText = alt || target;
             return `<img class="image-embed" src="${imagePath}" alt="${this.escapeHtml(altText)}" data-original-path="${this.escapeHtml(target)}" />`;
         });
+
+        // Convert ==highlight== syntax to <mark> tags
+        processed = processed.replace(/==([^=]+)==/g, '<mark>$1</mark>');
 
         // Use marked.js from the page (already loaded via CDN)
         let html;
@@ -392,6 +487,18 @@ export const tiptapMixin = {
 
     // Add Turndown rules for custom elements
     addTurndownRules(turndown) {
+        // Rule for underline - use HTML tag since markdown doesn't have native underline
+        turndown.addRule('underline', {
+            filter: 'u',
+            replacement: (content) => `<u>${content}</u>`
+        });
+
+        // Rule for highlight/mark - preserve as HTML or use ==text== syntax
+        turndown.addRule('highlight', {
+            filter: 'mark',
+            replacement: (content) => `==${content}==`
+        });
+
         // Rule for list items - handle <p> tags inside <li> to avoid extra newlines
         turndown.addRule('listItem', {
             filter: 'li',

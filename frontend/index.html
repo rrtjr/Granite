@@ -771,6 +771,66 @@
             color: white;
         }
 
+        /* Underline styling in Tiptap */
+        .tiptap-editor-content u {
+            text-decoration: underline;
+        }
+
+        /* Highlight/mark styling in Tiptap */
+        .tiptap-editor-content mark {
+            background-color: #fef08a;
+            padding: 0.1em 0.2em;
+            border-radius: 2px;
+            color: inherit;
+        }
+
+        /* Bubble Menu styling */
+        .tiptap-bubble-menu {
+            display: flex;
+            gap: 2px;
+            padding: 4px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+        }
+
+        .tiptap-bubble-menu button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.15s;
+        }
+
+        .tiptap-bubble-menu button:hover {
+            background: var(--bg-secondary);
+        }
+
+        .tiptap-bubble-menu button.is-active {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .tiptap-bubble-menu button code {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 11px;
+        }
+
+        .tiptap-bubble-menu button mark {
+            background: #fef08a;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+
         /* Image embed styling in Tiptap */
         .tiptap-editor-content .image-embed,
         .tiptap-image-embed {

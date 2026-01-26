@@ -14,6 +14,11 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import { TaskList } from '@tiptap/extension-task-list';
 import { TaskItem } from '@tiptap/extension-task-item';
 import { Mathematics } from '@tiptap/extension-mathematics';
+import { BubbleMenu } from '@tiptap/extension-bubble-menu';
+import { Typography } from '@tiptap/extension-typography';
+import { Underline } from '@tiptap/extension-underline';
+import { Highlight } from '@tiptap/extension-highlight';
+import { CharacterCount } from '@tiptap/extension-character-count';
 import { common, createLowlight } from 'lowlight';
 import TurndownService from 'turndown';
 
@@ -42,6 +47,11 @@ window.Tiptap = {
     TaskList,
     TaskItem,
     Mathematics,
+    BubbleMenu,
+    Typography,
+    Underline,
+    Highlight,
+    CharacterCount,
 
     // Utilities
     lowlight,
