@@ -173,26 +173,28 @@ export const tiptapMixin = {
     executeBubbleMenuAction(action) {
         if (!this.tiptapEditor) return;
 
-        // Apply formatting - editor focus is maintained by mousedown preventDefault
-        switch (action) {
-            case 'bold':
-                this.tiptapEditor.chain().focus().toggleBold().run();
-                break;
-            case 'italic':
-                this.tiptapEditor.chain().focus().toggleItalic().run();
-                break;
-            case 'underline':
-                this.tiptapEditor.chain().focus().toggleUnderline().run();
-                break;
-            case 'strike':
-                this.tiptapEditor.chain().focus().toggleStrike().run();
-                break;
-            case 'highlight':
-                this.tiptapEditor.chain().focus().toggleHighlight({ color: '#fef08a' }).run();
-                break;
-            case 'code':
-                this.tiptapEditor.chain().focus().toggleCode().run();
-                break;
+        // Clear any pending sync to prevent state mismatch
+        if (this._tiptapSyncTimeout) {
+            clearTimeout(this._tiptapSyncTimeout);
+            this._tiptapSyncTimeout = null;
+        }
+
+        // Ensure we have a valid selection before applying formatting
+        const { from, to } = this.tiptapEditor.state.selection;
+        if (from === to) return; // No selection, nothing to format
+
+        // Apply formatting using current state - avoid focus() which can cause state mismatch
+        const commands = {
+            bold: () => this.tiptapEditor.commands.toggleBold(),
+            italic: () => this.tiptapEditor.commands.toggleItalic(),
+            underline: () => this.tiptapEditor.commands.toggleUnderline(),
+            strike: () => this.tiptapEditor.commands.toggleStrike(),
+            highlight: () => this.tiptapEditor.commands.toggleHighlight({ color: '#fef08a' }),
+            code: () => this.tiptapEditor.commands.toggleCode(),
+        };
+
+        if (commands[action]) {
+            commands[action]();
         }
     },
 
