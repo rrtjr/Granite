@@ -79,13 +79,14 @@ export const tiptapMixin = {
                 TableHeader,
                 TaskList,
                 TaskItem.configure({ nested: true }),
-                Mathematics,
                 // Custom extensions
                 this.createBannerExtension(),
                 this.createWikilinkExtension(),
                 this.createImageEmbedExtension(),
                 this.createSpreadsheetExtension(),
                 this.createMermaidExtension(),
+                this.createMathInlineExtension(),
+                this.createMathBlockExtension(),
             ],
             content: initialHtml,
             onUpdate: ({ editor }) => {
@@ -260,13 +261,10 @@ export const tiptapMixin = {
         }
 
         // Restore math placeholders and render with KaTeX
-        console.log('[Math Debug] Placeholders:', mathPlaceholders);
-        console.log('[Math Debug] HTML before restore:', html.substring(0, 500));
         mathPlaceholders.forEach(({ placeholder, tex, displayMode }) => {
             let rendered;
             try {
                 if (window.katex) {
-                    console.log('[Math Debug] Rendering with KaTeX:', tex);
                     const katexHtml = window.katex.renderToString(tex, {
                         displayMode: displayMode,
                         throwOnError: false
@@ -277,20 +275,15 @@ export const tiptapMixin = {
                         rendered = `<span class="math-inline" data-math-tex="${this.escapeHtml(tex)}">${katexHtml}</span>`;
                     }
                 } else {
-                    console.log('[Math Debug] KaTeX not available!');
                     // Fallback: show raw TeX
                     rendered = displayMode ? `$$${tex}$$` : `$${tex}$`;
                 }
             } catch (e) {
-                console.log('[Math Debug] KaTeX error:', e);
                 Debug.log('KaTeX error:', e);
                 rendered = displayMode ? `$$${tex}$$` : `$${tex}$`;
             }
-            console.log('[Math Debug] Looking for placeholder:', placeholder);
-            console.log('[Math Debug] Found in HTML:', html.includes(placeholder));
             html = html.replace(new RegExp(placeholder, 'g'), rendered);
         });
-        console.log('[Math Debug] HTML after restore:', html.substring(0, 500));
 
         // Transform spreadsheet code blocks to our custom format after marked parsing
         // marked converts ```spreadsheet to <pre><code class="language-spreadsheet">
@@ -786,6 +779,105 @@ export const tiptapMixin = {
                 }), ['div', { class: 'spreadsheet-placeholder' },
                     `Spreadsheet${node.attrs.sheetName ? `: ${node.attrs.sheetName}` : ''}`
                 ]];
+            },
+        });
+    },
+
+    // Create Math Inline extension (for $...$)
+    createMathInlineExtension() {
+        const { Node, mergeAttributes } = window.Tiptap;
+
+        return Node.create({
+            name: 'mathInline',
+            group: 'inline',
+            inline: true,
+            atom: true,
+            selectable: true,
+
+            addAttributes() {
+                return {
+                    tex: { default: '' },
+                };
+            },
+
+            parseHTML() {
+                return [{
+                    tag: 'span.math-inline',
+                    getAttrs: (dom) => ({
+                        tex: dom.dataset.mathTex || '',
+                    }),
+                }];
+            },
+
+            renderHTML({ node, HTMLAttributes }) {
+                // Render KaTeX HTML
+                let katexHtml = '';
+                try {
+                    if (window.katex) {
+                        katexHtml = window.katex.renderToString(node.attrs.tex, {
+                            displayMode: false,
+                            throwOnError: false
+                        });
+                    }
+                } catch (e) {
+                    katexHtml = `$${node.attrs.tex}$`;
+                }
+                
+                const span = document.createElement('span');
+                span.className = 'math-inline';
+                span.setAttribute('data-math-tex', node.attrs.tex);
+                span.setAttribute('contenteditable', 'false');
+                span.innerHTML = katexHtml || `$${node.attrs.tex}$`;
+                return { dom: span };
+            },
+        });
+    },
+
+    // Create Math Block extension (for $$...$$)
+    createMathBlockExtension() {
+        const { Node, mergeAttributes } = window.Tiptap;
+
+        return Node.create({
+            name: 'mathBlock',
+            group: 'block',
+            atom: true,
+            selectable: true,
+
+            addAttributes() {
+                return {
+                    tex: { default: '' },
+                };
+            },
+
+            parseHTML() {
+                return [{
+                    tag: 'div.math-display',
+                    getAttrs: (dom) => ({
+                        tex: dom.dataset.mathTex || '',
+                    }),
+                }];
+            },
+
+            renderHTML({ node, HTMLAttributes }) {
+                // Render KaTeX HTML
+                let katexHtml = '';
+                try {
+                    if (window.katex) {
+                        katexHtml = window.katex.renderToString(node.attrs.tex, {
+                            displayMode: true,
+                            throwOnError: false
+                        });
+                    }
+                } catch (e) {
+                    katexHtml = `$$${node.attrs.tex}$$`;
+                }
+                
+                const div = document.createElement('div');
+                div.className = 'math-display';
+                div.setAttribute('data-math-tex', node.attrs.tex);
+                div.setAttribute('contenteditable', 'false');
+                div.innerHTML = katexHtml || `$$${node.attrs.tex}$$`;
+                return { dom: div };
             },
         });
     },
