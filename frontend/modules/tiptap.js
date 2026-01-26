@@ -259,6 +259,11 @@ export const tiptapMixin = {
                 .replace(/\n/g, '<br>');
         }
 
+        // Restore math placeholders immediately after marked parsing
+        mathPlaceholders.forEach(({ placeholder, content }) => {
+            html = html.replace(new RegExp(placeholder, 'g'), content);
+        });
+
         // Transform spreadsheet code blocks to our custom format after marked parsing
         // marked converts ```spreadsheet to <pre><code class="language-spreadsheet">
         const tempDiv = document.createElement('div');
@@ -302,13 +307,7 @@ export const tiptapMixin = {
             pre.parentNode.replaceChild(wrapper, pre);
         });
 
-        // Restore math placeholders so Mathematics extension can handle them
-        let finalHtml = tempDiv.innerHTML;
-        mathPlaceholders.forEach(({ placeholder, content }) => {
-            finalHtml = finalHtml.replace(placeholder, content);
-        });
-
-        return finalHtml;
+        return tempDiv.innerHTML;
     },
 
     // Convert Tiptap HTML back to markdown
