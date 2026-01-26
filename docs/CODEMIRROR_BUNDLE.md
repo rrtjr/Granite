@@ -23,7 +23,7 @@ If you need to rebuild the bundle locally for development:
 ```bash
 cd scripts/build
 npm install
-npm run build
+npm run build-codemirror
 ```
 
 This creates `frontend/codemirror6.bundle.js` (~200KB minified).

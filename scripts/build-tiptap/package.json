@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "node build-tiptap.js"
+    "build-tiptap": "node build-tiptap.js"
   },
   "dependencies": {
     "@tiptap/core": "^2.1.0",

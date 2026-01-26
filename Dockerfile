@@ -19,14 +19,14 @@ COPY frontend ./frontend
 # Build CodeMirror
 RUN cd /app/scripts/build && \
     npm install && \
-    npm run build && \
+    npm run build-codemirror && \
     echo "[OK] CodeMirror 6 bundle built" && \
     ls -lh /app/frontend/codemirror6.bundle.js
 
 # Build Tiptap
 RUN cd /app/scripts/build-tiptap && \
     npm install && \
-    npm run build && \
+    npm run build-tiptap && \
     echo "[OK] Tiptap bundle built" && \
     ls -lh /app/frontend/tiptap.bundle.js && \
     echo "Editor bundles built successfully!"
