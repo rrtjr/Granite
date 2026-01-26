@@ -35,7 +35,7 @@ export const tiptapMixin = {
         const {
             Editor, StarterKit, Placeholder, Link, Image,
             CodeBlockLowlight, Table, TableRow, TableCell,
-            TableHeader, TaskList, TaskItem, Mathematics, lowlight
+            TableHeader, TaskList, TaskItem, lowlight
         } = window.Tiptap;
 
         const self = this;
