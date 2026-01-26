@@ -108,6 +108,7 @@ export const tiptapMixin = {
         this.$nextTick(() => {
             this.updateTiptapReadingPreferences();
             this.updateTiptapBannerOpacity();
+            this.renderTiptapSpecialBlocks();
         });
     },
 
@@ -209,31 +210,65 @@ export const tiptapMixin = {
             return `<img class="image-embed" src="${imagePath}" alt="${this.escapeHtml(altText)}" data-original-path="${this.escapeHtml(target)}" />`;
         });
 
-        // Convert spreadsheet blocks to divs
-        processed = processed.replace(/```spreadsheet([^\n]*)\n([\s\S]*?)```/g, (match, meta, code) => {
-            const nameMatch = meta.match(/(?:name|title)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s,;]+))/i);
-            const sheetName = nameMatch ? (nameMatch[1] || nameMatch[2] || nameMatch[3]) : '';
-            return `<div class="spreadsheet-block" data-original-code="${this.escapeHtml(code.trim())}" data-sheet-name="${this.escapeHtml(sheetName)}" contenteditable="false"><div class="spreadsheet-placeholder">Spreadsheet${sheetName ? `: ${sheetName}` : ''}</div></div>`;
-        });
-
-        // Convert mermaid blocks to divs
-        processed = processed.replace(/```mermaid\n([\s\S]*?)```/g, (match, code) => {
-            return `<div class="mermaid-block" data-original-code="${this.escapeHtml(code.trim())}" contenteditable="false"><div class="mermaid-placeholder">Mermaid Diagram</div></div>`;
-        });
-
         // Use marked.js from the page (already loaded via CDN)
+        let html;
         if (typeof marked !== 'undefined') {
-            return marked.parse(processed);
+            html = marked.parse(processed);
+        } else {
+            // Fallback: basic conversion
+            html = processed
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
         }
 
-        // Fallback: basic conversion
-        return processed
-            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-            .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/\n/g, '<br>');
+        // Transform spreadsheet code blocks to our custom format after marked parsing
+        // marked converts ```spreadsheet to <pre><code class="language-spreadsheet">
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+
+        tempDiv.querySelectorAll('pre code.language-spreadsheet').forEach((block) => {
+            const pre = block.parentElement;
+            if (!pre) return;
+            const code = block.textContent || '';
+
+            // Extract sheet name from first line if present (e.g., name="Sheet1")
+            const lines = code.split('\n');
+            let sheetName = '';
+            let csvCode = code;
+            if (lines.length > 0 && /^(?:name|title)\s*=/i.test(lines[0].trim())) {
+                const nameMatch = lines[0].match(/(?:name|title)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s,;]+))/i);
+                sheetName = nameMatch ? (nameMatch[1] || nameMatch[2] || nameMatch[3]) : '';
+                csvCode = lines.slice(1).join('\n');
+            }
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'spreadsheet-block';
+            wrapper.dataset.originalCode = csvCode.trim();
+            wrapper.dataset.sheetName = sheetName;
+            wrapper.setAttribute('contenteditable', 'false');
+            wrapper.innerHTML = `<div class="spreadsheet-placeholder">Spreadsheet${sheetName ? `: ${sheetName}` : ''}</div>`;
+            pre.parentNode.replaceChild(wrapper, pre);
+        });
+
+        // Transform mermaid code blocks similarly
+        tempDiv.querySelectorAll('pre code.language-mermaid').forEach((block) => {
+            const pre = block.parentElement;
+            if (!pre) return;
+            const code = block.textContent || '';
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'mermaid-block';
+            wrapper.dataset.originalCode = code.trim();
+            wrapper.setAttribute('contenteditable', 'false');
+            wrapper.innerHTML = '<div class="mermaid-placeholder">Mermaid Diagram</div>';
+            pre.parentNode.replaceChild(wrapper, pre);
+        });
+
+        return tempDiv.innerHTML;
     },
 
     // Convert Tiptap HTML back to markdown
