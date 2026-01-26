@@ -174,6 +174,13 @@ export const tiptapMixin = {
         if (tr.docChanged) {
             view.dispatch(tr);
         }
+
+        // Ensure immediate visual update in the DOM
+        const bannerImages = document.querySelectorAll('.tiptap-editor-content .note-banner .banner-image');
+        bannerImages.forEach((img) => {
+            // Preserve background image set by tiptap while adjusting opacity
+            img.style.opacity = String(opacity);
+        });
     },
 
     // Extract YAML frontmatter from markdown
