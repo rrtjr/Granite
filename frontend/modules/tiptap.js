@@ -212,7 +212,7 @@ export const tiptapMixin = {
 
         // Protect block math $$...$$
         processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (match) => {
-            const placeholder = `___MATH_BLOCK_${mathIndex}___`;
+            const placeholder = `XMATHBLOCKX${mathIndex}XMATHBLOCKX`;
             mathPlaceholders.push({ placeholder, content: match });
             mathIndex++;
             return placeholder;
@@ -220,7 +220,7 @@ export const tiptapMixin = {
 
         // Protect inline math $...$
         processed = processed.replace(/\$([^$\n]+?)\$/g, (match) => {
-            const placeholder = `___MATH_INLINE_${mathIndex}___`;
+            const placeholder = `XMATHINLINEX${mathIndex}XMATHINLINEX`;
             mathPlaceholders.push({ placeholder, content: match });
             mathIndex++;
             return placeholder;
