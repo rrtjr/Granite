@@ -107,6 +107,7 @@ export const tiptapMixin = {
         // Apply current reading preferences to the editor
         this.$nextTick(() => {
             this.updateTiptapReadingPreferences();
+            this.updateTiptapBannerOpacity();
         });
     },
 
@@ -154,6 +155,25 @@ export const tiptapMixin = {
             align: this.contentAlign,
             margins: this.contentMargins
         });
+    },
+
+    // Update banner opacity in rich mode without reload
+    updateTiptapBannerOpacity() {
+        if (!this.tiptapEditor || !this.tiptapReady) return;
+
+        const opacity = Math.max(0, Math.min(1, parseFloat(this.bannerOpacity) || 0));
+        const { state, view } = this.tiptapEditor;
+        let tr = state.tr;
+
+        state.doc.descendants((node, pos) => {
+            if (node.type.name === 'noteBanner') {
+                tr = tr.setNodeMarkup(pos, node.type, { ...node.attrs, opacity });
+            }
+        });
+
+        if (tr.docChanged) {
+            view.dispatch(tr);
+        }
     },
 
     // Extract YAML frontmatter from markdown

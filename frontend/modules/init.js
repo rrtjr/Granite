@@ -161,6 +161,10 @@ export const initMixin = {
             this.updateTiptapReadingPreferences();
         });
 
+        this.$watch('bannerOpacity', () => {
+            this.updateTiptapBannerOpacity();
+        });
+
         // Close dropdowns when clicking outside
         document.addEventListener('click', () => {
             this.closeDropdown();
