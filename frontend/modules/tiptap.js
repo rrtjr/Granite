@@ -44,7 +44,11 @@ export const tiptapMixin = {
         const { frontmatter, content } = this.extractFrontmatter(this.noteContent || '');
         this._frontmatter = frontmatter;
 
-        const initialHtml = this.addBannerToHtml(this.noteContent || '', this.markdownToHtml(content));
+        const htmlContent = this.markdownToHtml(content);
+        Debug.log('Markdown to HTML:', { contentLength: content.length, htmlLength: htmlContent.length });
+        
+        const initialHtml = this.addBannerToHtml(this.noteContent || '', htmlContent);
+        Debug.log('After banner:', { initialHtmlLength: initialHtml.length });
 
         this.tiptapEditor = new Editor({
             element: container,
@@ -103,6 +107,10 @@ export const tiptapMixin = {
 
         this.tiptapReady = true;
         Debug.log('Tiptap initialized successfully!');
+        Debug.log('Tiptap final HTML:', { 
+            finalHtmlLength: this.tiptapEditor.getHTML().length,
+            finalHtmlPreview: this.tiptapEditor.getHTML().substring(0, 300)
+        });
 
         // Apply current reading preferences to the editor
         this.$nextTick(() => {
