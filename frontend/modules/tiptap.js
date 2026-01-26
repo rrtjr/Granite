@@ -205,6 +205,18 @@ export const tiptapMixin = {
         // Pre-process custom syntax
         let processed = markdown;
 
+        // Preserve math delimiters by wrapping with data-tex so we can recover after MathJax
+        // Block math $$...$$
+        processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (match, expr) => {
+            const tex = `$$${expr}$$`;
+            return `<div class="math-tex-block" data-tex="${this.escapeHtml(tex)}">${tex}</div>`;
+        });
+        // Inline math $...$ (avoid matching $$)
+        processed = processed.replace(/(?<!\$)\$(?!\$)([^$\n]+?)\$(?!\$)/g, (match, expr) => {
+            const tex = `$${expr}$`;
+            return `<span class="math-tex-inline" data-tex="${this.escapeHtml(tex)}">${tex}</span>`;
+        });
+
         // Convert wikilinks to spans: [[target]] or [[target|display]]
         processed = processed.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (match, target, display) => {
             const text = display || target;
@@ -288,15 +300,25 @@ export const tiptapMixin = {
     htmlToMarkdown(html) {
         if (!html) return '';
 
-        // Replace MathJax-rendered nodes with original TeX from aria-label
         const temp = document.createElement('div');
         temp.innerHTML = html;
+
+        // If MathJax has rendered, recover TeX from mjx-container
         temp.querySelectorAll('mjx-container').forEach((node) => {
             const tex = node.getAttribute('aria-label') || '';
             const display = node.getAttribute('display') === 'true';
-            const replacement = display ? `$$${tex}$$` : `$${tex}$`;
-            const textNode = document.createTextNode(replacement);
-            node.replaceWith(textNode);
+            if (tex) {
+                const replacement = display ? `$$${tex}$$` : `$${tex}$`;
+                node.replaceWith(document.createTextNode(replacement));
+            }
+        });
+
+        // Also recover from our data-tex wrappers in case MathJax didn’t run or aria-label missing
+        temp.querySelectorAll('.math-tex-inline, .math-tex-block').forEach((el) => {
+            const tex = el.getAttribute('data-tex');
+            if (tex) {
+                el.replaceWith(document.createTextNode(tex));
+            }
         });
 
         const cleanedHtml = temp.innerHTML;
