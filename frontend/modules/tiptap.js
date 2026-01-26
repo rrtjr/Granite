@@ -370,6 +370,10 @@ export const tiptapMixin = {
             bulletListMarker: '-',
             emDelimiter: '*',
             strongDelimiter: '**',
+            blankReplacement: (content, node) => {
+                // Prevent extra blank lines in lists
+                return node.isBlock ? '\n' : '';
+            },
         });
 
         // Add custom rules for our extensions
@@ -377,14 +381,38 @@ export const tiptapMixin = {
 
         let markdown = turndown.turndown(cleanedHtml);
 
-        // Clean up extra whitespace
+        // Clean up extra whitespace - but preserve single blank lines between paragraphs
         markdown = markdown.replace(/\n{3,}/g, '\n\n');
+        
+        // Fix list items that have extra blank lines between them
+        markdown = markdown.replace(/^([-*+]|\d+\.)\s+(.+)\n\n(?=([-*+]|\d+\.)\s)/gm, '$1 $2\n');
 
         return markdown;
     },
 
     // Add Turndown rules for custom elements
     addTurndownRules(turndown) {
+        // Rule for list items - handle <p> tags inside <li> to avoid extra newlines
+        turndown.addRule('listItem', {
+            filter: 'li',
+            replacement: (content, node, options) => {
+                // Remove leading/trailing newlines and collapse internal newlines
+                content = content.replace(/^\n+/, '').replace(/\n+$/, '').replace(/\n\n+/g, '\n');
+                
+                const parent = node.parentNode;
+                const isOrdered = parent && parent.nodeName === 'OL';
+                const prefix = isOrdered 
+                    ? (Array.from(parent.children).indexOf(node) + 1) + '. '
+                    : options.bulletListMarker + ' ';
+                
+                // Handle nested content with proper indentation
+                const lines = content.split('\n');
+                const indentedContent = lines.map((line, i) => i === 0 ? line : '    ' + line).join('\n');
+                
+                return prefix + indentedContent + '\n';
+            }
+        });
+
         // Rule for block math (display mode)
         turndown.addRule('mathDisplay', {
             filter: (node) => node.nodeName === 'DIV' && node.classList.contains('math-display'),
