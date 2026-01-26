@@ -359,6 +359,34 @@ export const tiptapMixin = {
             replacement: (content) => content || ''
         });
 
+        // Rule for markdown tables (convert HTML tables back to markdown pipe tables)
+        turndown.addRule('table', {
+            filter: 'table',
+            replacement: (content, node) => {
+                const rows = Array.from(node.querySelectorAll('tr'));
+                if (rows.length === 0) return '';
+
+                let markdown = '\n';
+                rows.forEach((row, rowIndex) => {
+                    const cells = Array.from(row.querySelectorAll('td, th'));
+                    const cellContents = cells.map(cell => {
+                        const text = cell.textContent.trim();
+                        // Escape pipes in cell content
+                        return text.replace(/\|/g, '\\|');
+                    });
+                    
+                    markdown += '| ' + cellContents.join(' | ') + ' |\n';
+                    
+                    // Add separator row after header
+                    if (rowIndex === 0) {
+                        markdown += '| ' + cells.map(() => '---').join(' | ') + ' |\n';
+                    }
+                });
+                
+                return markdown + '\n';
+            }
+        });
+
         // Keep code blocks with language
         turndown.addRule('fencedCodeBlock', {
             filter: (node) => {
