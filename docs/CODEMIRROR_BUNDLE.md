@@ -26,7 +26,7 @@ npm install
 npm run build
 ```
 
-This creates `frontend/static/codemirror6.bundle.js` (~200KB minified).
+This creates `frontend/codemirror6.bundle.js` (~200KB minified).
 
 ## What Gets Bundled
 
@@ -54,4 +54,4 @@ If you need to update CodeMirror versions:
 - `scripts/build/package.json` - CodeMirror 6 dependencies and build script
 - `scripts/build/build-codemirror.js` - esbuild configuration
 - `scripts/build/codemirror-bundle-entry.js` - Bundle entry point that exports CodeMirror to `window.CodeMirror`
-- `frontend/static/codemirror6.bundle.js` - Generated bundle file (created during Docker build)
+- `frontend/codemirror6.bundle.js` - Generated bundle file (created during Docker build)

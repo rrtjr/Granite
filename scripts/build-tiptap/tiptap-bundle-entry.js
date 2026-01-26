@@ -1,5 +1,5 @@
 // Tiptap bundle entry point - exports everything needed for Granite Rich view
-// This file is bundled by esbuild into frontend/static/tiptap.bundle.js
+// This file is bundled by esbuild into frontend/tiptap.bundle.js
 
 import { Editor, Node, Mark, Extension, mergeAttributes } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
