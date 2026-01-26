@@ -206,24 +206,36 @@ export const tiptapMixin = {
         // Pre-process custom syntax
         let processed = markdown;
 
-        // Protect math from marked.js by temporarily replacing delimiters
-        const mathPlaceholders = [];
-        let mathIndex = 0;
-
-        // Protect block math $$...$$
-        processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (match) => {
-            const placeholder = `XMATHBLOCKX${mathIndex}XMATHBLOCKX`;
-            mathPlaceholders.push({ placeholder, content: match });
-            mathIndex++;
-            return placeholder;
+        // Render block math $$...$$ directly with KaTeX
+        processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (match, tex) => {
+            try {
+                if (window.katex) {
+                    const rendered = window.katex.renderToString(tex.trim(), {
+                        displayMode: true,
+                        throwOnError: false
+                    });
+                    return `<div class="math-display" data-math-tex="${this.escapeHtml(tex.trim())}">${rendered}</div>`;
+                }
+            } catch (e) {
+                Debug.log('KaTeX block error:', e);
+            }
+            return match; // Fallback to raw if KaTeX fails
         });
 
-        // Protect inline math $...$
-        processed = processed.replace(/\$([^$\n]+?)\$/g, (match) => {
-            const placeholder = `XMATHINLINEX${mathIndex}XMATHINLINEX`;
-            mathPlaceholders.push({ placeholder, content: match });
-            mathIndex++;
-            return placeholder;
+        // Render inline math $...$ directly with KaTeX
+        processed = processed.replace(/\$([^$\n]+?)\$/g, (match, tex) => {
+            try {
+                if (window.katex) {
+                    const rendered = window.katex.renderToString(tex.trim(), {
+                        displayMode: false,
+                        throwOnError: false
+                    });
+                    return `<span class="math-inline" data-math-tex="${this.escapeHtml(tex.trim())}">${rendered}</span>`;
+                }
+            } catch (e) {
+                Debug.log('KaTeX inline error:', e);
+            }
+            return match; // Fallback to raw if KaTeX fails
         });
 
         // Convert wikilinks to spans: [[target]] or [[target|display]]
@@ -258,11 +270,6 @@ export const tiptapMixin = {
                 .replace(/\*(.*?)\*/g, '<em>$1</em>')
                 .replace(/\n/g, '<br>');
         }
-
-        // Restore math placeholders immediately after marked parsing
-        mathPlaceholders.forEach(({ placeholder, content }) => {
-            html = html.replace(new RegExp(placeholder, 'g'), content);
-        });
 
         // Transform spreadsheet code blocks to our custom format after marked parsing
         // marked converts ```spreadsheet to <pre><code class="language-spreadsheet">
@@ -364,6 +371,24 @@ export const tiptapMixin = {
 
     // Add Turndown rules for custom elements
     addTurndownRules(turndown) {
+        // Rule for block math (display mode)
+        turndown.addRule('mathDisplay', {
+            filter: (node) => node.nodeName === 'DIV' && node.classList.contains('math-display'),
+            replacement: (content, node) => {
+                const tex = node.dataset.mathTex || '';
+                return `\n$$${tex}$$\n`;
+            }
+        });
+
+        // Rule for inline math
+        turndown.addRule('mathInline', {
+            filter: (node) => node.nodeName === 'SPAN' && node.classList.contains('math-inline'),
+            replacement: (content, node) => {
+                const tex = node.dataset.mathTex || '';
+                return `$${tex}$`;
+            }
+        });
+
         // Rule for wikilinks
         turndown.addRule('wikilink', {
             filter: (node) => node.nodeName === 'SPAN' && node.classList.contains('wikilink'),
