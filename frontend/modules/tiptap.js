@@ -58,13 +58,13 @@ export const tiptapMixin = {
                     heading: {
                         levels: [1, 2, 3, 4, 5, 6],
                     },
+                    link: {
+                        openOnClick: false,
+                        HTMLAttributes: { class: 'tiptap-link' }
+                    },
                 }),
                 Placeholder.configure({
                     placeholder: 'Start writing...',
-                }),
-                Link.configure({
-                    openOnClick: false,
-                    HTMLAttributes: { class: 'tiptap-link' }
                 }),
                 Image.configure({
                     HTMLAttributes: { class: 'tiptap-image' },
@@ -580,18 +580,6 @@ export const tiptapMixin = {
                 }
             }
         });
-
-        // Render MathJax equations (delay to allow DOM settle)
-        if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
-            setTimeout(() => {
-                const tiptapContent = document.querySelector('.tiptap-editor-content');
-                if (tiptapContent) {
-                    MathJax.typesetPromise([tiptapContent]).catch((err) => {
-                        Debug.error('MathJax typesetting failed in Tiptap:', err);
-                    });
-                }
-            }, 100);
-        }
     },
 
     // Create Wikilink extension
