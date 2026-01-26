@@ -634,15 +634,18 @@ export const tiptapMixin = {
                 });
 
                 const style = node.attrs.bannerUrl
-                    ? { style: `background-image: url('${node.attrs.bannerUrl}'); opacity: ${node.attrs.opacity};` }
-                    : { style: `opacity: ${node.attrs.opacity};` };
+                    ? `background-image: url('${node.attrs.bannerUrl}'); opacity: ${node.attrs.opacity};`
+                    : `opacity: ${node.attrs.opacity};`;
 
-                const title = node.attrs.bannerTitle || '';
-
-                return ['div', attrs,
-                    ['div', mergeAttributes({ class: 'banner-image' }, style)],
-                    title ? ['h1', { class: 'banner-title' }, title] : null
+                const children = [
+                    ['div', { class: 'banner-image', style }]
                 ];
+
+                if (node.attrs.bannerTitle) {
+                    children.push(['h1', { class: 'banner-title' }, node.attrs.bannerTitle]);
+                }
+
+                return ['div', attrs, ...children];
             },
         });
     },
