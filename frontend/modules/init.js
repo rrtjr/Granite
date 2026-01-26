@@ -148,6 +148,19 @@ export const initMixin = {
             }
         });
 
+        // Watch reading preferences changes and update Tiptap editor
+        this.$watch('readingWidth', () => {
+            this.updateTiptapReadingPreferences();
+        });
+
+        this.$watch('contentAlign', () => {
+            this.updateTiptapReadingPreferences();
+        });
+
+        this.$watch('contentMargins', () => {
+            this.updateTiptapReadingPreferences();
+        });
+
         // Close dropdowns when clicking outside
         document.addEventListener('click', () => {
             this.closeDropdown();

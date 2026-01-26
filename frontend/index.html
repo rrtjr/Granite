@@ -956,6 +956,80 @@
             line-height: 2.2;
         }
 
+        /* Reading Preferences for Tiptap Editor */
+        .tiptap-editor-content.reading-width-narrow {
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tiptap-editor-content.reading-width-medium {
+            max-width: 850px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tiptap-editor-content.reading-width-wide {
+            max-width: 1100px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tiptap-editor-content.reading-width-full {
+            max-width: none;
+        }
+
+        /* Text Alignment for Tiptap */
+        .tiptap-editor-content.align-left {
+            text-align: left;
+        }
+
+        .tiptap-editor-content.align-center {
+            text-align: center;
+        }
+
+        .tiptap-editor-content.align-center h1,
+        .tiptap-editor-content.align-center h2,
+        .tiptap-editor-content.align-center h3,
+        .tiptap-editor-content.align-center h4,
+        .tiptap-editor-content.align-center h5,
+        .tiptap-editor-content.align-center h6 {
+            text-align: center;
+        }
+
+        .tiptap-editor-content.align-justified {
+            text-align: justify;
+        }
+
+        .tiptap-editor-content.align-justified h1,
+        .tiptap-editor-content.align-justified h2,
+        .tiptap-editor-content.align-justified h3,
+        .tiptap-editor-content.align-justified h4,
+        .tiptap-editor-content.align-justified h5,
+        .tiptap-editor-content.align-justified h6 {
+            text-align: left;
+        }
+
+        /* Content Spacing for Tiptap */
+        .tiptap-editor-content.margins-compact {
+            padding: 1rem 1.5rem !important;
+            line-height: 1.6;
+        }
+
+        .tiptap-editor-content.margins-normal {
+            padding: 1.5rem !important;
+        }
+
+        .tiptap-editor-content.margins-relaxed {
+            padding: 2rem 3rem !important;
+            line-height: 2;
+        }
+
+        .tiptap-editor-content.margins-extra-relaxed {
+            padding: 3rem 4rem !important;
+            line-height: 2.2;
+        }
+
         /* CodeMirror Editor styling */
         #note-editor {
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
@@ -3344,6 +3418,13 @@
                                     'reading-width-medium': readingWidth === 'medium',
                                     'reading-width-wide': readingWidth === 'wide',
                                     'reading-width-full': readingWidth === 'full',
+                                    'align-left': contentAlign === 'left',
+                                    'align-center': contentAlign === 'center',
+                                    'align-justified': contentAlign === 'justified',
+                                    'margins-compact': contentMargins === 'compact',
+                                    'margins-normal': contentMargins === 'normal',
+                                    'margins-relaxed': contentMargins === 'relaxed',
+                                    'margins-extra-relaxed': contentMargins === 'extra-relaxed'
                                 }"
                             ></div>
 

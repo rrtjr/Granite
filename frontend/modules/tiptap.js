@@ -103,6 +103,11 @@ export const tiptapMixin = {
 
         this.tiptapReady = true;
         Debug.log('Tiptap initialized successfully!');
+
+        // Apply current reading preferences to the editor
+        this.$nextTick(() => {
+            this.updateTiptapReadingPreferences();
+        });
     },
 
     // Destroy Tiptap editor
@@ -114,6 +119,38 @@ export const tiptapMixin = {
             this._frontmatter = '';
             Debug.log('Tiptap destroyed');
         }
+    },
+
+    // Update Tiptap editor with reading preferences classes
+    updateTiptapReadingPreferences() {
+        if (!this.tiptapEditor || !this.tiptapReady) return;
+
+        const contentElement = document.querySelector('.tiptap-editor-content');
+        if (!contentElement) return;
+
+        // Remove all previous reading preference classes
+        contentElement.classList.remove(
+            'reading-width-narrow', 'reading-width-medium', 'reading-width-wide', 'reading-width-full',
+            'align-left', 'align-center', 'align-justified',
+            'margins-compact', 'margins-normal', 'margins-relaxed', 'margins-extra-relaxed'
+        );
+
+        // Add new reading preference classes
+        if (this.readingWidth) {
+            contentElement.classList.add(`reading-width-${this.readingWidth}`);
+        }
+        if (this.contentAlign) {
+            contentElement.classList.add(`align-${this.contentAlign}`);
+        }
+        if (this.contentMargins) {
+            contentElement.classList.add(`margins-${this.contentMargins}`);
+        }
+
+        Debug.log('Updated Tiptap reading preferences:', {
+            width: this.readingWidth,
+            align: this.contentAlign,
+            margins: this.contentMargins
+        });
     },
 
     // Extract YAML frontmatter from markdown
