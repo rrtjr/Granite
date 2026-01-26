@@ -162,24 +162,9 @@ export const tiptapMixin = {
         if (!this.tiptapEditor || !this.tiptapReady) return;
 
         const opacity = Math.max(0, Math.min(1, parseFloat(this.bannerOpacity) || 0));
-        const { view } = this.tiptapEditor;
-        if (!view || !view.state) return;
 
-        let tr = view.state.tr;
-        let updated = false;
-
-        view.state.doc.descendants((node, pos) => {
-            if (node.type.name === 'noteBanner') {
-                tr = tr.setNodeMarkup(pos, node.type, { ...node.attrs, opacity });
-                updated = true;
-            }
-        });
-
-        if (updated && tr.docChanged) {
-            view.dispatch(tr);
-        }
-
-        // Ensure immediate visual update in the DOM
+        // Update the DOM directly for immediate visual feedback
+        // Banner opacity is a display preference, not document content
         const banners = document.querySelectorAll('.tiptap-editor-content .note-banner');
         banners.forEach((banner) => {
             banner.dataset.bannerOpacity = String(opacity);
