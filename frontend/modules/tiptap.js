@@ -35,7 +35,7 @@ export const tiptapMixin = {
         const {
             Editor, StarterKit, Placeholder, Link, Image,
             CodeBlockLowlight, Table, TableRow, TableCell,
-            TableHeader, TaskList, TaskItem, lowlight
+            TableHeader, TaskList, TaskItem, Mathematics, lowlight
         } = window.Tiptap;
 
         const self = this;
@@ -79,6 +79,7 @@ export const tiptapMixin = {
                 TableHeader,
                 TaskList,
                 TaskItem.configure({ nested: true }),
+                Mathematics,
                 // Custom extensions
                 this.createBannerExtension(),
                 this.createWikilinkExtension(),
@@ -204,18 +205,6 @@ export const tiptapMixin = {
 
         // Pre-process custom syntax
         let processed = markdown;
-
-        // Preserve math delimiters by wrapping with data-tex so we can recover after MathJax
-        // Block math $$...$$
-        processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (match, expr) => {
-            const tex = `$$${expr}$$`;
-            return `<div class="math-tex-block" data-tex="${this.escapeHtml(tex)}">${tex}</div>`;
-        });
-        // Inline math $...$ (avoid matching $$)
-        processed = processed.replace(/(?<!\$)\$(?!\$)([^$\n]+?)\$(?!\$)/g, (match, expr) => {
-            const tex = `$${expr}$`;
-            return `<span class="math-tex-inline" data-tex="${this.escapeHtml(tex)}">${tex}</span>`;
-        });
 
         // Convert wikilinks to spans: [[target]] or [[target|display]]
         processed = processed.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (match, target, display) => {
