@@ -76,6 +76,7 @@ export const tiptapMixin = {
                 TaskList,
                 TaskItem.configure({ nested: true }),
                 // Custom extensions
+                this.createBannerExtension(),
                 this.createWikilinkExtension(),
                 this.createImageEmbedExtension(),
                 this.createSpreadsheetExtension(),
@@ -585,6 +586,67 @@ export const tiptapMixin = {
         });
     },
 
+    // Create Banner extension to preserve banner block in Tiptap schema
+    createBannerExtension() {
+        const { Node, mergeAttributes } = window.Tiptap;
+
+        return Node.create({
+            name: 'noteBanner',
+            group: 'block',
+            atom: true,
+            selectable: true,
+
+            addAttributes() {
+                return {
+                    bannerUrl: { default: '' },
+                    bannerTitle: { default: '' },
+                    opacity: { default: 1 },
+                };
+            },
+
+            parseHTML() {
+                return [{
+                    tag: 'div.note-banner',
+                    getAttrs: (dom) => {
+                        const url = dom.dataset.bannerUrl || dom.getAttribute('data-banner-url') || '';
+                        const opacityAttr = dom.dataset.bannerOpacity || dom.getAttribute('data-banner-opacity');
+                        const opacity = opacityAttr ? parseFloat(opacityAttr) : 1;
+
+                        const titleFromData = dom.dataset.bannerTitle || dom.getAttribute('data-banner-title') || '';
+                        const titleEl = dom.querySelector('h1.banner-title');
+                        const title = titleFromData || (titleEl ? titleEl.textContent || '' : '');
+
+                        return {
+                            bannerUrl: url,
+                            bannerTitle: title,
+                            opacity: isNaN(opacity) ? 1 : opacity,
+                        };
+                    }
+                }];
+            },
+
+            renderHTML({ node, HTMLAttributes }) {
+                const attrs = mergeAttributes(HTMLAttributes, {
+                    class: 'note-banner',
+                    'data-banner-url': node.attrs.bannerUrl || '',
+                    'data-banner-title': node.attrs.bannerTitle || '',
+                    'data-banner-opacity': node.attrs.opacity,
+                });
+
+                const style = node.attrs.bannerUrl
+                    ? { style: `background-image: url('${node.attrs.bannerUrl}'); opacity: ${node.attrs.opacity};` }
+                    : { style: `opacity: ${node.attrs.opacity};` };
+
+                const title = node.attrs.bannerTitle || '';
+
+                return ['div', attrs,
+                    ['div', mergeAttributes({ class: 'banner-image' }, style)],
+                    title ? ['h1', { class: 'banner-title' }, title] : null
+                ];
+            },
+        });
+    },
+
     // Inject banner HTML (from frontmatter banner:) ahead of note content for rich view
     addBannerToHtml(markdown, html) {
         if (!markdown || !html || typeof this.parseBannerFromContent !== 'function') {
@@ -606,7 +668,7 @@ export const tiptapMixin = {
             contentHtml = contentHtml.replace(h1Match[0], '');
         }
 
-        const bannerHtml = `<div class="note-banner"><div class="banner-image" style="background-image: url('${safeUrl}'); opacity: ${opacity}"></div>${titleHtml}</div>`;
+        const bannerHtml = `<div class="note-banner" data-banner-url="${safeUrl}" data-banner-title="${this.escapeHtml(titleHtml.replace(/<[^>]+>/g, '') )}" data-banner-opacity="${opacity}"><div class="banner-image" style="background-image: url('${safeUrl}'); opacity: ${opacity}"></div>${titleHtml}</div>`;
         return bannerHtml + contentHtml;
     },
 };
