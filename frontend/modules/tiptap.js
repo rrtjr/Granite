@@ -61,13 +61,16 @@ export const tiptapMixin = {
         `;
         document.body.appendChild(bubbleMenuElement);
 
-        // Add mousedown handlers (mousedown prevents focus loss unlike click)
+        // Prevent focus loss on mousedown, but execute action on click
         bubbleMenuElement.querySelectorAll('button').forEach(btn => {
             btn.addEventListener('mousedown', (e) => {
                 e.preventDefault();  // Prevents button from stealing focus
+            });
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 const action = btn.dataset.action;
-                self.executeBubbleMenuAction(action);  // Use self instead of this
+                self.executeBubbleMenuAction(action);
             });
         });
 
@@ -170,40 +173,27 @@ export const tiptapMixin = {
     executeBubbleMenuAction(action) {
         if (!this.tiptapEditor) return;
 
-        // Store selection before any DOM changes
-        const { from, to } = this.tiptapEditor.state.selection;
-
-        // Use setTimeout to ensure we're in a clean state
-        setTimeout(() => {
-            // Restore selection and apply formatting
-            this.tiptapEditor
-                .chain()
-                .focus()
-                .setTextSelection({ from, to })
-                .run();
-
-            // Now apply the formatting
-            switch (action) {
-                case 'bold':
-                    this.tiptapEditor.chain().toggleBold().run();
-                    break;
-                case 'italic':
-                    this.tiptapEditor.chain().toggleItalic().run();
-                    break;
-                case 'underline':
-                    this.tiptapEditor.chain().toggleUnderline().run();
-                    break;
-                case 'strike':
-                    this.tiptapEditor.chain().toggleStrike().run();
-                    break;
-                case 'highlight':
-                    this.tiptapEditor.chain().toggleHighlight({ color: '#fef08a' }).run();
-                    break;
-                case 'code':
-                    this.tiptapEditor.chain().toggleCode().run();
-                    break;
-            }
-        }, 0);
+        // Apply formatting - editor focus is maintained by mousedown preventDefault
+        switch (action) {
+            case 'bold':
+                this.tiptapEditor.chain().focus().toggleBold().run();
+                break;
+            case 'italic':
+                this.tiptapEditor.chain().focus().toggleItalic().run();
+                break;
+            case 'underline':
+                this.tiptapEditor.chain().focus().toggleUnderline().run();
+                break;
+            case 'strike':
+                this.tiptapEditor.chain().focus().toggleStrike().run();
+                break;
+            case 'highlight':
+                this.tiptapEditor.chain().focus().toggleHighlight({ color: '#fef08a' }).run();
+                break;
+            case 'code':
+                this.tiptapEditor.chain().focus().toggleCode().run();
+                break;
+        }
     },
 
     // Get character/word count from Tiptap
