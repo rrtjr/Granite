@@ -12,12 +12,12 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Build editor bundles (CodeMirror + Tiptap)
-COPY scripts/build/package.json scripts/build/codemirror-bundle-entry.js scripts/build/build-codemirror.js ./scripts/build/
+COPY scripts/build-codemirror/package.json scripts/build-codemirror/codemirror-bundle-entry.js scripts/build-codemirror/build-codemirror.js ./scripts/build-codemirror/
 COPY scripts/build-tiptap/package.json scripts/build-tiptap/package-lock.json scripts/build-tiptap/tiptap-bundle-entry.js scripts/build-tiptap/build-tiptap.js ./scripts/build-tiptap/
 COPY frontend ./frontend
 
 # Build CodeMirror
-RUN cd /app/scripts/build && \
+RUN cd /app/scripts/build-codemirror && \
     npm install && \
     npm run build-codemirror && \
     echo "[OK] CodeMirror 6 bundle built" && \

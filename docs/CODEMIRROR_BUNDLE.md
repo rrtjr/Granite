@@ -21,7 +21,7 @@ The CodeMirror bundle is **automatically built during Docker image creation**. N
 If you need to rebuild the bundle locally for development:
 
 ```bash
-cd scripts/build
+cd scripts/build-codemirror
 npm install
 npm run build-codemirror
 ```
@@ -45,13 +45,13 @@ The bundle includes all CodeMirror 6 features used by Granite:
 
 If you need to update CodeMirror versions:
 
-1. Update version numbers in `scripts/build/package.json`
+1. Update version numbers in `scripts/build-codemirror/package.json`
 2. Rebuild the Docker image: `docker-compose build`
 3. The new bundle will be automatically created during the build
 
 ## File Descriptions
 
-- `scripts/build/package.json` - CodeMirror 6 dependencies and build script
-- `scripts/build/build-codemirror.js` - esbuild configuration
-- `scripts/build/codemirror-bundle-entry.js` - Bundle entry point that exports CodeMirror to `window.CodeMirror`
+- `scripts/build-codemirror/package.json` - CodeMirror 6 dependencies and build script
+- `scripts/build-codemirror/build-codemirror.js` - esbuild configuration
+- `scripts/build-codemirror/codemirror-bundle-entry.js` - Bundle entry point that exports CodeMirror to `window.CodeMirror`
 - `frontend/codemirror6.bundle.js` - Generated bundle file (created during Docker build)
