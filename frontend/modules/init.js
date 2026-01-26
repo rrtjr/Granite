@@ -104,6 +104,10 @@ export const initMixin = {
             this.$nextTick(() => {
                 this.refreshDOMCache();
                 this.setupScrollSync();
+                // Sync editor content when switching to edit or split mode
+                if ((newValue === 'edit' || newValue === 'split') && this.noteContent) {
+                    this.updateEditorContent(this.noteContent);
+                }
             });
         });
 
