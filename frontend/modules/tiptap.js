@@ -36,10 +36,37 @@ export const tiptapMixin = {
             Editor, StarterKit, Placeholder, Link, Image,
             CodeBlockLowlight, Table, TableRow, TableCell,
             TableHeader, TaskList, TaskItem, Typography,
-            Underline, Highlight, CharacterCount, lowlight
+            Underline, Highlight, CharacterCount, BubbleMenu, lowlight
         } = window.Tiptap;
 
         const self = this;
+
+        // Create bubble menu element
+        let bubbleMenuElement = document.getElementById('tiptap-bubble-menu');
+        if (!bubbleMenuElement) {
+            bubbleMenuElement = document.createElement('div');
+            bubbleMenuElement.id = 'tiptap-bubble-menu';
+            bubbleMenuElement.className = 'tiptap-bubble-menu';
+            bubbleMenuElement.innerHTML = `
+                <button type="button" data-action="bold" title="Bold (Ctrl+B)"><strong>B</strong></button>
+                <button type="button" data-action="italic" title="Italic (Ctrl+I)"><em>I</em></button>
+                <button type="button" data-action="underline" title="Underline (Ctrl+U)"><u>U</u></button>
+                <button type="button" data-action="strike" title="Strikethrough"><s>S</s></button>
+                <button type="button" data-action="highlight" title="Highlight"><mark>H</mark></button>
+                <button type="button" data-action="code" title="Code"><code>&lt;/&gt;</code></button>
+            `;
+            document.body.appendChild(bubbleMenuElement);
+
+            // Add click handlers
+            bubbleMenuElement.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const action = btn.dataset.action;
+                    this.executeBubbleMenuAction(action);
+                });
+            });
+        }
 
         // Extract frontmatter before converting to HTML
         const { frontmatter, content } = this.extractFrontmatter(this.noteContent || '');
@@ -85,6 +112,13 @@ export const tiptapMixin = {
                 Underline,   // Underline formatting
                 Highlight.configure({ multicolor: true }),  // Text highlighting
                 CharacterCount.configure({ limit: null }),  // Word/character count
+                BubbleMenu.configure({
+                    element: bubbleMenuElement,
+                    tippyOptions: {
+                        duration: 100,
+                        placement: 'top',
+                    },
+                }),
                 // Custom extensions
                 this.createBannerExtension(),
                 this.createWikilinkExtension(),
@@ -125,54 +159,7 @@ export const tiptapMixin = {
             this.updateTiptapReadingPreferences();
             this.updateTiptapBannerOpacity();
             this.renderTiptapSpecialBlocks();
-            this.initBubbleMenu();
         });
-    },
-
-    // Initialize bubble menu for text selection
-    initBubbleMenu() {
-        if (!this.tiptapEditor) return;
-
-        const { BubbleMenu } = window.Tiptap;
-        if (!BubbleMenu) return;
-
-        // Check if bubble menu container exists
-        let menuContainer = document.getElementById('tiptap-bubble-menu');
-        if (!menuContainer) {
-            // Create bubble menu container
-            menuContainer = document.createElement('div');
-            menuContainer.id = 'tiptap-bubble-menu';
-            menuContainer.className = 'tiptap-bubble-menu';
-            menuContainer.innerHTML = `
-                <button type="button" data-action="bold" title="Bold (Ctrl+B)"><strong>B</strong></button>
-                <button type="button" data-action="italic" title="Italic (Ctrl+I)"><em>I</em></button>
-                <button type="button" data-action="underline" title="Underline (Ctrl+U)"><u>U</u></button>
-                <button type="button" data-action="strike" title="Strikethrough"><s>S</s></button>
-                <button type="button" data-action="highlight" title="Highlight"><mark>H</mark></button>
-                <button type="button" data-action="code" title="Code"><code>&lt;/&gt;</code></button>
-            `;
-            document.body.appendChild(menuContainer);
-
-            // Add click handlers
-            menuContainer.querySelectorAll('button').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const action = btn.dataset.action;
-                    this.executeBubbleMenuAction(action);
-                });
-            });
-        }
-
-        // Register bubble menu with Tiptap
-        this.tiptapEditor.registerPlugin(
-            BubbleMenu.configure({
-                element: menuContainer,
-                tippyOptions: {
-                    duration: 100,
-                    placement: 'top',
-                },
-            }).options.plugins[0]
-        );
     },
 
     // Execute bubble menu formatting action
