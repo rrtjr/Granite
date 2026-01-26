@@ -213,6 +213,11 @@ export const tiptapMixin = {
         // Use marked.js from the page (already loaded via CDN)
         let html;
         if (typeof marked !== 'undefined') {
+            // Configure marked for GFM tables and line breaks
+            marked.setOptions({
+                breaks: true,
+                gfm: true,
+            });
             html = marked.parse(processed);
         } else {
             // Fallback: basic conversion
@@ -509,12 +514,14 @@ export const tiptapMixin = {
 
         // Render MathJax equations
         if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
-            const tiptapContent = container.querySelector('.tiptap-editor-content');
-            if (tiptapContent) {
-                MathJax.typesetPromise([tiptapContent]).catch((err) => {
-                    Debug.error('MathJax typesetting failed in Tiptap:', err);
-                });
-            }
+            setTimeout(() => {
+                const tiptapContent = document.querySelector('.tiptap-editor-content');
+                if (tiptapContent) {
+                    MathJax.typesetPromise([tiptapContent]).catch((err) => {
+                        Debug.error('MathJax typesetting failed in Tiptap:', err);
+                    });
+                }
+            }, 50);
         }
     },
 
