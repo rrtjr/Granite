@@ -206,6 +206,26 @@ export const tiptapMixin = {
         // Pre-process custom syntax
         let processed = markdown;
 
+        // Protect math from marked.js by temporarily replacing delimiters
+        const mathPlaceholders = [];
+        let mathIndex = 0;
+
+        // Protect block math $$...$$
+        processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (match) => {
+            const placeholder = `___MATH_BLOCK_${mathIndex}___`;
+            mathPlaceholders.push({ placeholder, content: match });
+            mathIndex++;
+            return placeholder;
+        });
+
+        // Protect inline math $...$
+        processed = processed.replace(/\$([^$\n]+?)\$/g, (match) => {
+            const placeholder = `___MATH_INLINE_${mathIndex}___`;
+            mathPlaceholders.push({ placeholder, content: match });
+            mathIndex++;
+            return placeholder;
+        });
+
         // Convert wikilinks to spans: [[target]] or [[target|display]]
         processed = processed.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (match, target, display) => {
             const text = display || target;
@@ -282,7 +302,13 @@ export const tiptapMixin = {
             pre.parentNode.replaceChild(wrapper, pre);
         });
 
-        return tempDiv.innerHTML;
+        // Restore math placeholders so Mathematics extension can handle them
+        let finalHtml = tempDiv.innerHTML;
+        mathPlaceholders.forEach(({ placeholder, content }) => {
+            finalHtml = finalHtml.replace(placeholder, content);
+        });
+
+        return finalHtml;
     },
 
     // Convert Tiptap HTML back to markdown
