@@ -44,6 +44,8 @@ export const tiptapMixin = {
         const { frontmatter, content } = this.extractFrontmatter(this.noteContent || '');
         this._frontmatter = frontmatter;
 
+        const initialHtml = this.addBannerToHtml(this.noteContent || '', this.markdownToHtml(content));
+
         this.tiptapEditor = new Editor({
             element: container,
             extensions: [
@@ -79,7 +81,7 @@ export const tiptapMixin = {
                 this.createSpreadsheetExtension(),
                 this.createMermaidExtension(),
             ],
-            content: this.markdownToHtml(content),
+            content: initialHtml,
             onUpdate: ({ editor }) => {
                 if (self._tiptapUpdating) return;
 
@@ -251,6 +253,12 @@ export const tiptapMixin = {
             }
         });
 
+        // Rule for banner wrapper (keep inner content only)
+        turndown.addRule('noteBanner', {
+            filter: (node) => node.classList && node.classList.contains('note-banner'),
+            replacement: (content) => content || ''
+        });
+
         // Keep code blocks with language
         turndown.addRule('fencedCodeBlock', {
             filter: (node) => {
@@ -297,8 +305,8 @@ export const tiptapMixin = {
         const { frontmatter, content } = this.extractFrontmatter(markdown || '');
         this._frontmatter = frontmatter;
 
-        const html = this.markdownToHtml(content);
-        this.tiptapEditor.commands.setContent(html);
+        const htmlWithBanner = this.addBannerToHtml(markdown, this.markdownToHtml(content));
+        this.tiptapEditor.commands.setContent(htmlWithBanner);
 
         this.$nextTick(() => {
             this._tiptapUpdating = false;
@@ -575,5 +583,30 @@ export const tiptapMixin = {
                 }), ['div', { class: 'mermaid-placeholder' }, 'Mermaid Diagram']];
             },
         });
+    },
+
+    // Inject banner HTML (from frontmatter banner:) ahead of note content for rich view
+    addBannerToHtml(markdown, html) {
+        if (!markdown || !html || typeof this.parseBannerFromContent !== 'function') {
+            return html;
+        }
+
+        const bannerInfo = this.parseBannerFromContent(markdown);
+        if (!bannerInfo || !bannerInfo.url) return html;
+
+        const safeUrl = bannerInfo.url.replace(/"/g, '%22');
+        const opacity = this.bannerOpacity;
+
+        let contentHtml = html;
+        let titleHtml = '';
+
+        const h1Match = contentHtml.match(/<h1[^>]*>(.*?)<\/h1>/i);
+        if (h1Match) {
+            titleHtml = `<h1 class="banner-title">${h1Match[1]}</h1>`;
+            contentHtml = contentHtml.replace(h1Match[0], '');
+        }
+
+        const bannerHtml = `<div class="note-banner"><div class="banner-image" style="background-image: url('${safeUrl}'); opacity: ${opacity}"></div>${titleHtml}</div>`;
+        return bannerHtml + contentHtml;
     },
 };

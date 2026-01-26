@@ -140,6 +140,10 @@
             margin-top: 0 !important;
         }
 
+        .tiptap-editor-content > *:first-child {
+            margin-top: 0 !important;
+        }
+
         /* Headings */
         .markdown-preview h1 {
             font-size: 2.25rem;
@@ -410,7 +414,8 @@
         }
 
         /* Note Banner - translucent header image from frontmatter */
-        .markdown-preview .note-banner {
+        .markdown-preview .note-banner,
+        .tiptap-editor-content .note-banner {
             width: calc(100% + 3rem);
             margin-left: -1.5rem;
             margin-top: -1.5rem;
@@ -420,7 +425,8 @@
         }
 
         /* Banner image with opacity control */
-        .markdown-preview .note-banner .banner-image {
+        .markdown-preview .note-banner .banner-image,
+        .tiptap-editor-content .note-banner .banner-image {
             position: absolute;
             inset: 0;
             background-size: cover;
@@ -428,7 +434,8 @@
         }
 
         /* Gradient fade at bottom */
-        .markdown-preview .note-banner::after {
+        .markdown-preview .note-banner::after,
+        .tiptap-editor-content .note-banner::after {
             content: '';
             position: absolute;
             inset: 0;
@@ -439,26 +446,30 @@
         }
 
         /* Adjust banner for different margin settings */
-        .markdown-preview.margins-compact .note-banner {
+        .markdown-preview.margins-compact .note-banner,
+        .tiptap-editor-content.margins-compact .note-banner {
             width: calc(100% + 3rem);
             margin-left: -1.5rem;
             margin-top: -1rem;
         }
 
-        .markdown-preview.margins-relaxed .note-banner {
+        .markdown-preview.margins-relaxed .note-banner,
+        .tiptap-editor-content.margins-relaxed .note-banner {
             width: calc(100% + 6rem);
             margin-left: -3rem;
             margin-top: -2rem;
         }
 
-        .markdown-preview.margins-extra-relaxed .note-banner {
+        .markdown-preview.margins-extra-relaxed .note-banner,
+        .tiptap-editor-content.margins-extra-relaxed .note-banner {
             width: calc(100% + 8rem);
             margin-left: -4rem;
             margin-top: -3rem;
         }
 
         /* Banner title overlay */
-        .markdown-preview .note-banner .banner-title {
+        .markdown-preview .note-banner .banner-title,
+        .tiptap-editor-content .note-banner .banner-title {
             position: absolute;
             bottom: 0;
             left: 0;
