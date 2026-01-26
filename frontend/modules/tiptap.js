@@ -260,10 +260,13 @@ export const tiptapMixin = {
         }
 
         // Restore math placeholders and render with KaTeX
+        console.log('[Math Debug] Placeholders:', mathPlaceholders);
+        console.log('[Math Debug] HTML before restore:', html.substring(0, 500));
         mathPlaceholders.forEach(({ placeholder, tex, displayMode }) => {
             let rendered;
             try {
                 if (window.katex) {
+                    console.log('[Math Debug] Rendering with KaTeX:', tex);
                     const katexHtml = window.katex.renderToString(tex, {
                         displayMode: displayMode,
                         throwOnError: false
@@ -274,15 +277,20 @@ export const tiptapMixin = {
                         rendered = `<span class="math-inline" data-math-tex="${this.escapeHtml(tex)}">${katexHtml}</span>`;
                     }
                 } else {
+                    console.log('[Math Debug] KaTeX not available!');
                     // Fallback: show raw TeX
                     rendered = displayMode ? `$$${tex}$$` : `$${tex}$`;
                 }
             } catch (e) {
+                console.log('[Math Debug] KaTeX error:', e);
                 Debug.log('KaTeX error:', e);
                 rendered = displayMode ? `$$${tex}$$` : `$${tex}$`;
             }
+            console.log('[Math Debug] Looking for placeholder:', placeholder);
+            console.log('[Math Debug] Found in HTML:', html.includes(placeholder));
             html = html.replace(new RegExp(placeholder, 'g'), rendered);
         });
+        console.log('[Math Debug] HTML after restore:', html.substring(0, 500));
 
         // Transform spreadsheet code blocks to our custom format after marked parsing
         // marked converts ```spreadsheet to <pre><code class="language-spreadsheet">
