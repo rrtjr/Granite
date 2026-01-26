@@ -506,6 +506,16 @@ export const tiptapMixin = {
                 }
             }
         });
+
+        // Render MathJax equations
+        if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+            const tiptapContent = container.querySelector('.tiptap-editor-content');
+            if (tiptapContent) {
+                MathJax.typesetPromise([tiptapContent]).catch((err) => {
+                    Debug.error('MathJax typesetting failed in Tiptap:', err);
+                });
+            }
+        }
     },
 
     // Create Wikilink extension
