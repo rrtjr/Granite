@@ -14,7 +14,7 @@ export const stateMixin = {
     currentNote: '',
     currentNoteName: '',
     noteContent: '',
-    viewMode: 'split', // 'edit', 'split', 'preview'
+    viewMode: 'split', // 'edit', 'split', or 'rich' (WYSIWYG)
     searchQuery: '',
 
     // Reading preferences

@@ -114,8 +114,11 @@ export const sidebarMixin = {
     loadViewMode() {
         try {
             const saved = localStorage.getItem('viewMode');
-            if (saved && ['edit', 'split', 'preview'].includes(saved)) {
+            if (saved && ['edit', 'split', 'rich'].includes(saved)) {
                 this.viewMode = saved;
+            } else if (saved === 'preview') {
+                // Migrate old preview mode to rich
+                this.viewMode = 'rich';
             }
         } catch (error) {
             Debug.error('Error loading view mode:', error);
@@ -162,6 +165,7 @@ export const sidebarMixin = {
             const wasMobile = previousWidth <= MOBILE_BREAKPOINT;
             const isMobile = currentWidth <= MOBILE_BREAKPOINT;
 
+            // Switch from split to edit when entering mobile viewport
             if (!wasMobile && isMobile && this.viewMode === 'split') {
                 this.viewMode = 'edit';
             }
@@ -171,6 +175,7 @@ export const sidebarMixin = {
 
         window.addEventListener('resize', handleResize);
 
+        // Check on initial load
         if (window.innerWidth <= MOBILE_BREAKPOINT && this.viewMode === 'split') {
             this.viewMode = 'edit';
         }

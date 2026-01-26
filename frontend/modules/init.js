@@ -99,14 +99,39 @@ export const initMixin = {
         this.setupMobileViewMode();
 
         // Watch view mode changes and auto-save
-        this.$watch('viewMode', (newValue) => {
+        this.$watch('viewMode', (newValue, oldValue) => {
             this.saveViewMode();
             this.$nextTick(() => {
                 this.refreshDOMCache();
-                this.setupScrollSync();
-                // Sync editor content when switching to edit or split mode
+
+                // Handle Edit or Split mode - sync CodeMirror
                 if ((newValue === 'edit' || newValue === 'split') && this.noteContent) {
                     this.updateEditorContent(this.noteContent);
+                }
+
+                // Setup scroll sync for Split mode
+                if (newValue === 'split') {
+                    this.setupScrollSync();
+                }
+
+                // Handle Rich mode - initialize/update Tiptap
+                if (newValue === 'rich') {
+                    if (!this.tiptapEditor) {
+                        this.initTiptap();
+                    } else if (this.noteContent) {
+                        this.updateTiptapContent(this.noteContent);
+                    }
+                }
+
+                // Sync from Tiptap when leaving Rich mode
+                if (oldValue === 'rich' && this.tiptapEditor) {
+                    const markdown = this.getTiptapContent();
+                    if (markdown !== this.noteContent) {
+                        this.noteContent = markdown;
+                        if (newValue === 'edit' || newValue === 'split') {
+                            this.updateEditorContent(this.noteContent);
+                        }
+                    }
                 }
             });
         });

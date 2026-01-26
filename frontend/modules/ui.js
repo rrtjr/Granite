@@ -17,7 +17,7 @@ export const uiMixin = {
         this.toasts = this.toasts.filter(t => t.id !== id);
     },
 
-    // Setup scroll synchronization
+    // Setup scroll synchronization for Split view
     setupScrollSync() {
         const editorScroller = this.editorView?.scrollDOM;
         // Preview container is the scrollable parent of .markdown-preview
@@ -90,7 +90,7 @@ export const uiMixin = {
         preview.addEventListener('scroll', this._previewScrollHandler);
     },
 
-    // Scroll to top of editor and preview
+    // Scroll to top of editor, preview, or Tiptap container
     scrollToTop() {
         this.isScrolling = true;
 
@@ -104,9 +104,19 @@ export const uiMixin = {
             }
         }
 
-        if (this.viewMode === 'preview' || this.viewMode === 'split') {
+        if (this.viewMode === 'split') {
             if (this._domCache.previewContainer) {
                 this._domCache.previewContainer.scrollTop = 0;
+            }
+        }
+
+        if (this.viewMode === 'rich') {
+            const tiptapContainer = document.getElementById('tiptap-editor');
+            if (tiptapContainer) {
+                const scrollParent = tiptapContainer.closest('.overflow-y-auto');
+                if (scrollParent) {
+                    scrollParent.scrollTop = 0;
+                }
             }
         }
 

@@ -72,6 +72,9 @@
     <!-- CodeMirror 6 - Local bundle (guaranteed single @codemirror/state instance) -->
     <script src="/static/codemirror6.bundle.js"></script>
 
+    <!-- Tiptap - Local bundle for Rich view WYSIWYG editing -->
+    <script src="/static/tiptap.bundle.js"></script>
+
     <!-- Theme styles will be loaded dynamically -->
     <link rel="stylesheet" id="theme-stylesheet" href="">
 
@@ -617,6 +620,245 @@
 
         .spreadsheet-active {
             box-shadow: 0 0 0 2px var(--accent-primary);
+        }
+
+        /* Tiptap Editor Styles */
+        .tiptap-container {
+            padding: 1.5rem;
+            min-height: 100%;
+        }
+
+        .tiptap-container.reading-width-narrow {
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tiptap-container.reading-width-medium {
+            max-width: 850px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tiptap-container.reading-width-wide {
+            max-width: 1100px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tiptap-container.reading-width-full {
+            max-width: none;
+        }
+
+        .tiptap-editor-content {
+            outline: none;
+            min-height: 300px;
+        }
+
+        .tiptap-editor-content > * + * {
+            margin-top: 0.75em;
+        }
+
+        .tiptap-editor-content p {
+            line-height: 1.6;
+        }
+
+        .tiptap-editor-content h1,
+        .tiptap-editor-content h2,
+        .tiptap-editor-content h3,
+        .tiptap-editor-content h4,
+        .tiptap-editor-content h5,
+        .tiptap-editor-content h6 {
+            line-height: 1.3;
+            font-weight: 600;
+        }
+
+        .tiptap-editor-content h1 { font-size: 2em; margin-top: 1em; }
+        .tiptap-editor-content h2 { font-size: 1.5em; margin-top: 0.9em; }
+        .tiptap-editor-content h3 { font-size: 1.25em; margin-top: 0.8em; }
+        .tiptap-editor-content h4 { font-size: 1.1em; margin-top: 0.7em; }
+
+        .tiptap-editor-content ul,
+        .tiptap-editor-content ol {
+            padding-left: 1.5em;
+        }
+
+        .tiptap-editor-content li {
+            margin: 0.25em 0;
+        }
+
+        .tiptap-editor-content blockquote {
+            border-left: 3px solid var(--accent-primary);
+            padding-left: 1em;
+            margin-left: 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .tiptap-editor-content code {
+            background-color: var(--bg-tertiary);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-size: 0.9em;
+            font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+        }
+
+        .tiptap-editor-content pre {
+            background-color: var(--bg-tertiary);
+            padding: 1em;
+            border-radius: 0.5em;
+            overflow-x: auto;
+        }
+
+        .tiptap-editor-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        /* Wikilink styling in Tiptap */
+        .tiptap-editor-content .wikilink,
+        .wikilink {
+            color: var(--accent-primary);
+            text-decoration: none;
+            cursor: pointer;
+            background-color: var(--accent-light, rgba(124, 58, 237, 0.1));
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+
+        .tiptap-editor-content .wikilink:hover,
+        .wikilink:hover {
+            background-color: var(--accent-primary);
+            color: white;
+        }
+
+        /* Image embed styling in Tiptap */
+        .tiptap-editor-content .image-embed,
+        .tiptap-image-embed {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        /* Spreadsheet block in Tiptap */
+        .tiptap-editor-content .spreadsheet-block,
+        .spreadsheet-block {
+            margin: 1rem 0;
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--bg-secondary);
+        }
+
+        .spreadsheet-block .spreadsheet-placeholder,
+        .spreadsheet-block .spreadsheet-name {
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .spreadsheet-block .spreadsheet-edit-hint {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            text-align: center;
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border-primary);
+        }
+
+        .spreadsheet-block .tiptap-spreadsheet {
+            width: 100%;
+        }
+
+        /* Mermaid block in Tiptap */
+        .tiptap-editor-content .mermaid-block,
+        .mermaid-block {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .mermaid-block .mermaid-placeholder {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .mermaid-block .mermaid-error {
+            color: var(--error);
+            font-size: 0.875rem;
+        }
+
+        .mermaid-block svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Placeholder styling */
+        .tiptap-editor-content p.is-editor-empty:first-child::before {
+            content: attr(data-placeholder);
+            color: var(--text-tertiary);
+            float: left;
+            height: 0;
+            pointer-events: none;
+        }
+
+        /* Block selection styling */
+        .ProseMirror-selectednode {
+            outline: 2px solid var(--accent-primary);
+            outline-offset: 2px;
+        }
+
+        /* Table styling in Tiptap */
+        .tiptap-editor-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1rem 0;
+        }
+
+        .tiptap-editor-content th,
+        .tiptap-editor-content td {
+            border: 1px solid var(--border-primary);
+            padding: 0.5rem;
+            text-align: left;
+        }
+
+        .tiptap-editor-content th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+        }
+
+        /* Task list styling */
+        .tiptap-editor-content ul[data-type="taskList"] {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .tiptap-editor-content ul[data-type="taskList"] li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .tiptap-editor-content ul[data-type="taskList"] input[type="checkbox"] {
+            margin-top: 0.25rem;
+        }
+
+        /* Link styling in Tiptap */
+        .tiptap-editor-content a,
+        .tiptap-link {
+            color: var(--accent-primary);
+            text-decoration: underline;
+        }
+
+        .tiptap-editor-content a:hover,
+        .tiptap-link:hover {
+            text-decoration: none;
         }
 
         /* Reading Preferences - Content Width */
@@ -2790,6 +3032,7 @@
                                     :style="viewMode === 'edit' ? 'background-color: var(--accent-primary); color: white;' : 'color: var(--text-secondary);'"
                                     @mouseenter="if (viewMode !== 'edit') $el.style.backgroundColor = 'var(--bg-secondary)'"
                                     @mouseleave="if (viewMode !== 'edit') $el.style.backgroundColor = 'transparent'"
+                                    title="Raw markdown editing"
                                 >
                                     Edit
                                 </button>
@@ -2799,17 +3042,19 @@
                                     :style="viewMode === 'split' ? 'background-color: var(--accent-primary); color: white;' : 'color: var(--text-secondary);'"
                                     @mouseenter="if (viewMode !== 'split') $el.style.backgroundColor = 'var(--bg-secondary)'"
                                     @mouseleave="if (viewMode !== 'split') $el.style.backgroundColor = 'transparent'"
+                                    title="Editor + live preview"
                                 >
                                     Split
                                 </button>
                                 <button
-                                    @click="viewMode = 'preview'"
+                                    @click="viewMode = 'rich'"
                                     class="px-2 md:px-3 py-1 text-xs md:text-sm rounded transition"
-                                    :style="viewMode === 'preview' ? 'background-color: var(--accent-primary); color: white;' : 'color: var(--text-secondary);'"
-                                    @mouseenter="if (viewMode !== 'preview') $el.style.backgroundColor = 'var(--bg-secondary)'"
-                                    @mouseleave="if (viewMode !== 'preview') $el.style.backgroundColor = 'transparent'"
+                                    :style="viewMode === 'rich' ? 'background-color: var(--accent-primary); color: white;' : 'color: var(--text-secondary);'"
+                                    @mouseenter="if (viewMode !== 'rich') $el.style.backgroundColor = 'var(--bg-secondary)'"
+                                    @mouseleave="if (viewMode !== 'rich') $el.style.backgroundColor = 'transparent'"
+                                    title="WYSIWYG editing"
                                 >
-                                    Preview
+                                    Rich
                                 </button>
                             </div>
 
@@ -2903,7 +3148,7 @@
 
                     <!-- Editor/Preview/Graph -->
                     <div class="flex-1 flex relative" style="min-height: 0;">
-                        <!-- Editor -->
+                        <!-- Editor (Raw Markdown - Edit or Split mode) -->
                         <div
                             x-show="!currentImage && (viewMode === 'edit' || viewMode === 'split')"
                             class="flex flex-col"
@@ -2934,12 +3179,38 @@
                             @mouseout="if(!isResizingSplit) { $el.style.opacity='0.5'; $el.style.background='linear-gradient(90deg, transparent 0%, var(--border-secondary) 50%, transparent 100%)' }"
                         ></div>
 
-                        <!-- Preview -->
+                        <!-- Preview (Split mode only - rendered markdown) -->
                         <div
-                            x-show="(viewMode === 'preview' || viewMode === 'split') && !currentImage"
+                            x-show="viewMode === 'split' && !currentImage"
                             class="overflow-y-auto overflow-x-hidden custom-scrollbar"
                             style="background-color: var(--bg-primary); min-height: 0;"
-                            :style="viewMode === 'split' ? `width: ${100 - editorWidth}%;` : 'width: 100%;'"
+                            :style="`width: ${100 - editorWidth}%;`"
+                        >
+                            <div
+                                class="markdown-preview note-preview"
+                                :class="{
+                                    'reading-width-narrow': readingWidth === 'narrow',
+                                    'reading-width-medium': readingWidth === 'medium',
+                                    'reading-width-wide': readingWidth === 'wide',
+                                    'reading-width-full': readingWidth === 'full',
+                                    'align-left': contentAlign === 'left',
+                                    'align-center': contentAlign === 'center',
+                                    'align-justified': contentAlign === 'justified',
+                                    'margins-compact': contentMargins === 'compact',
+                                    'margins-normal': contentMargins === 'normal',
+                                    'margins-relaxed': contentMargins === 'relaxed',
+                                    'margins-extra-relaxed': contentMargins === 'extra-relaxed'
+                                }"
+                                x-html="renderedMarkdown"
+                                @click="handleInternalLink($event)"
+                            ></div>
+                        </div>
+
+                        <!-- Rich View (Tiptap WYSIWYG - Rich mode only) -->
+                        <div
+                            x-show="viewMode === 'rich' && !currentImage"
+                            class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar w-full"
+                            style="background-color: var(--bg-primary); min-height: 0;"
                         >
                             <!-- Note Properties/Metadata Panel -->
                             <div
@@ -3051,24 +3322,18 @@
                                 </div>
                             </div>
 
+                            <!-- Tiptap Editor Container -->
                             <div
-                                class="markdown-preview note-preview"
+                                id="tiptap-editor"
+                                x-ref="tiptapContainer"
+                                class="tiptap-container"
                                 :class="{
                                     'pt-2': getHasMetadata() && currentNote,
                                     'reading-width-narrow': readingWidth === 'narrow',
                                     'reading-width-medium': readingWidth === 'medium',
                                     'reading-width-wide': readingWidth === 'wide',
                                     'reading-width-full': readingWidth === 'full',
-                                    'align-left': contentAlign === 'left',
-                                    'align-center': contentAlign === 'center',
-                                    'align-justified': contentAlign === 'justified',
-                                    'margins-compact': contentMargins === 'compact',
-                                    'margins-normal': contentMargins === 'normal',
-                                    'margins-relaxed': contentMargins === 'relaxed',
-                                    'margins-extra-relaxed': contentMargins === 'extra-relaxed'
                                 }"
-                                x-html="renderedMarkdown"
-                                @click="handleInternalLink($event)"
                             ></div>
 
                             <!-- Table of Contents Floating Panel -->

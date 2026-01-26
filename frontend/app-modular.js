@@ -6,7 +6,7 @@ console.log('[Granite] Starting module loader...');
 // Use dynamic imports with error handling to identify which module fails
 let CONFIG, ErrorHandler;
 let stateMixin, helpersMixin, themesMixin, tagsMixin, favoritesMixin, templatesMixin;
-let statsMixin, metadataMixin, sidebarMixin, settingsMixin, editorMixin;
+let statsMixin, metadataMixin, sidebarMixin, settingsMixin, editorMixin, tiptapMixin;
 let notesMixin, foldersMixin, folderOperationsMixin, folderRenderMixin;
 let searchMixin, imagesMixin, pluginsMixin;
 let graphMixin, markdownMixin, uiMixin, exportMixin, initMixin;
@@ -26,6 +26,7 @@ async function loadModules() {
         { name: 'sidebar', path: './modules/sidebar.js' },
         { name: 'settings', path: './modules/settings.js' },
         { name: 'editor', path: './modules/editor.js' },
+        { name: 'tiptap', path: './modules/tiptap.js' },
         { name: 'notes', path: './modules/notes.js' },
         { name: 'folders', path: './modules/folders.js' },
         { name: 'folder-operations', path: './modules/folder-operations.js' },
@@ -68,6 +69,7 @@ async function loadModules() {
     sidebarMixin = loaded.sidebar.sidebarMixin;
     settingsMixin = loaded.settings.settingsMixin;
     editorMixin = loaded.editor.editorMixin;
+    tiptapMixin = loaded.tiptap.tiptapMixin;
     notesMixin = loaded.notes.notesMixin;
     foldersMixin = loaded.folders.foldersMixin;
     folderOperationsMixin = loaded['folder-operations'].folderOperationsMixin;
@@ -91,7 +93,7 @@ async function loadModules() {
     // Verify all mixins are defined
     const mixins = {
         stateMixin, helpersMixin, themesMixin, tagsMixin, favoritesMixin, templatesMixin,
-        statsMixin, metadataMixin, sidebarMixin, settingsMixin, editorMixin,
+        statsMixin, metadataMixin, sidebarMixin, settingsMixin, editorMixin, tiptapMixin,
         notesMixin, foldersMixin, folderOperationsMixin, folderRenderMixin,
         searchMixin, imagesMixin, pluginsMixin,
         graphMixin, markdownMixin, uiMixin, exportMixin, initMixin,
@@ -143,6 +145,7 @@ function noteApp() {
             sidebarMixin,
             settingsMixin,
             editorMixin,
+            tiptapMixin,
             notesMixin,
             foldersMixin,
             folderOperationsMixin,
