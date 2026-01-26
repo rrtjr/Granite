@@ -146,6 +146,9 @@ export const tiptapMixin = {
             contentElement.classList.add(`margins-${this.contentMargins}`);
         }
 
+        // Force reflow to ensure immediate visual update
+        void contentElement.offsetHeight;
+
         Debug.log('Updated Tiptap reading preferences:', {
             width: this.readingWidth,
             align: this.contentAlign,
