@@ -170,29 +170,40 @@ export const tiptapMixin = {
     executeBubbleMenuAction(action) {
         if (!this.tiptapEditor) return;
 
-        // Use commands directly instead of chaining to avoid transaction issues
-        const editor = this.tiptapEditor;
+        // Store selection before any DOM changes
+        const { from, to } = this.tiptapEditor.state.selection;
 
-        switch (action) {
-            case 'bold':
-                editor.commands.toggleBold();
-                break;
-            case 'italic':
-                editor.commands.toggleItalic();
-                break;
-            case 'underline':
-                editor.commands.toggleUnderline();
-                break;
-            case 'strike':
-                editor.commands.toggleStrike();
-                break;
-            case 'highlight':
-                editor.commands.toggleHighlight({ color: '#fef08a' });
-                break;
-            case 'code':
-                editor.commands.toggleCode();
-                break;
-        }
+        // Use setTimeout to ensure we're in a clean state
+        setTimeout(() => {
+            // Restore selection and apply formatting
+            this.tiptapEditor
+                .chain()
+                .focus()
+                .setTextSelection({ from, to })
+                .run();
+
+            // Now apply the formatting
+            switch (action) {
+                case 'bold':
+                    this.tiptapEditor.chain().toggleBold().run();
+                    break;
+                case 'italic':
+                    this.tiptapEditor.chain().toggleItalic().run();
+                    break;
+                case 'underline':
+                    this.tiptapEditor.chain().toggleUnderline().run();
+                    break;
+                case 'strike':
+                    this.tiptapEditor.chain().toggleStrike().run();
+                    break;
+                case 'highlight':
+                    this.tiptapEditor.chain().toggleHighlight({ color: '#fef08a' }).run();
+                    break;
+                case 'code':
+                    this.tiptapEditor.chain().toggleCode().run();
+                    break;
+            }
+        }, 0);
     },
 
     // Get character/word count from Tiptap
