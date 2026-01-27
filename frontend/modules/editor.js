@@ -223,4 +223,40 @@ export const editorMixin = {
 
         this.editorView.focus();
     },
+
+    async formatMarkdown() {
+        if (!this.editorView) return;
+
+        const content = this.getEditorContent();
+
+        try {
+            const response = await fetch('/api/format', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ content: content })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to format markdown');
+            }
+
+            const data = await response.json();
+
+            // Only update if changed
+            if (data.content !== content) {
+                // Keep cursor position approx consistent?
+                // Replacing entire doc resets cursor usually.
+                // updateEditorContent handles full replacement.
+                // We might want to preserve scroll at least.
+                // Simple replacement is fine for now.
+                this.updateEditorContent(data.content);
+                Debug.log('Markdown formatted');
+            }
+        } catch (error) {
+            console.error('Error formatting markdown:', error);
+            Debug.log('Error formatting markdown: ' + error.message);
+        }
+    },
 };

@@ -3264,6 +3264,19 @@
                                 style="background-color: var(--bg-tertiary); border: 1px solid var(--border-primary);"
                             >
                                 <button
+                                    @click="formatMarkdown()"
+                                    class="p-2 transition"
+                                    style="color: var(--text-secondary);"
+                                    title="Format Markdown"
+                                    @mouseenter="$el.style.backgroundColor = 'var(--bg-secondary)'"
+                                    @mouseleave="$el.style.backgroundColor = 'transparent'"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                                    </svg>
+                                </button>
+                                <div style="width: 1px; height: 20px; background-color: var(--border-primary);"></div>
+                                <button
                                     @click="exportToHTML()"
                                     class="p-2 transition"
                                     style="color: var(--text-secondary);"

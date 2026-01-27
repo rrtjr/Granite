@@ -20,6 +20,7 @@ from .routers import (
     api_config_router,
     auth_router,
     folders_router,
+    formatter_router,
     images_router,
     notes_router,
     pages_router,
@@ -102,6 +103,7 @@ app.include_router(graph_router)
 app.include_router(plugins_router)
 app.include_router(plugins_git_router)
 app.include_router(plugins_pdf_router)
+app.include_router(formatter_router)
 app.include_router(pages_router)  # SPA catch-all - must be last
 
 
