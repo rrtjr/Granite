@@ -33,10 +33,10 @@ export const tiptapMixin = {
         Debug.log('Initializing Tiptap...');
 
         const {
-            Editor, StarterKit, Placeholder, Link, Image,
+            Editor, StarterKit, Placeholder, Image,
             CodeBlockLowlight, Table, TableRow, TableCell,
-            TableHeader, TaskList, TaskItem, Typography,
-            Highlight, CharacterCount, BubbleMenu, lowlight
+            TableHeader, TaskList, TaskItem,
+            Underline, Highlight, CharacterCount, BubbleMenu, lowlight
         } = window.Tiptap;
 
         const self = this;
@@ -80,24 +80,22 @@ export const tiptapMixin = {
 
         const htmlContent = this.markdownToHtml(content);
         Debug.log('Markdown to HTML:', { contentLength: content.length, htmlLength: htmlContent.length });
-        
+
         const initialHtml = this.addBannerToHtml(this.noteContent || '', htmlContent);
         Debug.log('After banner:', { initialHtmlLength: initialHtml.length });
 
-        this.tiptapEditor = new Editor({
+        // Store raw editor reference outside Alpine's reactivity to prevent proxy interference
+        const editor = new Editor({
             element: container,
             extensions: [
                 StarterKit.configure({
                     codeBlock: false, // Use CodeBlockLowlight instead
-                    underline: true,  // StarterKit v3 includes Underline
                     heading: {
                         levels: [1, 2, 3, 4, 5, 6],
                     },
-                    link: {
-                        openOnClick: false,
-                        HTMLAttributes: { class: 'tiptap-link' }
-                    },
+                    underline: false, // Disable StarterKit's underline - we add it separately for explicit control
                 }),
+                Underline,
                 Placeholder.configure({
                     placeholder: 'Start writing...',
                 }),
@@ -114,9 +112,6 @@ export const tiptapMixin = {
                 TableHeader,
                 TaskList,
                 TaskItem.configure({ nested: true }),
-                // New extensions
-                Typography,  // Smart quotes, dashes, ellipses
-                // Underline is included in StarterKit v3
                 Highlight.configure({ multicolor: true }),  // Text highlighting
                 CharacterCount.configure({ limit: null }),  // Word/character count
                 BubbleMenu.configure({
@@ -154,11 +149,15 @@ export const tiptapMixin = {
             },
         });
 
+        // Assign to component property and store raw reference for bubble menu
+        this.tiptapEditor = editor;
+        window._graniteTiptapEditor = editor;  // Raw reference bypasses Alpine proxy
+
         this.tiptapReady = true;
         Debug.log('Tiptap initialized successfully!');
-        Debug.log('Tiptap final HTML:', { 
-            finalHtmlLength: this.tiptapEditor.getHTML().length,
-            finalHtmlPreview: this.tiptapEditor.getHTML().substring(0, 300)
+        Debug.log('Tiptap final HTML:', {
+            finalHtmlLength: editor.getHTML().length,
+            finalHtmlPreview: editor.getHTML().substring(0, 300)
         });
 
         // Apply current reading preferences to the editor
@@ -179,23 +178,32 @@ export const tiptapMixin = {
             this._tiptapSyncTimeout = null;
         }
 
-        // Ensure we have a valid selection before applying formatting
-        const { from, to } = this.tiptapEditor.state.selection;
-        if (from === to) return; // No selection, nothing to format
-
-        // Apply formatting using current state - avoid focus() which can cause state mismatch
-        const commands = {
-            bold: () => this.tiptapEditor.commands.toggleBold(),
-            italic: () => this.tiptapEditor.commands.toggleItalic(),
-            underline: () => this.tiptapEditor.commands.toggleUnderline(),
-            strike: () => this.tiptapEditor.commands.toggleStrike(),
-            highlight: () => this.tiptapEditor.commands.toggleHighlight({ color: '#fef08a' }),
-            code: () => this.tiptapEditor.commands.toggleCode(),
-        };
-
-        if (commands[action]) {
-            commands[action]();
-        }
+        // Use raw editor reference (bypasses Alpine's reactive proxy) and defer to next frame
+        // This prevents "mismatched transaction" errors from proxy/state conflicts
+        requestAnimationFrame(() => {
+            const editor = window._graniteTiptapEditor;
+            if (!editor) return;
+            switch (action) {
+                case 'bold':
+                    editor.chain().focus().toggleBold().run();
+                    break;
+                case 'italic':
+                    editor.chain().focus().toggleItalic().run();
+                    break;
+                case 'underline':
+                    editor.chain().focus().toggleUnderline().run();
+                    break;
+                case 'strike':
+                    editor.chain().focus().toggleStrike().run();
+                    break;
+                case 'highlight':
+                    editor.chain().focus().toggleHighlight({ color: '#fef08a' }).run();
+                    break;
+                case 'code':
+                    editor.chain().focus().toggleCode().run();
+                    break;
+            }
+        });
     },
 
     // Get character/word count from Tiptap
@@ -214,6 +222,7 @@ export const tiptapMixin = {
         if (this.tiptapEditor) {
             this.tiptapEditor.destroy();
             this.tiptapEditor = null;
+            window._graniteTiptapEditor = null;  // Clear raw reference
             this.tiptapReady = false;
             this._frontmatter = '';
             Debug.log('Tiptap destroyed');
@@ -473,7 +482,7 @@ export const tiptapMixin = {
 
         // Clean up extra whitespace - but preserve single blank lines between paragraphs
         markdown = markdown.replace(/\n{3,}/g, '\n\n');
-        
+
         // Fix list items that have extra blank lines between them
         markdown = markdown.replace(/^([-*+]|\d+\.)\s+(.+)\n\n(?=([-*+]|\d+\.)\s)/gm, '$1 $2\n');
 
@@ -500,17 +509,17 @@ export const tiptapMixin = {
             replacement: (content, node, options) => {
                 // Remove leading/trailing newlines and collapse internal newlines
                 content = content.replace(/^\n+/, '').replace(/\n+$/, '').replace(/\n\n+/g, '\n');
-                
+
                 const parent = node.parentNode;
                 const isOrdered = parent && parent.nodeName === 'OL';
-                const prefix = isOrdered 
+                const prefix = isOrdered
                     ? (Array.from(parent.children).indexOf(node) + 1) + '. '
                     : options.bulletListMarker + ' ';
-                
+
                 // Handle nested content with proper indentation
                 const lines = content.split('\n');
                 const indentedContent = lines.map((line, i) => i === 0 ? line : '    ' + line).join('\n');
-                
+
                 return prefix + indentedContent + '\n';
             }
         });
@@ -600,15 +609,15 @@ export const tiptapMixin = {
                         // Escape pipes in cell content
                         return text.replace(/\|/g, '\\|');
                     });
-                    
+
                     markdown += '| ' + cellContents.join(' | ') + ' |\n';
-                    
+
                     // Add separator row after header
                     if (rowIndex === 0) {
                         markdown += '| ' + cells.map(() => '---').join(' | ') + ' |\n';
                     }
                 });
-                
+
                 return markdown + '\n';
             }
         });
@@ -836,7 +845,6 @@ export const tiptapMixin = {
     // Create Image Embed extension
     createImageEmbedExtension() {
         const { Node, mergeAttributes } = window.Tiptap;
-        const self = this;
 
         return Node.create({
             name: 'imageEmbed',
@@ -915,7 +923,7 @@ export const tiptapMixin = {
 
     // Create Math Inline extension (for $...$)
     createMathInlineExtension() {
-        const { Node, mergeAttributes } = window.Tiptap;
+        const { Node } = window.Tiptap;
 
         return Node.create({
             name: 'mathInline',
@@ -939,7 +947,7 @@ export const tiptapMixin = {
                 }];
             },
 
-            renderHTML({ node, HTMLAttributes }) {
+            renderHTML({ node }) {
                 // Render KaTeX HTML
                 let katexHtml = '';
                 try {
@@ -952,7 +960,7 @@ export const tiptapMixin = {
                 } catch (e) {
                     katexHtml = `$${node.attrs.tex}$`;
                 }
-                
+
                 const span = document.createElement('span');
                 span.className = 'math-inline';
                 span.setAttribute('data-math-tex', node.attrs.tex);
@@ -965,7 +973,7 @@ export const tiptapMixin = {
 
     // Create Math Block extension (for $$...$$)
     createMathBlockExtension() {
-        const { Node, mergeAttributes } = window.Tiptap;
+        const { Node } = window.Tiptap;
 
         return Node.create({
             name: 'mathBlock',
@@ -988,7 +996,7 @@ export const tiptapMixin = {
                 }];
             },
 
-            renderHTML({ node, HTMLAttributes }) {
+            renderHTML({ node }) {
                 // Render KaTeX HTML
                 let katexHtml = '';
                 try {
@@ -1001,7 +1009,7 @@ export const tiptapMixin = {
                 } catch (e) {
                     katexHtml = `$$${node.attrs.tex}$$`;
                 }
-                
+
                 const div = document.createElement('div');
                 div.className = 'math-display';
                 div.setAttribute('data-math-tex', node.attrs.tex);

@@ -15,7 +15,7 @@ import { TaskList } from '@tiptap/extension-task-list';
 import { TaskItem } from '@tiptap/extension-task-item';
 import { Mathematics } from '@tiptap/extension-mathematics';
 import { BubbleMenu } from '@tiptap/extension-bubble-menu';
-import { Typography } from '@tiptap/extension-typography';
+import Typography from '@tiptap/extension-typography';
 import { Underline } from '@tiptap/extension-underline';
 import { Highlight } from '@tiptap/extension-highlight';
 import { CharacterCount } from '@tiptap/extension-character-count';
@@ -60,5 +60,5 @@ window.Tiptap = {
 
 // Signal that Tiptap is ready
 window.TiptapReady = true;
-console.log('[Granite] Tiptap bundle loaded successfully');
+if (window.GRANITE_DEBUG) console.log('[Granite] Tiptap bundle loaded successfully');
 window.dispatchEvent(new Event('tiptap-ready'));

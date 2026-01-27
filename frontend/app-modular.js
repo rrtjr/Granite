@@ -1,7 +1,12 @@
 // Granite Frontend - Main App Entry Point (Modular)
 // This file composes all mixins into the main Alpine.js noteApp component
 
-console.log('[Granite] Starting module loader...');
+// Debug logging helper - checks GRANITE_DEBUG or CONFIG.debug
+const debugLog = (...args) => {
+    if (window.GRANITE_DEBUG || window.CONFIG?.debug) console.log(...args);
+};
+
+debugLog('[Granite] Starting module loader...');
 
 // Use dynamic imports with error handling to identify which module fails
 let CONFIG, ErrorHandler;
@@ -46,9 +51,9 @@ async function loadModules() {
 
     for (const mod of modules) {
         try {
-            console.log(`[Granite] Loading ${mod.name}.js...`);
+            debugLog(`[Granite] Loading ${mod.name}.js...`);
             loaded[mod.name] = await import(mod.path);
-            console.log(`[Granite] OK: ${mod.name}.js`);
+            debugLog(`[Granite] OK: ${mod.name}.js`);
         } catch (error) {
             console.error(`[Granite] FAILED: ${mod.name}.js -`, error.message);
             throw new Error(`Failed to load ${mod.name}.js: ${error.message}`);
@@ -87,8 +92,9 @@ async function loadModules() {
     // Make CONFIG and ErrorHandler available globally
     window.CONFIG = CONFIG;
     window.ErrorHandler = ErrorHandler;
+    window.GRANITE_DEBUG = CONFIG.debug;  // Set debug flag for all scripts
 
-    console.log('[Granite] All modules loaded successfully!');
+    debugLog('[Granite] All modules loaded successfully!');
 
     // Verify all mixins are defined
     const mixins = {
@@ -105,7 +111,7 @@ async function loadModules() {
             console.error(`[Granite] Mixin ${name} is ${mixin}!`);
             throw new Error(`Mixin ${name} is ${mixin}`);
         }
-        console.log(`[Granite] Mixin OK: ${name} (${typeof mixin})`);
+        debugLog(`[Granite] Mixin OK: ${name} (${typeof mixin})`);
     }
 
     return true;
@@ -160,7 +166,7 @@ function noteApp() {
             initMixin,
             spreadsheetMixin,
         );
-        console.log('[Granite] noteApp() built successfully with', Object.keys(result).length, 'properties');
+        debugLog('[Granite] noteApp() built successfully with', Object.keys(result).length, 'properties');
         return result;
     } catch (error) {
         console.error('[Granite] Error building noteApp:', error);
@@ -186,13 +192,13 @@ loadModules()
     .then(() => {
         // Expose noteApp globally for Alpine.js x-data binding
         window.noteApp = noteApp;
-        console.log('[Granite] noteApp registered. Loading Alpine.js...');
+        debugLog('[Granite] noteApp registered. Loading Alpine.js...');
 
         // Dynamically load Alpine.js after noteApp is ready
         const alpineScript = document.createElement('script');
         alpineScript.src = 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js';
         alpineScript.onload = () => {
-            console.log('[Granite] Alpine.js loaded and initialized.');
+            debugLog('[Granite] Alpine.js loaded and initialized.');
         };
         alpineScript.onerror = (err) => {
             console.error('[Granite] Failed to load Alpine.js:', err);
