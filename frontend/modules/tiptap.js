@@ -670,7 +670,10 @@ export const tiptapMixin = {
             this._frontmatter = frontmatter;
 
             const htmlWithBanner = this.addBannerToHtml(markdown, this.markdownToHtml(content));
-            this.tiptapEditor.commands.setContent(htmlWithBanner, false);
+
+            // Use raw editor reference to avoid Proxy interference which causes "mismatched transaction" errors
+            const editor = window._graniteTiptapEditor || this.tiptapEditor;
+            editor.commands.setContent(htmlWithBanner, false);
         } catch (err) {
             Debug.error('updateTiptapContent failed, rebuilding editor:', err);
             this._tiptapUpdating = false;
