@@ -47,6 +47,17 @@ export const notesMixin = {
             this.currentImage = '';
             this.lastSaved = false;
 
+            // Keep Rich view in sync when user lands directly in it
+            if (this.viewMode === 'rich') {
+                this.$nextTick(() => {
+                    if (!this.tiptapEditor) {
+                        this.initTiptap();
+                    } else {
+                        this.updateTiptapContent(this.noteContent);
+                    }
+                });
+            }
+
             this.undoHistory = [data.content];
             this.redoHistory = [];
 

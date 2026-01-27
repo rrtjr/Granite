@@ -65,6 +65,9 @@ playwright-report/
 # Build artifacts
 frontend/static/
 frontend/codemirror6.bundle.js
+frontend/codemirror6.bundle.js.map
+frontend/tiptap.bundle.js
+frontend/tiptap.bundle.js.map
 node_modules/
 
 # Docker development overrides

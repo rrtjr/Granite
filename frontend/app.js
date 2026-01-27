@@ -13,6 +13,7 @@ import { metadataMixin } from './modules/metadata.js';
 import { sidebarMixin } from './modules/sidebar.js';
 import { settingsMixin } from './modules/settings.js';
 import { editorMixin } from './modules/editor.js';
+import { tiptapMixin } from './modules/tiptap.js';
 import { notesMixin } from './modules/notes.js';
 import { foldersMixin } from './modules/folders.js';
 import { searchMixin } from './modules/search.js';
@@ -47,6 +48,7 @@ function noteApp() {
         ...sidebarMixin,
         ...settingsMixin,
         ...editorMixin,
+        ...tiptapMixin,
         ...notesMixin,
         ...foldersMixin,
         ...searchMixin,
