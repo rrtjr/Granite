@@ -682,28 +682,237 @@ export const panesMixin = {
         this.scrollPaneIntoView(this.openPanes[prevIndex].id);
     },
 
-    // Render markdown preview for a pane (strips frontmatter since it's shown in the metadata panel)
+    // Render markdown preview for a pane (includes banner, wikilinks, images)
     renderPanePreview(pane) {
         if (!pane || !pane.content) return '';
 
-        // Strip frontmatter from content before rendering
-        let content = pane.content;
-        if (content.startsWith('---')) {
-            const endIndex = content.indexOf('\n---', 3);
-            if (endIndex !== -1) {
-                content = content.slice(endIndex + 4).trim();
+        const originalContent = pane.content;
+
+        // Parse banner from frontmatter (before stripping)
+        let bannerUrl = null;
+        if (typeof this.parseBannerFromContent === 'function') {
+            const bannerInfo = this.parseBannerFromContent(originalContent);
+            if (bannerInfo && bannerInfo.url) {
+                bannerUrl = bannerInfo.url;
             }
         }
 
-        // Use existing markdown rendering
-        if (this.renderMarkdownContent) {
-            return this.renderMarkdownContent(content);
+        // Strip frontmatter from content
+        let contentToRender = originalContent;
+        if (contentToRender.trim().startsWith('---')) {
+            const lines = contentToRender.split('\n');
+            if (lines[0].trim() === '---') {
+                let endIdx = -1;
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim() === '---') {
+                        endIdx = i;
+                        break;
+                    }
+                }
+                if (endIdx !== -1) {
+                    contentToRender = lines.slice(endIdx + 1).join('\n').trim();
+                }
+            }
         }
-        // Fallback to marked if available
+
+        // Process image embeds ![[image]]
+        if (this.notes) {
+            const allImages = this.notes.filter(n => n.type === 'image');
+            contentToRender = contentToRender.replace(
+                /!\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,
+                (match, target, altText) => {
+                    const imageTarget = target.trim();
+                    const imageAlt = altText ? altText.trim() : imageTarget;
+                    const imageTargetLower = imageTarget.toLowerCase();
+
+                    const foundImage = allImages.find(img => {
+                        const nameLower = img.name.toLowerCase();
+                        return (
+                            img.name === imageTarget ||
+                            nameLower === imageTargetLower ||
+                            img.path === imageTarget ||
+                            img.path.toLowerCase() === imageTargetLower
+                        );
+                    });
+
+                    if (foundImage) {
+                        const encodedPath = foundImage.path.split('/').map(segment => encodeURIComponent(segment)).join('/');
+                        const safeAlt = imageAlt.replace(/"/g, '&quot;').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        return `<img src="/api/images/${encodedPath}" alt="${safeAlt}" title="${safeAlt}" />`;
+                    } else {
+                        const safeTarget = imageTarget.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        return `<span class="wikilink-broken" title="Image not found">![[${safeTarget}]]</span>`;
+                    }
+                }
+            );
+
+            // Process wikilinks [[link]]
+            const notes = this.notes;
+            const allFolders = this.allFolders || [];
+            contentToRender = contentToRender.replace(
+                /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,
+                (match, target, displayText) => {
+                    const linkTarget = target.trim();
+                    const linkText = displayText ? displayText.trim() : linkTarget;
+                    const linkTargetLower = linkTarget.toLowerCase();
+
+                    const noteExists = notes.some(n => {
+                        const pathLower = n.path.toLowerCase();
+                        const nameLower = n.name.toLowerCase();
+                        return (
+                            n.path === linkTarget ||
+                            n.path === linkTarget + '.md' ||
+                            pathLower === linkTargetLower ||
+                            pathLower === linkTargetLower + '.md' ||
+                            n.name === linkTarget ||
+                            n.name === linkTarget + '.md' ||
+                            nameLower === linkTargetLower ||
+                            nameLower === linkTargetLower + '.md' ||
+                            n.path.endsWith('/' + linkTarget) ||
+                            n.path.endsWith('/' + linkTarget + '.md') ||
+                            pathLower.endsWith('/' + linkTargetLower) ||
+                            pathLower.endsWith('/' + linkTargetLower + '.md')
+                        );
+                    });
+
+                    const folderExists = allFolders.some(f => {
+                        const folderLower = f.toLowerCase();
+                        const folderName = f.split('/').pop();
+                        const folderNameLower = folderName.toLowerCase();
+                        return (
+                            f === linkTarget ||
+                            folderLower === linkTargetLower ||
+                            folderName === linkTarget ||
+                            folderNameLower === linkTargetLower ||
+                            f.endsWith('/' + linkTarget) ||
+                            folderLower.endsWith('/' + linkTargetLower)
+                        );
+                    });
+
+                    const safeHref = linkTarget.replace(/"/g, '%22');
+                    const safeText = linkText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    const linkExists = noteExists || folderExists;
+                    const brokenClass = linkExists ? '' : ' class="wikilink-broken"';
+                    const folderAttr = (folderExists && !noteExists) ? ' data-folder-link="true"' : '';
+                    return `<a href="${safeHref}"${brokenClass} data-wikilink="true"${folderAttr}>${safeText}</a>`;
+                }
+            );
+        }
+
+        // Render markdown
+        let html = '';
         if (window.marked) {
-            return window.marked.parse(content);
+            window.marked.setOptions({
+                breaks: true,
+                gfm: true,
+                highlight: function(code, lang) {
+                    if (lang && window.hljs && window.hljs.getLanguage(lang)) {
+                        try {
+                            return window.hljs.highlight(code, { language: lang }).value;
+                        } catch (err) {
+                            Debug.error('Highlight error:', err);
+                        }
+                    }
+                    return window.hljs ? window.hljs.highlightAuto(code).value : code;
+                }
+            });
+            html = window.marked.parse(contentToRender);
+        } else {
+            html = contentToRender;
         }
-        return content;
+
+        // Post-process: handle relative images and external links
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+
+        // Make external links open in new tab
+        const links = tempDiv.querySelectorAll('a');
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && typeof href === 'string') {
+                const isExternal = href.indexOf('http://') === 0 ||
+                                  href.indexOf('https://') === 0 ||
+                                  href.indexOf('//') === 0;
+                if (isExternal) {
+                    link.setAttribute('target', '_blank');
+                    link.setAttribute('rel', 'noopener noreferrer');
+                }
+            }
+        });
+
+        // Handle relative image paths
+        const images = tempDiv.querySelectorAll('img');
+        images.forEach(img => {
+            const src = img.getAttribute('src');
+            if (src && !src.startsWith('http://') && !src.startsWith('https://') &&
+                !src.startsWith('//') && !src.startsWith('/api/images/') &&
+                !src.startsWith('data:')) {
+
+                let imagePath = src;
+                if (!src.startsWith('/')) {
+                    const currentNoteFolder = pane.path ?
+                        (pane.path.includes('/') ? pane.path.substring(0, pane.path.lastIndexOf('/')) : '')
+                        : '';
+                    if (currentNoteFolder) {
+                        imagePath = `${currentNoteFolder}/${src}`;
+                    }
+                } else {
+                    imagePath = src.substring(1);
+                }
+
+                const encodedPath = imagePath.split('/').map(segment => encodeURIComponent(segment)).join('/');
+                img.setAttribute('src', `/api/images/${encodedPath}`);
+            }
+
+            const altText = img.getAttribute('alt');
+            if (altText) {
+                img.setAttribute('title', altText);
+            }
+        });
+
+        html = tempDiv.innerHTML;
+
+        // Add banner if present
+        if (bannerUrl) {
+            const safeUrl = bannerUrl.replace(/"/g, '%22');
+            const opacity = this.bannerOpacity || 0.5;
+
+            let titleHtml = '';
+            const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/i);
+            if (h1Match) {
+                const titleText = h1Match[1];
+                titleHtml = `<h1 class="banner-title">${titleText}</h1>`;
+                html = html.replace(h1Match[0], '');
+            }
+
+            const bannerHtml = `<div class="note-banner"><div class="banner-image" style="background-image: url('${safeUrl}'); opacity: ${opacity}"></div>${titleHtml}</div>`;
+            html = bannerHtml + html;
+        }
+
+        // Trigger math typesetting and mermaid rendering for this pane
+        setTimeout(() => {
+            const paneEl = document.querySelector(`[data-pane-id="${pane.id}"] .pane-preview`);
+            if (paneEl) {
+                // Syntax highlighting for code blocks
+                paneEl.querySelectorAll('pre code:not(.language-mermaid):not(.language-spreadsheet)').forEach((block) => {
+                    if (!block.classList.contains('hljs') && window.hljs) {
+                        window.hljs.highlightElement(block);
+                    }
+                });
+
+                // Math typesetting
+                if (typeof this.typesetMath === 'function') {
+                    this.typesetMath();
+                }
+
+                // Mermaid rendering
+                if (typeof this.renderMermaid === 'function') {
+                    this.renderMermaid();
+                }
+            }
+        }, 0);
+
+        return html;
     },
 
     // Extract frontmatter from pane content

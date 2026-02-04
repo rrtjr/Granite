@@ -4041,12 +4041,19 @@
                                         </div>
 
                                         <div
-                                            class="markdown-preview p-4"
+                                            class="markdown-preview note-preview p-4"
                                             :class="{
                                                 'reading-width-narrow': readingWidth === 'narrow',
                                                 'reading-width-medium': readingWidth === 'medium',
                                                 'reading-width-wide': readingWidth === 'wide',
-                                                'reading-width-full': readingWidth === 'full'
+                                                'reading-width-full': readingWidth === 'full',
+                                                'align-left': contentAlign === 'left',
+                                                'align-center': contentAlign === 'center',
+                                                'align-justified': contentAlign === 'justified',
+                                                'margins-compact': contentMargins === 'compact',
+                                                'margins-normal': contentMargins === 'normal',
+                                                'margins-relaxed': contentMargins === 'relaxed',
+                                                'margins-extra-relaxed': contentMargins === 'extra-relaxed'
                                             }"
                                             x-html="renderPanePreview(pane)"
                                             @click="handleInternalLink($event)"
