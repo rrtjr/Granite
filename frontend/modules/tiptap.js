@@ -770,7 +770,13 @@ export const tiptapMixin = {
 
     // Render special blocks (spreadsheets, mermaid) after content load
     renderTiptapSpecialBlocks() {
-        const container = this.$refs.tiptapContainer || document.getElementById('tiptap-editor');
+        // Choose container based on whether Rich Editor panel is open or using legacy view
+        let container;
+        if (this.showRichEditorPanel) {
+            container = this.$refs.tiptapPanelContainer || document.getElementById('tiptap-editor-panel');
+        } else {
+            container = this.$refs.tiptapContainer || document.getElementById('tiptap-editor');
+        }
         if (!container) return;
 
         // Render spreadsheets

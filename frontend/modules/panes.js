@@ -872,6 +872,12 @@ export const panesMixin = {
 
         html = tempDiv.innerHTML;
 
+        // Transform spreadsheet blocks to rendered tables
+        // Pass pane.content as sourceContent to ensure sheet names are extracted from the correct note
+        if (typeof this.transformSpreadsheetHtml === 'function') {
+            html = this.transformSpreadsheetHtml(html, pane.content);
+        }
+
         // Add banner if present
         if (bannerUrl) {
             const safeUrl = bannerUrl.replace(/"/g, '%22');
