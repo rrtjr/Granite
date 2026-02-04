@@ -1911,13 +1911,9 @@
             min-width: 40px !important;
             max-width: 40px !important;
             flex: 0 0 40px;
-            background-color: var(--bg-secondary);
             cursor: pointer;
             overflow: hidden; /* Prevent title text from overflowing */
-        }
-
-        .note-pane:not(.pane-active):hover {
-            background-color: var(--bg-tertiary);
+            /* background and border-left set by tab color system below */
         }
 
         /* Pane Header - horizontal (for active pane) */
@@ -2090,7 +2086,7 @@
             z-index: 5;
         }
 
-        /* Collapsed pane hover indicator */
+        /* Collapsed pane left indicator (structure only, colors set by tab color system) */
         .note-pane:not(.pane-active)::after {
             content: '';
             position: absolute;
@@ -2098,12 +2094,58 @@
             left: 0;
             bottom: 0;
             width: 3px;
-            background-color: transparent;
-            transition: background-color 0.2s;
+            transition: opacity 0.2s;
+        }
+
+        /* Distinct colors for collapsed pane tabs - theme-aware
+           Uses color-mix() to blend accent with theme background for smooth integration */
+        .note-pane:not(.pane-active):nth-child(6n+1) {
+            --tab-accent: var(--tab-color-1, var(--accent-primary, #3b82f6));
+        }
+        .note-pane:not(.pane-active):nth-child(6n+2) {
+            --tab-accent: var(--tab-color-2, #8b5cf6); /* Purple */
+        }
+        .note-pane:not(.pane-active):nth-child(6n+3) {
+            --tab-accent: var(--tab-color-3, var(--success, #10b981)); /* Green */
+        }
+        .note-pane:not(.pane-active):nth-child(6n+4) {
+            --tab-accent: var(--tab-color-4, var(--warning, #f59e0b)); /* Amber */
+        }
+        .note-pane:not(.pane-active):nth-child(6n+5) {
+            --tab-accent: var(--tab-color-5, var(--error, #ef4444)); /* Red */
+        }
+        .note-pane:not(.pane-active):nth-child(6n+6) {
+            --tab-accent: var(--tab-color-6, #06b6d4); /* Cyan */
+        }
+
+        /* Apply tab colors - background blends with theme */
+        .note-pane:not(.pane-active) {
+            background: color-mix(in srgb, var(--tab-accent) 12%, var(--bg-secondary, #f9fafb));
+            border-left: 3px solid var(--tab-accent);
+        }
+
+        .note-pane:not(.pane-active)::after {
+            background-color: var(--tab-accent);
+            opacity: 0.4;
+        }
+
+        .note-pane:not(.pane-active):hover {
+            background: color-mix(in srgb, var(--tab-accent) 18%, var(--bg-tertiary, #f3f4f6));
         }
 
         .note-pane:not(.pane-active):hover::after {
-            background-color: var(--accent-primary);
+            opacity: 1;
+        }
+
+        /* Fallback for browsers without color-mix support */
+        @supports not (background: color-mix(in srgb, red 50%, blue)) {
+            .note-pane:not(.pane-active) {
+                background-color: var(--bg-secondary);
+                border-left: 3px solid var(--tab-accent);
+            }
+            .note-pane:not(.pane-active):hover {
+                background-color: var(--bg-tertiary);
+            }
         }
 
         /* Mobile: show only active pane, hide collapsed tabs */
@@ -3811,21 +3853,22 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
                                     </svg>
                                 </button>
+                                <div style="width: 1px; height: 20px; background-color: var(--border-primary);"></div>
+                                <!-- Rich Editor Toggle (inside toolbar) -->
+                                <button
+                                    @click="showRichEditorPanel = !showRichEditorPanel; if(showRichEditorPanel && activePane) { $nextTick(() => { destroyTiptap(); initTiptap(); }); }"
+                                    class="px-2 py-1.5 transition flex items-center gap-1.5"
+                                    :style="showRichEditorPanel ? 'color: var(--accent-primary); background-color: var(--bg-secondary);' : 'color: var(--text-secondary);'"
+                                    title="Toggle Rich Editor panel"
+                                    @mouseenter="$el.style.backgroundColor = 'var(--bg-secondary)'"
+                                    @mouseleave="if (!showRichEditorPanel) $el.style.backgroundColor = 'transparent'"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                    <span class="text-xs font-medium hidden sm:inline">Rich</span>
+                                </button>
                             </div>
-
-                            <!-- Rich Editor Toggle Button -->
-                            <button
-                                @click="showRichEditorPanel = !showRichEditorPanel; if(showRichEditorPanel && activePane) { $nextTick(() => { destroyTiptap(); initTiptap(); }); }"
-                                class="px-3 py-1.5 text-sm rounded-lg flex items-center gap-2 transition"
-                                :class="showRichEditorPanel ? 'rich-editor-btn-active' : ''"
-                                :style="showRichEditorPanel ? 'background-color: var(--accent-primary); color: white;' : 'background-color: var(--bg-tertiary); color: var(--text-secondary);'"
-                                title="Toggle Rich Editor panel"
-                            >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                </svg>
-                                <span class="hidden sm:inline">Rich Editor</span>
-                            </button>
 
                             <!-- Close All Panes -->
                             <button
