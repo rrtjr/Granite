@@ -14,6 +14,7 @@ export const panesMixin = {
         const {
             focusExisting = true,  // Focus if already open
             width = 500,           // Default pane width
+            viewMode = null,       // Initial view mode (null = use default)
         } = options;
 
         Debug.log('openInPane:', notePath, options);
@@ -51,7 +52,7 @@ export const panesMixin = {
 
             // Create new pane object
             // Panes only support 'edit' and 'split' modes (Rich Editor is a separate panel)
-            const paneViewMode = this.defaultPaneViewMode || 'split';
+            const paneViewMode = viewMode || this.defaultPaneViewMode || 'split';
             const newPane = {
                 id: this.generatePaneId(),
                 path: notePath,
@@ -547,15 +548,15 @@ export const panesMixin = {
             Debug.log('Restoring panes state:', state);
 
             for (const paneData of state.panes) {
-                const pane = await this.openInPane(paneData.path, {
+                // Ensure viewMode is only 'edit' or 'split' (not 'rich')
+                const restoredMode = paneData.viewMode;
+                const finalViewMode = (restoredMode === 'edit' || restoredMode === 'split') ? restoredMode : (this.defaultPaneViewMode || 'split');
+
+                await this.openInPane(paneData.path, {
                     focusExisting: false,
-                    width: paneData.width || 500
+                    width: paneData.width || 500,
+                    viewMode: finalViewMode
                 });
-                if (pane) {
-                    // Ensure viewMode is only 'edit' or 'split' (not 'rich')
-                    const restoredMode = paneData.viewMode;
-                    pane.viewMode = (restoredMode === 'edit' || restoredMode === 'split') ? restoredMode : (this.defaultPaneViewMode || 'split');
-                }
             }
 
             // Restore active pane
@@ -628,8 +629,6 @@ export const panesMixin = {
         // Force Alpine reactivity by creating a new array reference
         // slice() creates a shallow copy which triggers array change detection
         this.openPanes = this.openPanes.slice();
-
-        Debug.log('Set pane view mode complete, viewMode is now:', pane.viewMode);
 
         // Handle scroll sync based on view mode
         if (mode === 'split') {
