@@ -146,10 +146,6 @@
                 failed++;
             }
 
-            const resultsDiv = document.getElementById('test-results');
-            const testCase = document.createElement('div');
-            testCase.className = `test-case ${success ? 'pass' : 'fail'}`;
-
             let html = `
                 <div class="test-name">${success ? '✅' : '❌'} ${name}</div>
                 <div class="test-result">${message}</div>
@@ -159,22 +155,34 @@
                 html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
             }
 
-            testCase.innerHTML = html;
-            resultsDiv.appendChild(testCase);
+            // Replace running element if exists, otherwise create new one
+            if (currentRunningEl) {
+                currentRunningEl.className = `test-case ${success ? 'pass' : 'fail'}`;
+                currentRunningEl.innerHTML = html;
+                currentRunningEl = null;
+            } else {
+                const resultsDiv = document.getElementById('test-results');
+                const testCase = document.createElement('div');
+                testCase.className = `test-case ${success ? 'pass' : 'fail'}`;
+                testCase.innerHTML = html;
+                resultsDiv.appendChild(testCase);
+            }
 
             updateSummary();
         }
+
+        let currentRunningEl = null;
 
         function setTestRunning(name) {
             const resultsDiv = document.getElementById('test-results');
             const testCase = document.createElement('div');
             testCase.className = 'test-case running';
-            testCase.id = `test-${testResults.length}`;
             testCase.innerHTML = `
                 <div class="test-name">⏳ ${name}</div>
                 <div class="test-result">Running...</div>
             `;
             resultsDiv.appendChild(testCase);
+            currentRunningEl = testCase;
         }
 
         async function runAllTests() {
