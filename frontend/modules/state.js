@@ -61,6 +61,12 @@ export const stateMixin = {
         autosaveDelay: 1000    // Delay before triggering autosave
     },
 
+    // Typography settings
+    typographySettings: {
+        fontSize: 'base',      // xs, sm, base, lg, xl, 2xl, 3xl
+        fontFamily: 'system'   // system, serif, mono, inter, open-sans
+    },
+
     // Graph state (separate overlay, doesn't affect viewMode)
     showGraph: false,
     graphInstance: null,

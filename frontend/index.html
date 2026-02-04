@@ -87,10 +87,443 @@
     <style>
         [x-cloak] { display: none !important; }
 
+        /* ============================================
+           UNIVERSAL ENHANCEMENTS - Applied to all themes
+           ============================================ */
+
+        :root {
+            /* Extended elevation scale */
+            --elevation-0: none;
+            --elevation-1: var(--shadow-sm);
+            --elevation-2: var(--shadow-md);
+            --elevation-3: var(--shadow-lg);
+            --elevation-4: 0 15px 25px -5px rgba(0, 0, 0, 0.15), 0 5px 10px -5px rgba(0, 0, 0, 0.1);
+            --elevation-floating: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+
+            /* Animation system */
+            --duration-instant: 100ms;
+            --duration-fast: 150ms;
+            --duration-normal: 250ms;
+            --duration-slow: 350ms;
+            --duration-slower: 500ms;
+
+            --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+            --ease-out: cubic-bezier(0, 0, 0.2, 1);
+            --ease-in: cubic-bezier(0.4, 0, 1, 1);
+            --ease-in-out: cubic-bezier(0.4, 0, 0.6, 1);
+
+            /* Glassmorphism */
+            --glass-blur: blur(12px);
+            --focus-ring-opacity: 0.4;
+        }
+
         /* Theme-aware styles using CSS variables */
         body {
             background-color: var(--bg-primary, #ffffff);
             color: var(--text-primary, #111827);
+            font-family: var(--font-family-base, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+        }
+
+        /* Enhanced button styles */
+        button.bg-accent,
+        .btn-primary {
+            transition: all var(--duration-fast) var(--ease-smooth);
+            box-shadow: var(--elevation-1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button.bg-accent::before,
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transition: opacity var(--duration-fast);
+        }
+
+        button.bg-accent:hover,
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--elevation-2);
+        }
+
+        button.bg-accent:hover::before,
+        .btn-primary:hover::before {
+            opacity: 1;
+        }
+
+        button.bg-accent:active,
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: var(--elevation-1);
+        }
+
+        button:not(.bg-accent):not(.btn-primary) {
+            transition: all var(--duration-fast) var(--ease-smooth);
+        }
+
+        button:not(.bg-accent):not(.btn-primary):hover {
+            transform: translateY(-1px);
+            box-shadow: var(--elevation-1);
+        }
+
+        /* Sidebar enhancements */
+        .sidebar,
+        aside {
+            box-shadow: var(--elevation-1);
+        }
+
+        .folder-item,
+        .note-item {
+            margin: 0.125rem 0.5rem;
+            border-radius: 8px;
+            transition: all var(--duration-fast) var(--ease-smooth);
+            position: relative;
+        }
+
+        .folder-item:hover,
+        .note-item:hover {
+            transform: translateX(3px);
+            box-shadow: var(--elevation-1);
+        }
+
+        .folder-item.active::before,
+        .note-item.active::before,
+        .folder-item[class*="bg-accent"]::before,
+        .note-item[class*="bg-accent"]::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 60%;
+            background: var(--accent-primary);
+            border-radius: 0 3px 3px 0;
+            box-shadow: 0 0 8px var(--accent-primary);
+        }
+
+        /* Modal enhancements */
+        .fixed.inset-0.bg-black {
+            backdrop-filter: var(--glass-blur);
+            transition: opacity var(--duration-normal) var(--ease-out);
+        }
+
+        [role="dialog"],
+        .modal {
+            border-radius: 16px;
+            box-shadow: var(--elevation-floating);
+            animation: modalSlideIn var(--duration-normal) var(--ease-out);
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* Input field enhancements */
+        input[type="text"],
+        input[type="search"],
+        input[type="email"],
+        input[type="password"],
+        input[type="url"],
+        textarea,
+        select {
+            border-width: 1.5px;
+            border-radius: 8px;
+            transition: all var(--duration-fast) var(--ease-smooth);
+            box-shadow: var(--elevation-1);
+        }
+
+        input:hover,
+        textarea:hover,
+        select:hover {
+            box-shadow: var(--elevation-2);
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb, 59, 130, 246), var(--focus-ring-opacity));
+            outline: none;
+            transform: scale(1.01);
+        }
+
+        /* Markdown preview enhancements */
+        .markdown-preview h1 {
+            position: relative;
+            padding-bottom: 0.75rem;
+        }
+
+        .markdown-preview h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent-primary);
+            border-radius: 2px;
+        }
+
+        .markdown-preview blockquote {
+            border-radius: 0 8px 8px 0;
+            box-shadow: var(--elevation-1);
+            transition: box-shadow var(--duration-fast);
+        }
+
+        .markdown-preview pre {
+            border-radius: 12px;
+            box-shadow: var(--elevation-1);
+        }
+
+        .markdown-preview code:not(pre code) {
+            border-radius: 6px;
+            font-weight: var(--font-weight-medium, 500);
+        }
+
+        .markdown-preview table {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--elevation-1);
+        }
+
+        /* Stacked panes enhancements */
+        .note-pane {
+            box-shadow: var(--elevation-1);
+            transition: all var(--duration-normal) var(--ease-smooth);
+        }
+
+        .note-pane.pane-active {
+            box-shadow: var(--elevation-2);
+            z-index: 10;
+        }
+
+        .note-pane:not(.pane-active) {
+            transition: all var(--duration-fast) var(--ease-smooth);
+            cursor: pointer;
+        }
+
+        .note-pane:not(.pane-active):hover {
+            transform: translateX(2px);
+            box-shadow: var(--elevation-1);
+        }
+
+        .pane-header {
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Resize handles */
+        .resize-handle,
+        .split-resize-handle {
+            transition: all var(--duration-fast) var(--ease-smooth);
+        }
+
+        .resize-handle:hover,
+        .split-resize-handle:hover {
+            box-shadow: 0 0 8px var(--accent-primary);
+        }
+
+        /* Wikilinks enhancement */
+        .markdown-preview a[data-wikilink],
+        .wikilink {
+            border-radius: 6px;
+            font-weight: var(--font-weight-medium, 500);
+            transition: all var(--duration-fast) var(--ease-smooth);
+        }
+
+        .markdown-preview a[data-wikilink]:hover,
+        .wikilink:hover {
+            box-shadow: 0 0 8px rgba(var(--accent-primary-rgb, 59, 130, 246), 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Tiptap bubble menu */
+        .tiptap-bubble-menu {
+            backdrop-filter: var(--glass-blur);
+            border-radius: 10px;
+            box-shadow: var(--elevation-floating);
+            animation: bubbleSlideUp var(--duration-fast) var(--ease-out);
+        }
+
+        @keyframes bubbleSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tiptap-bubble-menu button {
+            transition: all var(--duration-fast) var(--ease-smooth);
+            border-radius: 6px;
+        }
+
+        /* Spreadsheet enhancements */
+        .spreadsheet-container {
+            border-radius: 12px;
+            box-shadow: var(--elevation-1);
+            overflow: hidden;
+        }
+
+        .spreadsheet-btn {
+            transition: all var(--duration-fast) var(--ease-smooth);
+        }
+
+        .spreadsheet-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--elevation-1);
+        }
+
+        /* TOC panel */
+        .toc-panel {
+            backdrop-filter: var(--glass-blur);
+            border-radius: 12px;
+            box-shadow: var(--elevation-floating);
+        }
+
+        .toc-item {
+            transition: all var(--duration-fast) var(--ease-smooth);
+        }
+
+        .toc-item:hover {
+            transform: translateX(2px);
+        }
+
+        /* Graph legend */
+        .graph-legend {
+            backdrop-filter: var(--glass-blur);
+            border-radius: 10px;
+            box-shadow: var(--elevation-3);
+        }
+
+        /* Toast notifications */
+        .toast {
+            backdrop-filter: var(--glass-blur);
+            border-radius: 12px;
+            box-shadow: var(--elevation-floating);
+            animation: toastSlideIn var(--duration-normal) var(--ease-out);
+        }
+
+        @keyframes toastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-100%) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Enhanced scrollbar */
+        .custom-scrollbar::-webkit-scrollbar,
+        .cm-scroller::-webkit-scrollbar,
+        .markdown-preview::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track,
+        .cm-scroller::-webkit-scrollbar-track,
+        .markdown-preview::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb,
+        .cm-scroller::-webkit-scrollbar-thumb,
+        .markdown-preview::-webkit-scrollbar-thumb {
+            border-radius: 6px;
+            transition: background var(--duration-fast);
+        }
+
+        /* Loading states */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        .skeleton {
+            background: linear-gradient(
+                90deg,
+                var(--bg-secondary) 0%,
+                var(--bg-tertiary) 50%,
+                var(--bg-secondary) 100%
+            );
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+            border-radius: 6px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* Accessibility - focus states */
+        *:focus-visible {
+            outline: 2px solid var(--accent-primary);
+            outline-offset: 2px;
+            transition: outline var(--duration-fast);
+        }
+
+        button:focus-visible,
+        a:focus-visible {
+            box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb, 59, 130, 246), var(--focus-ring-opacity));
+        }
+
+        /* Smooth transitions for theme changes */
+        * {
+            transition-property: color, background-color, border-color, fill, stroke;
+            transition-duration: var(--duration-fast);
+            transition-timing-function: var(--ease-smooth);
+        }
+
+        /* Exclude elements that shouldn't transition */
+        input,
+        textarea,
+        .CodeMirror,
+        .cm-editor,
+        .tiptap-editor-content {
+            transition-property: border-color, box-shadow !important;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            button:hover,
+            .folder-item:hover,
+            .note-item:hover {
+                transform: none;
+            }
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+
+            button:hover,
+            .folder-item:hover,
+            .note-item:hover {
+                transform: none !important;
+            }
         }
 
         /* Truncate utility for long text */
@@ -1941,13 +2374,25 @@
         }
 
         .pane-title {
-            font-size: 13px;
-            font-weight: 500;
+            font-size: 15px;
+            font-weight: 600;
             color: var(--text-primary);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
             max-width: 200px;
+            transition: color var(--duration-fast, 150ms) ease;
+        }
+
+        /* Hover effect on pane header (changes title color) */
+        .pane-header:hover .pane-title {
+            color: var(--accent-primary);
+        }
+
+        /* Active pane title - slightly larger and bolder */
+        .note-pane.pane-active .pane-title {
+            font-size: 16px;
+            font-weight: 600;
         }
 
         /* Vertical title for collapsed panes */
@@ -1957,8 +2402,15 @@
             transform: rotate(180deg);
             max-width: none;
             max-height: 200px;
-            font-size: 12px;
+            font-size: 13px;
             padding: 8px 0;
+            font-weight: 500;
+        }
+
+        /* Collapsed pane hover effect */
+        .note-pane:not(.pane-active):hover .pane-title {
+            color: var(--accent-primary);
+            font-weight: 600;
         }
 
         .pane-dirty-indicator {
@@ -3137,6 +3589,77 @@
                                             />
                                             <p class="text-xs mt-1" style="color: var(--text-tertiary);">Controls the fade effect on note banners</p>
                                         </div>
+                                    </div>
+                                </div>
+
+                                <!-- Typography Settings -->
+                                <div class="mb-4" x-data="{ typographyExpanded: false }">
+                                    <label class="block text-xs font-medium mb-2" style="color: var(--text-secondary);">Typography</label>
+
+                                    <!-- Toggle button -->
+                                    <button
+                                        @click="typographyExpanded = !typographyExpanded"
+                                        class="w-full px-3 py-2 text-sm rounded flex items-center justify-between transition-colors"
+                                        style="background-color: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-primary);"
+                                        onmouseover="this.style.backgroundColor='var(--bg-hover)'"
+                                        onmouseout="this.style.backgroundColor='var(--bg-secondary)'"
+                                    >
+                                        <span>Font Settings</span>
+                                        <span x-text="typographyExpanded ? '▲' : '▼'" class="text-xs"></span>
+                                    </button>
+
+                                    <!-- Collapsible content -->
+                                    <div x-show="typographyExpanded" x-cloak class="mt-3 p-3 rounded"
+                                         style="background-color: var(--bg-secondary); border: 1px solid var(--border-primary);">
+
+                                        <!-- Font Size -->
+                                        <div class="mb-3">
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Font Size</label>
+                                            <select
+                                                x-model="typographySettings.fontSize"
+                                                @change="saveTypographySettings()"
+                                                class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                                style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
+                                            >
+                                                <option value="xs">Extra Small (14px)</option>
+                                                <option value="sm">Small (15px)</option>
+                                                <option value="base">Normal (16px)</option>
+                                                <option value="lg">Large (17px)</option>
+                                                <option value="xl">Extra Large (18px)</option>
+                                                <option value="2xl">2X Large (20px)</option>
+                                                <option value="3xl">3X Large (22px)</option>
+                                            </select>
+                                            <p class="text-xs mt-1" style="color: var(--text-tertiary);">Adjusts the base font size for all text</p>
+                                        </div>
+
+                                        <!-- Font Family -->
+                                        <div class="mb-3">
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Font Family</label>
+                                            <select
+                                                x-model="typographySettings.fontFamily"
+                                                @change="saveTypographySettings()"
+                                                class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                                style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
+                                            >
+                                                <option value="system">System Default (Sans)</option>
+                                                <option value="serif">Serif (Georgia)</option>
+                                                <option value="mono">Monospace (Monaco)</option>
+                                                <option value="inter">Inter (Modern Sans)</option>
+                                                <option value="open-sans">Open Sans (Clean)</option>
+                                            </select>
+                                            <p class="text-xs mt-1" style="color: var(--text-tertiary);">Changes the font style for the entire app</p>
+                                        </div>
+
+                                        <!-- Reset Button -->
+                                        <button
+                                            @click="resetTypographySettings()"
+                                            class="w-full px-3 py-1.5 text-xs rounded transition-colors"
+                                            style="background-color: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border-primary);"
+                                            onmouseover="this.style.backgroundColor='var(--bg-hover)'"
+                                            onmouseout="this.style.backgroundColor='var(--bg-tertiary)'"
+                                        >
+                                            Reset to Defaults
+                                        </button>
                                     </div>
                                 </div>
 

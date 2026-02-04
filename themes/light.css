@@ -1,35 +1,114 @@
-/* Light Theme - Default */
+/* Light Theme - Enhanced */
 /* @theme-type: light */
 :root[data-theme="light"] {
-  /* Background colors */
+  /* ============================================
+     BACKGROUND COLORS - Original palette
+     ============================================ */
+  --bg-canvas: #f9fafb;        /* New: Lightest background */
   --bg-primary: #ffffff;
   --bg-secondary: #f9fafb;
   --bg-tertiary: #f3f4f6;
-  --bg-hover: #f3f4f6;
-  --bg-active: #e5e7eb;
-  
-  /* Text colors */
+  --bg-hover: rgba(59, 130, 246, 0.06);
+  --bg-active: rgba(59, 130, 246, 0.12);
+
+  /* ============================================
+     TEXT COLORS - Original palette
+     ============================================ */
   --text-primary: #111827;
   --text-secondary: #6b7280;
   --text-tertiary: #9ca3af;
-  
-  /* Border colors */
-  --border-primary: #e5e7eb;
-  --border-secondary: #d1d5db;
-  
-  /* Accent colors */
+  --text-disabled: #d1d5db;
+
+  /* ============================================
+     BORDER COLORS
+     ============================================ */
+  --border-primary: rgba(0, 0, 0, 0.08);
+  --border-secondary: rgba(0, 0, 0, 0.12);
+  --border-focus: rgba(59, 130, 246, 0.5);
+
+  /* ============================================
+     ACCENT COLORS - Blue theme
+     ============================================ */
   --accent-primary: #3b82f6;
   --accent-hover: #2563eb;
-  --accent-light: #dbeafe;
-  
-  /* Status colors */
+  --accent-pressed: #1d4ed8;
+  --accent-light: #60a5fa;
+  --accent-dark: #1e40af;
+
+  /* Accent gradient for premium elements */
+  --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+  --accent-gradient-hover: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+
+  /* Subtle accent backgrounds */
+  --accent-subtle: rgba(59, 130, 246, 0.08);
+  --accent-subtle-hover: rgba(59, 130, 246, 0.15);
+
+  /* RGB values for use in rgba() - for focus rings */
+  --accent-primary-rgb: 59, 130, 246;
+
+  /* ============================================
+     SEMANTIC COLORS
+     ============================================ */
   --success: #10b981;
+  --success-bg: rgba(16, 185, 129, 0.08);
+  --success-border: rgba(16, 185, 129, 0.25);
+
   --error: #ef4444;
+  --error-bg: rgba(239, 68, 68, 0.08);
+  --error-border: rgba(239, 68, 68, 0.25);
+
   --warning: #f59e0b;
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --warning-bg: rgba(245, 158, 11, 0.08);
+  --warning-border: rgba(245, 158, 11, 0.25);
+
+  --info: #3b82f6;
+  --info-bg: rgba(59, 130, 246, 0.08);
+  --info-border: rgba(59, 130, 246, 0.25);
+
+  /* ============================================
+     SHADOWS & ELEVATION - Softer for light mode
+     ============================================ */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.06);
+  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.1), 0 12px 24px rgba(0, 0, 0, 0.08);
+  --shadow-2xl: 0 16px 32px rgba(0, 0, 0, 0.12), 0 20px 40px rgba(0, 0, 0, 0.1);
+
+  /* ============================================
+     INTERACTIVE STATES
+     ============================================ */
+  --focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  --focus-ring-error: 0 0 0 3px rgba(239, 68, 68, 0.3);
+  --focus-ring-success: 0 0 0 3px rgba(16, 185, 129, 0.3);
+
+  /* ============================================
+     GLASSMORPHISM - Lighter for light mode
+     ============================================ */
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.08);
+
+  /* ============================================
+     LINKS & NAVIGATION
+     ============================================ */
+  --link-internal: #2563eb;
+  --link-internal-hover: #1d4ed8;
+  --link-internal-bg: rgba(59, 130, 246, 0.1);
+  --link-internal-hover-bg: rgba(59, 130, 246, 0.2);
+  --link-broken: var(--text-tertiary);
 }
 
+/* ============================================
+   ENHANCED SCROLLBAR - Theme specific
+   ============================================ */
+
+:root[data-theme="light"] .custom-scrollbar::-webkit-scrollbar-thumb,
+:root[data-theme="light"] .cm-scroller::-webkit-scrollbar-thumb,
+:root[data-theme="light"] .markdown-preview::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+:root[data-theme="light"] .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+:root[data-theme="light"] .cm-scroller::-webkit-scrollbar-thumb:hover,
+:root[data-theme="light"] .markdown-preview::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.5);
+}

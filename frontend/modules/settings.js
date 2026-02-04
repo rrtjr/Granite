@@ -43,6 +43,22 @@ export const settingsMixin = {
                         updateModifiedOnOpen: settings.datetime.updateModifiedOnOpen !== false,
                     };
                 }
+
+                // Apply typography settings
+                if (settings.typography) {
+                    this.typographySettings = {
+                        fontSize: settings.typography.fontSize || 'base',
+                        fontFamily: settings.typography.fontFamily || 'system'
+                    };
+                } else {
+                    // Initialize with defaults if not present
+                    this.typographySettings = {
+                        fontSize: 'base',
+                        fontFamily: 'system'
+                    };
+                }
+                // Always apply typography on load
+                this.applyTypographySettings();
             } else {
                 await this.migrateFromLocalStorage();
             }
@@ -50,6 +66,15 @@ export const settingsMixin = {
             Debug.error('Error loading user settings:', error);
             await this.migrateFromLocalStorage();
         }
+
+        // Always ensure typography is applied (even if settings load fails)
+        if (!this.typographySettings) {
+            this.typographySettings = {
+                fontSize: 'base',
+                fontFamily: 'system'
+            };
+        }
+        this.applyTypographySettings();
     },
 
     // Migrate settings from localStorage to server (one-time migration)
@@ -123,7 +148,8 @@ export const settingsMixin = {
                     templatesDir: this.templatesDir,
                     homepageFile: this.homepageFile
                 },
-                datetime: this.datetimeSettings
+                datetime: this.datetimeSettings,
+                typography: this.typographySettings
             };
 
             const response = await fetch('/api/settings/user', {
@@ -180,5 +206,69 @@ export const settingsMixin = {
             autosaveDelay: 1000
         };
         this.savePerformanceSettings();
+    },
+
+    // Save typography settings (called from UI)
+    saveTypographySettings() {
+        this.applyTypographySettings();
+        this.saveUserSettings();
+    },
+
+    // Apply typography settings to DOM
+    applyTypographySettings() {
+        if (!this.typographySettings) {
+            Debug.warn('Typography settings not initialized, using defaults');
+            this.typographySettings = {
+                fontSize: 'base',
+                fontFamily: 'system'
+            };
+        }
+
+        const root = document.documentElement;
+
+        // Font size mapping
+        const fontSizeMap = {
+            'xs': 0.875,     // 87.5% = 14px base
+            'sm': 0.9375,    // 93.75% = 15px base
+            'base': 1.0,     // 100% = 16px base (default)
+            'lg': 1.0625,    // 106.25% = 17px base
+            'xl': 1.125,     // 112.5% = 18px base
+            '2xl': 1.25,     // 125% = 20px base
+            '3xl': 1.375     // 137.5% = 22px base
+        };
+
+        // Apply font size to root
+        const fontSizeMultiplier = fontSizeMap[this.typographySettings.fontSize] || 1.0;
+        const baseFontSize = fontSizeMultiplier * 16;
+        root.style.fontSize = `${baseFontSize}px`;
+
+        // Font family mapping
+        const fontFamilyMap = {
+            'system': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+            'serif': 'Georgia, Cambria, "Times New Roman", Times, serif',
+            'mono': '"SF Mono", Monaco, Menlo, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace',
+            'inter': '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            'open-sans': '"Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        };
+
+        // Apply font family to CSS variable
+        const fontFamily = fontFamilyMap[this.typographySettings.fontFamily] || fontFamilyMap['system'];
+        root.style.setProperty('--font-family-base', fontFamily);
+
+        Debug.log('Typography settings applied:', {
+            fontSize: this.typographySettings.fontSize,
+            fontFamily: this.typographySettings.fontFamily,
+            computedFontSize: `${baseFontSize}px`,
+            computedFontFamily: fontFamily
+        });
+    },
+
+    // Reset typography settings to defaults
+    resetTypographySettings() {
+        this.typographySettings = {
+            fontSize: 'base',
+            fontFamily: 'system'
+        };
+        this.saveTypographySettings();
     },
 };
