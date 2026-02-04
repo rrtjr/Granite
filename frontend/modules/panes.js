@@ -51,7 +51,7 @@ export const panesMixin = {
 
             // Create new pane object
             // Panes only support 'edit' and 'split' modes (Rich Editor is a separate panel)
-            const paneViewMode = (this.viewMode === 'edit' || this.viewMode === 'split') ? this.viewMode : 'split';
+            const paneViewMode = this.defaultPaneViewMode || 'split';
             const newPane = {
                 id: this.generatePaneId(),
                 path: notePath,
@@ -554,7 +554,7 @@ export const panesMixin = {
                 if (pane) {
                     // Ensure viewMode is only 'edit' or 'split' (not 'rich')
                     const restoredMode = paneData.viewMode;
-                    pane.viewMode = (restoredMode === 'edit' || restoredMode === 'split') ? restoredMode : 'split';
+                    pane.viewMode = (restoredMode === 'edit' || restoredMode === 'split') ? restoredMode : (this.defaultPaneViewMode || 'split');
                 }
             }
 

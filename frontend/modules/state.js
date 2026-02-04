@@ -36,11 +36,8 @@ export const stateMixin = {
     //   redoHistory: [],
     // }
 
-    // Legacy single-note state (for backward compatibility)
-    _legacyCurrentNote: '',
-    _legacyNoteContent: '',
-    _legacyCurrentNoteName: '',
-    viewMode: 'split', // 'edit', 'split', or 'rich' (WYSIWYG) - default for new panes
+    // Default view mode for new panes
+    defaultPaneViewMode: 'split', // 'edit' or 'split' - default for new panes
 
     // Reading preferences
     readingWidth: 'full', // 'narrow', 'medium', 'wide', 'full'
@@ -126,8 +123,6 @@ export const stateMixin = {
     currentTheme: 'light',
     availableThemes: [],
 
-    // CodeMirror editor instance (legacy - used when no panes open)
-    _legacyEditorView: null,
     editorThemeCompartment: null,
 
     // Icon rail / panel state
@@ -360,51 +355,43 @@ export const stateMixin = {
     },
 
     get currentNote() {
-        return this.activePane?.path || this._legacyCurrentNote || '';
+        return this.activePane?.path || '';
     },
 
     set currentNote(value) {
         if (this.activePane) {
             this.activePane.path = value;
-        } else {
-            this._legacyCurrentNote = value;
         }
     },
 
     get noteContent() {
-        return this.activePane?.content || this._legacyNoteContent || '';
+        return this.activePane?.content || '';
     },
 
     set noteContent(value) {
         if (this.activePane) {
             this.activePane.content = value;
             this.activePane.isDirty = true;
-        } else {
-            this._legacyNoteContent = value;
         }
     },
 
     get currentNoteName() {
-        return this.activePane?.name || this._legacyCurrentNoteName || '';
+        return this.activePane?.name || '';
     },
 
     set currentNoteName(value) {
         if (this.activePane) {
             this.activePane.name = value;
-        } else {
-            this._legacyCurrentNoteName = value;
         }
     },
 
     get editorView() {
-        return this.activePane?.editorView || this._legacyEditorView || null;
+        return this.activePane?.editorView || null;
     },
 
     set editorView(value) {
         if (this.activePane) {
             this.activePane.editorView = value;
-        } else {
-            this._legacyEditorView = value;
         }
     },
 };

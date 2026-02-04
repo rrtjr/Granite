@@ -18,13 +18,8 @@ export const tiptapMixin = {
             return;
         }
 
-        // Choose container based on whether Rich Editor panel is open or using legacy view
-        let container;
-        if (this.showRichEditorPanel) {
-            container = this.$refs.tiptapPanelContainer || document.getElementById('tiptap-editor-panel');
-        } else {
-            container = this.$refs.tiptapContainer || document.getElementById('tiptap-editor');
-        }
+        // Rich Editor Panel container (pane-based system)
+        const container = this.$refs.tiptapPanelContainer || document.getElementById('tiptap-editor-panel');
 
         if (!container) {
             Debug.log('Tiptap container not found, retrying...');
@@ -123,9 +118,35 @@ export const tiptapMixin = {
                 CharacterCount.configure({ limit: null }),  // Word/character count
                 BubbleMenu.configure({
                     element: bubbleMenuElement,
+                    shouldShow: ({ editor, state }) => {
+                        const { from, to } = state.selection;
+                        const isTextSelected = from !== to;
+                        return isTextSelected;
+                    },
                     tippyOptions: {
                         duration: 100,
                         placement: 'top',
+                        appendTo: () => document.body,
+                        interactive: true,
+                        maxWidth: 'none',
+                        zIndex: 10000,
+                        popperOptions: {
+                            strategy: 'fixed',
+                            modifiers: [
+                                {
+                                    name: 'flip',
+                                    options: {
+                                        fallbackPlacements: ['bottom', 'top'],
+                                    },
+                                },
+                                {
+                                    name: 'preventOverflow',
+                                    options: {
+                                        boundary: 'viewport',
+                                    },
+                                },
+                            ],
+                        },
                     },
                 }),
                 // Custom extensions

@@ -1,4 +1,6 @@
 // Granite Frontend - CodeMirror Editor Module
+// Note: Panes now initialize their own CodeMirror editors
+// This function is legacy and not actively used in pane-based system
 
 import { Debug } from './config.js';
 

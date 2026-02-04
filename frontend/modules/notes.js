@@ -18,9 +18,10 @@ export const notesMixin = {
 
     async loadNote(notePath, updateHistory = true, searchQuery = '') {
         try {
-            // Use stacked panes system if available
-            if (this.openPanes !== undefined && typeof this.openInPane === 'function') {
-                this.mobileSidebarOpen = false;
+            // Always use pane system
+            this.mobileSidebarOpen = false;
+
+            if (typeof this.openInPane === 'function') {
                 await this.openInPane(notePath, { focusExisting: true });
 
                 // Handle search highlighting in the new pane if needed
@@ -30,101 +31,14 @@ export const notesMixin = {
                         this.highlightSearchTerm(searchQuery, true);
                     });
                 }
-                return;
-            }
-
-            // Legacy single-note mode (fallback)
-            this.mobileSidebarOpen = false;
-
-            // Cleanup spreadsheet instances from previous note
-            if (typeof this.cleanupSpreadsheets === 'function') {
-                this.cleanupSpreadsheets();
-            }
-
-            const response = await fetch(`/api/notes/${notePath}`);
-
-            if (!response.ok) {
-                if (response.status === 404) {
-                    window.history.replaceState({ homepageFolder: this.selectedHomepageFolder || '' }, '', '/');
-                    this.currentNote = '';
-                    this.noteContent = '';
-                    this.currentImage = '';
-                    return;
-                }
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            this.currentNote = notePath;
-            this.noteContent = data.content;
-            this.updateEditorContent(data.content);
-            this.currentNoteName = notePath.split('/').pop().replace('.md', '');
-            this.currentImage = '';
-            this.lastSaved = false;
-
-            // Keep Rich view in sync when user lands directly in it
-            if (this.viewMode === 'rich') {
-                this.$nextTick(() => {
-                    if (!this.tiptapEditor) {
-                        this.initTiptap();
-                    } else {
-                        this.updateTiptapContent(this.noteContent);
-                    }
-                });
-            }
-
-            this.undoHistory = [data.content];
-            this.redoHistory = [];
-
-            if (updateHistory) {
-                const pathWithoutExtension = notePath.replace('.md', '');
-                const encodedPath = pathWithoutExtension.split('/').map(segment => encodeURIComponent(segment)).join('/');
-                let url = `/${encodedPath}`;
-                if (searchQuery) {
-                    url += `?search=${encodeURIComponent(searchQuery)}`;
-                }
-                window.history.pushState(
-                    { notePath: notePath, searchQuery: searchQuery, homepageFolder: this.selectedHomepageFolder || '' },
-                    '',
-                    url
-                );
-            }
-
-            if (this.statsPluginEnabled) {
-                this.calculateStats();
-            }
-
-            this.parseMetadata();
-
-            if (searchQuery) {
-                this.currentSearchHighlight = searchQuery;
             } else {
-                this.currentSearchHighlight = '';
+                Debug.error('openInPane function not available');
             }
-
-            this.expandFolderForNote(notePath);
-
-            this.$nextTick(() => {
-                this.$nextTick(() => {
-                    this.refreshDOMCache();
-                    this.setupScrollSync();
-                    this.scrollToTop();
-
-                    if (searchQuery) {
-                        this.highlightSearchTerm(searchQuery, true);
-                    } else {
-                        this.clearSearchHighlights();
-                    }
-
-                    this.scrollNoteIntoView(notePath);
-                });
-            });
-
         } catch (error) {
             ErrorHandler.handle('load note', error);
         }
     },
+
 
     loadNoteFromURL() {
         let path = window.location.pathname;
