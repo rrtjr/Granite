@@ -283,6 +283,11 @@ export const panesMixin = {
             pane.editorView.scrollDOM.scrollTop = pane.scrollPos;
         }
 
+        // Setup scroll sync for split mode (with delay to ensure preview is rendered)
+        if (pane.viewMode === 'split') {
+            setTimeout(() => this.setupPaneScrollSync(paneId), 100);
+        }
+
         Debug.log('Initialized editor for pane:', paneId);
     },
 
@@ -301,6 +306,9 @@ export const panesMixin = {
         const pane = this.openPanes.find(p => p.id === paneId);
         if (!pane) return;
 
+        // Clean up scroll sync handlers
+        this.cleanupPaneScrollSync(paneId);
+
         if (pane.editorView) {
             pane.editorView.destroy();
             pane.editorView = null;
@@ -311,6 +319,96 @@ export const panesMixin = {
         }
 
         Debug.log('Destroyed editor for pane:', paneId);
+    },
+
+    // Setup scroll sync between editor and preview for a pane
+    setupPaneScrollSync(paneId) {
+        const pane = this.openPanes.find(p => p.id === paneId);
+        if (!pane || !pane.editorView || pane.viewMode !== 'split') return;
+
+        // Clean up any existing handlers first
+        this.cleanupPaneScrollSync(paneId);
+
+        const editorScroller = pane.editorView.scrollDOM;
+        const previewEl = document.querySelector(`[data-pane-id="${paneId}"] .pane-preview`);
+
+        if (!editorScroller || !previewEl) {
+            Debug.log('Scroll sync: elements not found for pane', paneId);
+            return;
+        }
+
+        // Flag to prevent infinite scroll loops
+        let isScrolling = false;
+
+        // Editor scroll -> Preview scroll
+        const editorScrollHandler = () => {
+            if (isScrolling) {
+                isScrolling = false;
+                return;
+            }
+
+            const scrollableHeight = editorScroller.scrollHeight - editorScroller.clientHeight;
+            if (scrollableHeight <= 0) return;
+
+            const scrollPercentage = editorScroller.scrollTop / scrollableHeight;
+            const previewScrollableHeight = previewEl.scrollHeight - previewEl.clientHeight;
+
+            if (previewScrollableHeight > 0) {
+                isScrolling = true;
+                previewEl.scrollTop = scrollPercentage * previewScrollableHeight;
+            }
+        };
+
+        // Preview scroll -> Editor scroll
+        const previewScrollHandler = () => {
+            if (isScrolling) {
+                isScrolling = false;
+                return;
+            }
+
+            const scrollableHeight = previewEl.scrollHeight - previewEl.clientHeight;
+            if (scrollableHeight <= 0) return;
+
+            const scrollPercentage = previewEl.scrollTop / scrollableHeight;
+            const editorScrollableHeight = editorScroller.scrollHeight - editorScroller.clientHeight;
+
+            if (editorScrollableHeight > 0) {
+                isScrolling = true;
+                editorScroller.scrollTop = scrollPercentage * editorScrollableHeight;
+            }
+        };
+
+        // Attach listeners
+        editorScroller.addEventListener('scroll', editorScrollHandler);
+        previewEl.addEventListener('scroll', previewScrollHandler);
+
+        // Store handlers on pane for cleanup
+        pane._scrollSyncHandlers = {
+            editor: editorScrollHandler,
+            preview: previewScrollHandler,
+            editorEl: editorScroller,
+            previewEl: previewEl
+        };
+
+        Debug.log('Scroll sync setup for pane:', paneId);
+    },
+
+    // Cleanup scroll sync handlers for a pane
+    cleanupPaneScrollSync(paneId) {
+        const pane = this.openPanes.find(p => p.id === paneId);
+        if (!pane || !pane._scrollSyncHandlers) return;
+
+        const { editor, preview, editorEl, previewEl } = pane._scrollSyncHandlers;
+
+        if (editorEl && editor) {
+            editorEl.removeEventListener('scroll', editor);
+        }
+        if (previewEl && preview) {
+            previewEl.removeEventListener('scroll', preview);
+        }
+
+        pane._scrollSyncHandlers = null;
+        Debug.log('Scroll sync cleaned up for pane:', paneId);
     },
 
     // Update pane's CodeMirror editor content (from external source like Tiptap)
@@ -532,6 +630,17 @@ export const panesMixin = {
         this.openPanes = this.openPanes.slice();
 
         Debug.log('Set pane view mode complete, viewMode is now:', pane.viewMode);
+
+        // Handle scroll sync based on view mode
+        if (mode === 'split') {
+            // Setup scroll sync when switching to split mode
+            this.$nextTick(() => {
+                setTimeout(() => this.setupPaneScrollSync(paneId), 100);
+            });
+        } else if (oldMode === 'split') {
+            // Cleanup scroll sync when leaving split mode
+            this.cleanupPaneScrollSync(paneId);
+        }
 
         // Handle editor transitions
         if (oldMode === 'rich' && mode !== 'rich') {
