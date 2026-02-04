@@ -100,25 +100,40 @@ export const panesMixin = {
 
     // Focus a specific pane
     focusPane(paneId) {
-        const pane = this.openPanes.find(p => p.id === paneId);
-        if (!pane) return;
+        const paneIndex = this.openPanes.findIndex(p => p.id === paneId);
+        if (paneIndex === -1) return;
+
+        const pane = this.openPanes[paneIndex];
+
+        // No change needed if already active
+        if (this.activePaneId === paneId) return;
+
+        Debug.log('Focusing pane:', paneId, 'from:', this.activePaneId);
 
         // Save scroll position of previously active pane
-        if (this.activePaneId && this.activePaneId !== paneId) {
+        if (this.activePaneId) {
             this.savePaneScrollPosition(this.activePaneId);
         }
 
         this.activePaneId = paneId;
+
+        // Force Alpine reactivity by creating a new array reference
+        this.openPanes = this.openPanes.slice();
+
         this.updatePanesUrl();
 
-        // Restore focus to editor
+        // Restore focus to editor after DOM update
         this.$nextTick(() => {
             if (pane.editorView) {
                 pane.editorView.focus();
             }
+            // Update Rich Editor panel content if open
+            if (this.showRichEditorPanel && this.tiptapEditor) {
+                this.updateTiptapContent(pane.content);
+            }
         });
 
-        Debug.log('Focused pane:', paneId);
+        Debug.log('Focused pane complete:', paneId);
     },
 
     // Close a pane
@@ -452,6 +467,11 @@ export const panesMixin = {
                 this.activePaneId = targetActive.id;
             }
 
+            // Force Alpine reactivity after all panes are restored with their viewModes
+            this.openPanes = this.openPanes.slice();
+
+            Debug.log('Panes restored:', this.openPanes.length, 'active:', this.activePaneId);
+
             return this.openPanes.length > 0;
         } catch (error) {
             Debug.error('Error restoring panes state:', error);
@@ -488,11 +508,22 @@ export const panesMixin = {
 
     // Set view mode for a pane
     setPaneViewMode(paneId, mode) {
-        const pane = this.openPanes.find(p => p.id === paneId);
-        if (!pane) return;
+        const paneIndex = this.openPanes.findIndex(p => p.id === paneId);
+        if (paneIndex === -1) return;
 
+        const pane = this.openPanes[paneIndex];
         const oldMode = pane.viewMode;
+        if (oldMode === mode) return; // No change needed
+
+        Debug.log('Setting pane view mode:', paneId, oldMode, '->', mode);
+
         pane.viewMode = mode;
+
+        // Force Alpine reactivity by creating a new array reference
+        // slice() creates a shallow copy which triggers array change detection
+        this.openPanes = this.openPanes.slice();
+
+        Debug.log('Set pane view mode complete, viewMode is now:', pane.viewMode);
 
         // Handle editor transitions
         if (oldMode === 'rich' && mode !== 'rich') {
