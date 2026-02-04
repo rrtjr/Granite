@@ -18,6 +18,22 @@ export const notesMixin = {
 
     async loadNote(notePath, updateHistory = true, searchQuery = '') {
         try {
+            // Use stacked panes system if available
+            if (this.openPanes !== undefined && typeof this.openInPane === 'function') {
+                this.mobileSidebarOpen = false;
+                await this.openInPane(notePath, { focusExisting: true });
+
+                // Handle search highlighting in the new pane if needed
+                if (searchQuery) {
+                    this.currentSearchHighlight = searchQuery;
+                    this.$nextTick(() => {
+                        this.highlightSearchTerm(searchQuery, true);
+                    });
+                }
+                return;
+            }
+
+            // Legacy single-note mode (fallback)
             this.mobileSidebarOpen = false;
 
             // Cleanup spreadsheet instances from previous note

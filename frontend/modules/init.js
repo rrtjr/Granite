@@ -40,8 +40,21 @@ export const initMixin = {
         // Load homepage content
         await this.loadHomepageContent();
 
-        // Parse URL and load specific note if provided
-        this.loadNoteFromURL();
+        // Initialize stacked panes system
+        if (typeof this.setupPaneKeyboardShortcuts === 'function') {
+            this.setupPaneKeyboardShortcuts();
+        }
+
+        // Try to restore panes from previous session
+        let panesRestored = false;
+        if (typeof this.restorePanesState === 'function') {
+            panesRestored = await this.restorePanesState();
+        }
+
+        // Parse URL and load specific note if provided (only if no panes were restored)
+        if (!panesRestored) {
+            this.loadNoteFromURL();
+        }
 
         // Set initial homepage state
         if (window.location.pathname === '/') {
@@ -50,6 +63,12 @@ export const initMixin = {
 
         // Listen for browser back/forward navigation
         window.addEventListener('popstate', (e) => {
+            // Handle panes navigation if using stacked panes
+            if (e.state && e.state.panes && typeof this.handlePanesPopstate === 'function') {
+                this.handlePanesPopstate(e.state);
+                return;
+            }
+
             if (e.state && e.state.notePath) {
                 const searchQuery = e.state.searchQuery || '';
                 this.loadNote(e.state.notePath, false, searchQuery);
@@ -170,6 +189,25 @@ export const initMixin = {
 
         this.$watch('bannerOpacity', () => {
             this.updateTiptapBannerOpacity();
+        });
+
+        // Watch active pane changes to sync Rich Editor panel
+        this.$watch('activePaneId', (newPaneId, oldPaneId) => {
+            if (newPaneId && newPaneId !== oldPaneId && this.showRichEditorPanel) {
+                const newPane = this.openPanes.find(p => p.id === newPaneId);
+                if (newPane && this.tiptapEditor) {
+                    // Sync from old pane first if needed
+                    if (oldPaneId && this._tiptapSyncTimeout) {
+                        clearTimeout(this._tiptapSyncTimeout);
+                        const oldPane = this.openPanes.find(p => p.id === oldPaneId);
+                        if (oldPane && this.tiptapEditor) {
+                            oldPane.content = this.getTiptapContent();
+                        }
+                    }
+                    // Update Tiptap with new pane's content
+                    this.updateTiptapContent(newPane.content);
+                }
+            }
         });
 
         // Close dropdowns when clicking outside

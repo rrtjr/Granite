@@ -18,7 +18,14 @@ export const tiptapMixin = {
             return;
         }
 
-        const container = this.$refs.tiptapContainer || document.getElementById('tiptap-editor');
+        // Choose container based on whether Rich Editor panel is open or using legacy view
+        let container;
+        if (this.showRichEditorPanel) {
+            container = this.$refs.tiptapPanelContainer || document.getElementById('tiptap-editor-panel');
+        } else {
+            container = this.$refs.tiptapContainer || document.getElementById('tiptap-editor');
+        }
+
         if (!container) {
             Debug.log('Tiptap container not found, retrying...');
             setTimeout(() => this.initTiptap(), 100);
@@ -225,6 +232,13 @@ export const tiptapMixin = {
             window._graniteTiptapEditor = null;  // Clear raw reference
             this.tiptapReady = false;
             this._frontmatter = '';
+
+            // Clean up bubble menu element
+            const bubbleMenu = document.getElementById('tiptap-bubble-menu');
+            if (bubbleMenu) {
+                bubbleMenu.remove();
+            }
+
             Debug.log('Tiptap destroyed');
         }
     },
@@ -651,7 +665,22 @@ export const tiptapMixin = {
         if (fullContent !== this.noteContent) {
             this._tiptapUpdating = true;
             this.noteContent = fullContent;
-            this.autoSave();
+
+            // Also update the pane's CodeMirror editor if panes are active
+            if (this.activePaneId && typeof this.updatePaneEditorContent === 'function') {
+                this.updatePaneEditorContent(this.activePaneId, fullContent);
+            } else if (this.editorView) {
+                // Legacy: update single editor
+                this.updateEditorContent(fullContent);
+            }
+
+            // Use pane-specific autosave if panes are active
+            if (this.activePaneId && typeof this.autoSavePane === 'function') {
+                this.autoSavePane(this.activePaneId);
+            } else {
+                this.autoSave();
+            }
+
             this.$nextTick(() => {
                 this._tiptapUpdating = false;
             });

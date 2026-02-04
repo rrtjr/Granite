@@ -170,6 +170,13 @@ export const sidebarMixin = {
                 this.viewMode = 'edit';
             }
 
+            // Close extra panes on mobile (keep only active pane)
+            if (!wasMobile && isMobile && this.openPanes && this.openPanes.length > 1) {
+                if (typeof this.closePanesExcept === 'function') {
+                    this.closePanesExcept(this.activePaneId);
+                }
+            }
+
             previousWidth = currentWidth;
         };
 
@@ -178,6 +185,13 @@ export const sidebarMixin = {
         // Check on initial load
         if (window.innerWidth <= MOBILE_BREAKPOINT && this.viewMode === 'split') {
             this.viewMode = 'edit';
+        }
+
+        // Close extra panes on initial mobile load
+        if (window.innerWidth <= MOBILE_BREAKPOINT && this.openPanes && this.openPanes.length > 1) {
+            if (typeof this.closePanesExcept === 'function') {
+                this.closePanesExcept(this.activePaneId);
+            }
         }
     },
 };

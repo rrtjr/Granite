@@ -15,7 +15,7 @@ let statsMixin, metadataMixin, sidebarMixin, settingsMixin, editorMixin, tiptapM
 let notesMixin, foldersMixin, folderOperationsMixin, folderRenderMixin;
 let searchMixin, imagesMixin, pluginsMixin;
 let graphMixin, markdownMixin, uiMixin, exportMixin, initMixin;
-let spreadsheetMixin;
+let spreadsheetMixin, panesMixin;
 
 async function loadModules() {
     const modules = [
@@ -45,6 +45,7 @@ async function loadModules() {
         { name: 'export', path: './modules/export.js' },
         { name: 'init', path: './modules/init.js' },
         { name: 'spreadsheet', path: './modules/spreadsheet.js' },
+        { name: 'panes', path: './modules/panes.js' },
     ];
 
     const loaded = {};
@@ -88,6 +89,7 @@ async function loadModules() {
     exportMixin = loaded.export.exportMixin;
     initMixin = loaded.init.initMixin;
     spreadsheetMixin = loaded.spreadsheet.spreadsheetMixin;
+    panesMixin = loaded.panes.panesMixin;
 
     // Make CONFIG and ErrorHandler available globally
     window.CONFIG = CONFIG;
@@ -103,7 +105,7 @@ async function loadModules() {
         notesMixin, foldersMixin, folderOperationsMixin, folderRenderMixin,
         searchMixin, imagesMixin, pluginsMixin,
         graphMixin, markdownMixin, uiMixin, exportMixin, initMixin,
-        spreadsheetMixin
+        spreadsheetMixin, panesMixin
     };
 
     for (const [name, mixin] of Object.entries(mixins)) {
@@ -165,6 +167,7 @@ function noteApp() {
             exportMixin,
             initMixin,
             spreadsheetMixin,
+            panesMixin,
         );
         debugLog('[Granite] noteApp() built successfully with', Object.keys(result).length, 'properties');
         return result;
