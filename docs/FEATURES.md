@@ -84,6 +84,95 @@ Link directly to folders using the same wiki-link syntax as notes:
 - **View mode memory** - Remembers Edit/Split/Preview preference
 - **Responsive design** - Works on all screen sizes
 
+## Stacked Panes
+
+Obsidian-style stacked panes for viewing and editing multiple notes side-by-side.
+
+### Opening Notes
+
+- **Click to open** - Clicking any note in the sidebar opens it in a new pane
+- **No duplicates** - If a note is already open, clicking it focuses that pane instead
+- **Wiki-link navigation** - Clicking `[[wikilinks]]` opens the target note in a new pane
+- **Maximum panes** - Up to 10 panes can be open simultaneously (oldest auto-closes when limit reached)
+
+### Pane Management
+
+- **Active pane indicator** - Currently focused pane highlighted with accent border at top
+- **Collapsed tabs** - Inactive panes collapse to colored vertical tabs on the left
+- **Tab colors** - Each collapsed pane has a distinct accent color for easy identification
+- **Click to focus** - Click any pane or collapsed tab to make it active
+- **Dirty indicator** - Unsaved changes shown with a dot (●) in the pane header
+
+### Per-Pane View Modes
+
+Each pane has independent view mode controls:
+
+- **Edit mode** - Raw markdown editing only
+- **Split mode** - Editor on left, live preview on right with synchronized scrolling
+
+### Closing Panes
+
+- **Close button** - X button in pane header closes that pane
+- **Close all** - Button in toolbar closes all open panes
+- **Unsaved changes** - Prompted to confirm if closing a pane with unsaved changes
+- **Keyboard shortcut** - `Ctrl/Cmd + W` closes the active pane
+
+### Pane Navigation
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl/Cmd + W` | Close active pane |
+| `Ctrl/Cmd + Tab` | Focus next pane |
+| `Ctrl/Cmd + Shift + Tab` | Focus previous pane |
+| `Ctrl/Cmd + 1-9` | Focus pane by index (1 = first pane) |
+
+### State Persistence
+
+- **Auto-save** - Pane layout saved to localStorage automatically
+- **Session restore** - Open panes restored when you return to the app
+- **URL updates** - Browser URL reflects the active pane's note path
+
+### Mobile Behavior
+
+On mobile viewports (< 768px):
+
+- Only the active pane is shown (full width)
+- Other panes are hidden but remain open
+- Swipe or use navigation to switch panes
+
+## Rich Editor Panel
+
+A WYSIWYG (What You See Is What You Get) editor panel that syncs with your markdown panes.
+
+### Opening the Rich Editor
+
+- **Toolbar button** - Click "Rich" in the panes toolbar to open the panel
+- **Side panel** - Opens as a resizable panel on the right side
+- **Synced content** - Changes in Rich Editor sync bidirectionally with the active pane
+
+### Features
+
+- **Visual formatting** - Bold, italic, headings, lists, links without markdown syntax
+- **Real-time sync** - Edits appear instantly in both views
+- **Tiptap-powered** - Full-featured rich text editing
+- **Theme-aware** - Matches your current theme settings
+
+### Collapsible Panes
+
+When using the Rich Editor, you can collapse the panes to give more screen space:
+
+- **Hide/Show button** - Click in the Rich Editor header to toggle
+- **Collapsed view** - Panes shrink to narrow vertical tabs (48px wide)
+- **Full expansion** - Rich Editor takes the remaining width
+- **Quick access** - Click collapsed tabs to identify which notes are open
+- **Auto-restore** - Closing the Rich Editor automatically expands panes back
+
+### Workflow Tips
+
+1. **Research mode** - Open multiple reference notes as panes, use Rich Editor for writing
+2. **Compare mode** - Open two versions of a note side-by-side in split view
+3. **Focus mode** - Collapse panes when you want to focus purely on Rich Editor
+
 ## Settings
 
 ### Server-Side Settings Persistence
@@ -446,6 +535,15 @@ date: {{date}}
 | `Ctrl+I` | `Cmd+I` | Italic | `*text*` |
 | `Ctrl+K` | `Cmd+K` | Insert link | `[text](url)` |
 | `Ctrl+Alt+T` | `Cmd+Option+T` | Insert table | 3x3 table placeholder |
+
+### Panes
+
+| Windows/Linux | Mac | Action |
+|---------------|-----|--------|
+| `Ctrl+W` | `Cmd+W` | Close active pane |
+| `Ctrl+Tab` | `Cmd+Tab` | Focus next pane |
+| `Ctrl+Shift+Tab` | `Cmd+Shift+Tab` | Focus previous pane |
+| `Ctrl+1` to `Ctrl+9` | `Cmd+1` to `Cmd+9` | Focus pane by index |
 
 ## Performance
 

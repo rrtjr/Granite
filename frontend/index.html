@@ -2186,6 +2186,85 @@
         }
 
         /* ============================================
+           COLLAPSED PANES (When Rich Editor Expanded)
+           ============================================ */
+        .panes-collapsed .panes-container {
+            width: 48px !important;
+            min-width: 48px !important;
+            max-width: 48px !important;
+            flex: 0 0 48px !important;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .panes-collapsed .note-pane {
+            width: 48px !important;
+            min-width: 48px !important;
+        }
+
+        .panes-collapsed .note-pane .pane-content,
+        .panes-collapsed .note-pane .pane-resize-handle {
+            display: none !important;
+        }
+
+        .panes-collapsed .note-pane .pane-header {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            padding: 12px 8px;
+            justify-content: flex-start;
+            height: 100%;
+        }
+
+        .panes-collapsed .note-pane .pane-header .pane-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-height: 150px;
+        }
+
+        .panes-collapsed .note-pane .pane-header .pane-controls {
+            display: none;
+        }
+
+        .panes-collapsed .rich-editor-panel {
+            flex: 1 !important;
+            width: auto !important;
+            min-width: 0 !important;
+            max-width: none !important;
+        }
+
+        /* Collapse toggle button */
+        .panes-collapse-toggle {
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: transparent;
+            border: 1px solid var(--border-primary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            transition: all 0.15s ease;
+        }
+
+        .panes-collapse-toggle:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border-color: var(--border-secondary);
+        }
+
+        .panes-collapse-toggle svg {
+            width: 14px;
+            height: 14px;
+            transition: transform 0.2s ease;
+        }
+
+        .panes-collapsed .panes-collapse-toggle svg {
+            transform: rotate(180deg);
+        }
+
+        /* ============================================
            RICH EDITOR PANEL (Right Sidebar)
            ============================================ */
         .rich-editor-panel {
@@ -3887,7 +3966,7 @@
                     </div>
 
                     <!-- Panes and Rich Editor Panel Container -->
-                    <div x-show="openPanes.length > 0" class="flex flex-1 overflow-hidden">
+                    <div x-show="openPanes.length > 0" class="flex flex-1 overflow-hidden" :class="{ 'panes-collapsed': panesCollapsed && showRichEditorPanel }">
                         <!-- Stacked Panes Container (Obsidian-style Accordion) -->
                         <div class="panes-container flex-1">
                         <template x-for="pane in openPanes" :key="pane.id">
@@ -4092,18 +4171,32 @@
                                     <span class="font-medium" style="color: var(--text-primary);">Rich Editor</span>
                                     <span class="text-sm" style="color: var(--text-tertiary);" x-text="activePane ? '— ' + activePane.name : ''"></span>
                                 </div>
-                                <button
-                                    @click="showRichEditorPanel = false"
-                                    class="p-1.5 rounded transition"
-                                    style="color: var(--text-tertiary);"
-                                    title="Close Rich Editor"
-                                    @mouseenter="$el.style.backgroundColor = 'var(--bg-tertiary)'"
-                                    @mouseleave="$el.style.backgroundColor = 'transparent'"
-                                >
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                    </svg>
-                                </button>
+                                <div class="flex items-center gap-2">
+                                    <!-- Collapse/Expand Panes Toggle -->
+                                    <button
+                                        @click="panesCollapsed = !panesCollapsed"
+                                        class="panes-collapse-toggle"
+                                        :title="panesCollapsed ? 'Show editor panes' : 'Hide editor panes (expand Rich Editor)'"
+                                    >
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                                        </svg>
+                                        <span x-text="panesCollapsed ? 'Show' : 'Hide'"></span>
+                                    </button>
+                                    <!-- Close Rich Editor -->
+                                    <button
+                                        @click="showRichEditorPanel = false; panesCollapsed = false"
+                                        class="p-1.5 rounded transition"
+                                        style="color: var(--text-tertiary);"
+                                        title="Close Rich Editor"
+                                        @mouseenter="$el.style.backgroundColor = 'var(--bg-tertiary)'"
+                                        @mouseleave="$el.style.backgroundColor = 'transparent'"
+                                    >
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <!-- Rich Editor Content (Tiptap) -->
                             <div class="flex-1 overflow-y-auto custom-scrollbar">

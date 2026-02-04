@@ -18,6 +18,7 @@ export const stateMixin = {
     activePaneId: null,      // Currently focused pane ID
     maxPanes: 10,            // Maximum open panes limit
     showRichEditorPanel: false, // Rich Editor right sidebar panel
+    panesCollapsed: false,       // Collapse panes to give Rich Editor more space
     // Pane object structure:
     // {
     //   id: 'pane-uuid',
