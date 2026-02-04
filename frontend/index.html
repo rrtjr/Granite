@@ -3945,6 +3945,101 @@
                                         x-show="pane.viewMode === 'split'"
                                         class="pane-preview w-1/2 h-full overflow-y-auto custom-scrollbar"
                                     >
+                                        <!-- Pane Frontmatter/Metadata -->
+                                        <div
+                                            x-show="paneHasFrontmatter(pane)"
+                                            class="pane-metadata mx-4 mt-3 mb-2"
+                                        >
+                                            <!-- Collapsed View -->
+                                            <div
+                                                x-show="!pane.metadataExpanded"
+                                                @click="togglePaneMetadata(pane)"
+                                                class="flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all"
+                                                style="background-color: var(--bg-tertiary); border: 1px solid var(--border-primary);"
+                                                onmouseover="this.style.borderColor='var(--accent-primary)'"
+                                                onmouseout="this.style.borderColor='var(--border-primary)'"
+                                            >
+                                                <!-- Property icon (clickable indicator) -->
+                                                <span class="text-xs opacity-60" title="Click to expand">⚙️</span>
+
+                                                <!-- Tags as pills -->
+                                                <template x-for="tag in getPaneTags(pane).slice(0, 4)" :key="tag">
+                                                    <span
+                                                        @click.stop="toggleTag(String(tag).toLowerCase())"
+                                                        class="px-2 py-0.5 text-xs rounded-full cursor-pointer transition-colors"
+                                                        style="background-color: var(--accent-light, rgba(124, 58, 237, 0.15)); color: var(--accent-primary);"
+                                                        onmouseover="this.style.backgroundColor='var(--accent-primary)'; this.style.color='white'"
+                                                        onmouseout="this.style.backgroundColor='var(--accent-light, rgba(124, 58, 237, 0.15))'; this.style.color='var(--accent-primary)'"
+                                                        x-text="'#' + tag"
+                                                    ></span>
+                                                </template>
+                                                <template x-if="getPaneTags(pane).length > 4">
+                                                    <span class="text-xs" style="color: var(--text-tertiary);">+<span x-text="getPaneTags(pane).length - 4"></span></span>
+                                                </template>
+
+                                                <!-- Priority fields (date, author, etc.) -->
+                                                <template x-for="field in getPanePriorityFields(pane)" :key="field.key">
+                                                    <span class="text-xs flex items-center gap-1" style="color: var(--text-secondary);">
+                                                        <span class="opacity-50">·</span>
+                                                        <span class="capitalize" x-text="field.key + ':'"></span>
+                                                        <span style="color: var(--text-primary);" x-text="field.value"></span>
+                                                    </span>
+                                                </template>
+
+                                                <!-- Expand hint -->
+                                                <span class="ml-auto text-xs opacity-40">▼</span>
+                                            </div>
+
+                                            <!-- Expanded View -->
+                                            <div
+                                                x-show="pane.metadataExpanded"
+                                                class="rounded-lg overflow-hidden"
+                                                style="background-color: var(--bg-tertiary); border: 1px solid var(--border-primary);"
+                                            >
+                                                <!-- Header (click to collapse) -->
+                                                <div
+                                                    @click="togglePaneMetadata(pane)"
+                                                    class="flex items-center justify-between px-3 py-2 cursor-pointer"
+                                                    style="border-bottom: 1px solid var(--border-primary);"
+                                                >
+                                                    <span class="text-xs font-medium" style="color: var(--text-secondary);">
+                                                        ⚙️ Properties
+                                                    </span>
+                                                    <span class="text-xs opacity-40">▲ Collapse</span>
+                                                </div>
+
+                                                <!-- Properties Grid -->
+                                                <div class="px-3 py-2 space-y-2">
+                                                    <!-- Tags row -->
+                                                    <template x-if="getPaneTags(pane).length > 0">
+                                                        <div class="flex flex-wrap gap-1.5 items-start">
+                                                            <span class="text-xs w-16 shrink-0 pt-0.5" style="color: var(--text-tertiary);">tags</span>
+                                                            <div class="flex flex-wrap gap-1">
+                                                                <template x-for="tag in getPaneTags(pane)" :key="tag">
+                                                                    <span
+                                                                        @click="toggleTag(String(tag).toLowerCase())"
+                                                                        class="px-2 py-0.5 text-xs rounded-full cursor-pointer transition-colors"
+                                                                        style="background-color: var(--accent-light, rgba(124, 58, 237, 0.15)); color: var(--accent-primary);"
+                                                                        onmouseover="this.style.backgroundColor='var(--accent-primary)'; this.style.color='white'"
+                                                                        onmouseout="this.style.backgroundColor='var(--accent-light, rgba(124, 58, 237, 0.15))'; this.style.color='var(--accent-primary)'"
+                                                                        x-text="'#' + tag"
+                                                                    ></span>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+
+                                                    <!-- All other fields -->
+                                                    <template x-for="field in getPaneAllMetadataFields(pane)" :key="field.key">
+                                                        <div class="flex gap-1.5 items-start text-xs">
+                                                            <span class="w-16 shrink-0 pt-0.5 capitalize" style="color: var(--text-tertiary);" x-text="field.key"></span>
+                                                            <span style="color: var(--text-primary); word-break: break-word;" x-text="field.value"></span>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div
                                             class="markdown-preview p-4"
                                             :class="{

@@ -50,6 +50,8 @@ export const panesMixin = {
             const data = await response.json();
 
             // Create new pane object
+            // Panes only support 'edit' and 'split' modes (Rich Editor is a separate panel)
+            const paneViewMode = (this.viewMode === 'edit' || this.viewMode === 'split') ? this.viewMode : 'split';
             const newPane = {
                 id: this.generatePaneId(),
                 path: notePath,
@@ -59,13 +61,14 @@ export const panesMixin = {
                 tiptapEditor: null,
                 scrollPos: 0,
                 previewScrollPos: 0,
-                viewMode: this.viewMode, // Inherit default view mode
+                viewMode: paneViewMode, // Only 'edit' or 'split' - 'rich' is handled by Rich Editor panel
                 isDirty: false,
                 lastSaved: new Date(),
                 width: width,
                 undoHistory: [data.content],
                 redoHistory: [],
                 _saveTimeout: null,
+                metadataExpanded: false, // Frontmatter panel expanded state
             };
 
             // Insert after active pane or at end
@@ -203,11 +206,8 @@ export const panesMixin = {
         // Skip if editor already initialized
         if (pane.editorView) return;
 
-        // Skip if in rich mode (uses Tiptap instead)
-        if (pane.viewMode === 'rich') {
-            this.initPaneTiptap(paneId);
-            return;
-        }
+        // Note: Panes only support 'edit' and 'split' modes
+        // Rich Editor is a separate panel that syncs with the active pane
 
         const container = document.querySelector(`[data-pane-id="${paneId}"] .pane-editor-container`);
         if (!container) {
@@ -454,7 +454,9 @@ export const panesMixin = {
                     width: paneData.width || 500
                 });
                 if (pane) {
-                    pane.viewMode = paneData.viewMode || 'split';
+                    // Ensure viewMode is only 'edit' or 'split' (not 'rich')
+                    const restoredMode = paneData.viewMode;
+                    pane.viewMode = (restoredMode === 'edit' || restoredMode === 'split') ? restoredMode : 'split';
                 }
             }
 
@@ -511,6 +513,12 @@ export const panesMixin = {
         const paneIndex = this.openPanes.findIndex(p => p.id === paneId);
         if (paneIndex === -1) return;
 
+        // Panes only support 'edit' and 'split' modes
+        if (mode !== 'edit' && mode !== 'split') {
+            Debug.warn('Invalid pane view mode:', mode, '- defaulting to split');
+            mode = 'split';
+        }
+
         const pane = this.openPanes[paneIndex];
         const oldMode = pane.viewMode;
         if (oldMode === mode) return; // No change needed
@@ -565,18 +573,126 @@ export const panesMixin = {
         this.scrollPaneIntoView(this.openPanes[prevIndex].id);
     },
 
-    // Render markdown preview for a pane
+    // Render markdown preview for a pane (strips frontmatter since it's shown in the metadata panel)
     renderPanePreview(pane) {
         if (!pane || !pane.content) return '';
+
+        // Strip frontmatter from content before rendering
+        let content = pane.content;
+        if (content.startsWith('---')) {
+            const endIndex = content.indexOf('\n---', 3);
+            if (endIndex !== -1) {
+                content = content.slice(endIndex + 4).trim();
+            }
+        }
+
         // Use existing markdown rendering
         if (this.renderMarkdownContent) {
-            return this.renderMarkdownContent(pane.content);
+            return this.renderMarkdownContent(content);
         }
         // Fallback to marked if available
         if (window.marked) {
-            return window.marked.parse(pane.content);
+            return window.marked.parse(content);
         }
-        return pane.content;
+        return content;
+    },
+
+    // Extract frontmatter from pane content
+    getPaneFrontmatter(pane) {
+        if (!pane || !pane.content) return null;
+
+        const content = pane.content;
+        if (!content.startsWith('---')) return null;
+
+        const endIndex = content.indexOf('\n---', 3);
+        if (endIndex === -1) return null;
+
+        const yamlContent = content.slice(4, endIndex).trim();
+        try {
+            // Simple YAML parsing for common cases
+            const metadata = {};
+            const lines = yamlContent.split('\n');
+
+            for (const line of lines) {
+                const colonIndex = line.indexOf(':');
+                if (colonIndex === -1) continue;
+
+                const key = line.slice(0, colonIndex).trim();
+                let value = line.slice(colonIndex + 1).trim();
+
+                // Handle arrays (simple single-line format)
+                if (value.startsWith('[') && value.endsWith(']')) {
+                    value = value.slice(1, -1).split(',').map(v => v.trim().replace(/^["']|["']$/g, ''));
+                } else if (value.startsWith('"') && value.endsWith('"')) {
+                    value = value.slice(1, -1);
+                } else if (value.startsWith("'") && value.endsWith("'")) {
+                    value = value.slice(1, -1);
+                }
+
+                metadata[key] = value;
+            }
+
+            return Object.keys(metadata).length > 0 ? metadata : null;
+        } catch (e) {
+            Debug.error('Error parsing pane frontmatter:', e);
+            return null;
+        }
+    },
+
+    // Check if pane has frontmatter
+    paneHasFrontmatter(pane) {
+        return this.getPaneFrontmatter(pane) !== null;
+    },
+
+    // Get tags from pane frontmatter
+    getPaneTags(pane) {
+        const metadata = this.getPaneFrontmatter(pane);
+        if (!metadata || !metadata.tags) return [];
+        return Array.isArray(metadata.tags) ? metadata.tags : [metadata.tags];
+    },
+
+    // Get priority fields from pane frontmatter
+    getPanePriorityFields(pane) {
+        const metadata = this.getPaneFrontmatter(pane);
+        if (!metadata) return [];
+
+        const priority = ['date', 'created', 'author', 'status', 'priority', 'type', 'category'];
+        const fields = [];
+
+        for (const key of priority) {
+            if (metadata[key] !== undefined && !Array.isArray(metadata[key])) {
+                fields.push({ key, value: String(metadata[key]) });
+            }
+        }
+
+        return fields.slice(0, 3); // Limit to 3 fields for compact display
+    },
+
+    // Get all metadata fields for expanded view (excludes tags which are shown separately)
+    getPaneAllMetadataFields(pane) {
+        const metadata = this.getPaneFrontmatter(pane);
+        if (!metadata) return [];
+
+        const fields = [];
+        for (const [key, value] of Object.entries(metadata)) {
+            // Skip tags (shown separately) and arrays
+            if (key === 'tags') continue;
+            if (Array.isArray(value)) {
+                fields.push({ key, value: value.join(', ') });
+            } else {
+                fields.push({ key, value: String(value) });
+            }
+        }
+
+        return fields;
+    },
+
+    // Toggle pane metadata expanded state
+    togglePaneMetadata(pane) {
+        if (!pane) return;
+        pane.metadataExpanded = !pane.metadataExpanded;
+        // Force reactivity
+        this.openPanes = this.openPanes.slice();
     },
 
     // Setup keyboard shortcuts for panes
