@@ -15,7 +15,7 @@ let statsMixin, metadataMixin, sidebarMixin, settingsMixin, editorMixin, tiptapM
 let notesMixin, foldersMixin, folderOperationsMixin, folderRenderMixin;
 let searchMixin, imagesMixin, pluginsMixin;
 let graphMixin, markdownMixin, uiMixin, exportMixin, initMixin;
-let spreadsheetMixin, panesMixin;
+let spreadsheetMixin, drawioMixin, panesMixin;
 
 async function loadModules() {
     const modules = [
@@ -45,6 +45,7 @@ async function loadModules() {
         { name: 'export', path: './modules/export.js' },
         { name: 'init', path: './modules/init.js' },
         { name: 'spreadsheet', path: './modules/spreadsheet.js' },
+        { name: 'drawio', path: './modules/drawio.js' },
         { name: 'panes', path: './modules/panes.js' },
     ];
 
@@ -89,6 +90,7 @@ async function loadModules() {
     exportMixin = loaded.export.exportMixin;
     initMixin = loaded.init.initMixin;
     spreadsheetMixin = loaded.spreadsheet.spreadsheetMixin;
+    drawioMixin = loaded.drawio.drawioMixin;
     panesMixin = loaded.panes.panesMixin;
 
     // Make CONFIG and ErrorHandler available globally
@@ -105,7 +107,7 @@ async function loadModules() {
         notesMixin, foldersMixin, folderOperationsMixin, folderRenderMixin,
         searchMixin, imagesMixin, pluginsMixin,
         graphMixin, markdownMixin, uiMixin, exportMixin, initMixin,
-        spreadsheetMixin, panesMixin
+        spreadsheetMixin, drawioMixin, panesMixin
     };
 
     for (const [name, mixin] of Object.entries(mixins)) {
@@ -167,6 +169,7 @@ function noteApp() {
             exportMixin,
             initMixin,
             spreadsheetMixin,
+            drawioMixin,
             panesMixin,
         );
         debugLog('[Granite] noteApp() built successfully with', Object.keys(result).length, 'properties');

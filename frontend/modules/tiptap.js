@@ -155,6 +155,7 @@ export const tiptapMixin = {
                 this.createImageEmbedExtension(),
                 this.createSpreadsheetExtension(),
                 this.createMermaidExtension(),
+                this.createDrawioExtension(),
                 this.createMathInlineExtension(),
                 this.createMathBlockExtension(),
             ],
@@ -462,6 +463,21 @@ export const tiptapMixin = {
             pre.parentNode.replaceChild(wrapper, pre);
         });
 
+        // Transform draw.io code blocks
+        tempDiv.querySelectorAll('pre code.language-drawio').forEach((block) => {
+            const pre = block.parentElement;
+            if (!pre) return;
+            const xml = block.textContent || '';
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'drawio-block';
+            wrapper.dataset.originalXml = xml.trim();
+            wrapper.dataset.diagramName = '';
+            wrapper.setAttribute('contenteditable', 'false');
+            wrapper.innerHTML = '<div class="drawio-placeholder">Draw.io Diagram</div>';
+            pre.parentNode.replaceChild(wrapper, pre);
+        });
+
         return tempDiv.innerHTML;
     },
 
@@ -620,6 +636,17 @@ export const tiptapMixin = {
             replacement: (content, node) => {
                 const code = node.dataset.originalCode || '';
                 return `\n\`\`\`mermaid\n${code}\n\`\`\`\n`;
+            }
+        });
+
+        // Rule for draw.io diagram blocks
+        turndown.addRule('drawio', {
+            filter: (node) => node.classList && node.classList.contains('drawio-block'),
+            replacement: (content, node) => {
+                const xml = node.dataset.originalXml || '';
+                const name = node.dataset.diagramName || '';
+                const meta = name ? ` name="${name}"` : '';
+                return `\n\`\`\`drawio${meta}\n${xml}\n\`\`\`\n`;
             }
         });
 
@@ -840,6 +867,57 @@ export const tiptapMixin = {
                 } catch (e) {
                     block.innerHTML = `<div class="mermaid-error">Diagram error: ${e.message}</div>`;
                 }
+            }
+        });
+
+        // Render draw.io diagrams from cache
+        container.querySelectorAll('.drawio-block').forEach(async (block) => {
+            const xml = block.dataset.originalXml || '';
+            if (!xml) return;
+
+            // Skip if already has SVG
+            if (block.querySelector('svg')) return;
+
+            try {
+                // Try to load cached SVG
+                if (typeof this.hashDrawioXml === 'function') {
+                    const hash = await this.hashDrawioXml(xml);
+                    const svg = await this.loadSvgFromCache(hash);
+
+                    if (svg) {
+                        // Handle potential data URL format in cache
+                        let svgContent = svg;
+                        if (svg.startsWith('data:image/svg+xml')) {
+                            const commaIndex = svg.indexOf(',');
+                            if (commaIndex !== -1) {
+                                try {
+                                    svgContent = atob(svg.substring(commaIndex + 1));
+                                } catch (e) {
+                                    return; // Keep placeholder
+                                }
+                            }
+                        }
+
+                        const name = block.dataset.diagramName || 'Draw.io Diagram';
+                        block.innerHTML = `
+                            <div class="drawio-tiptap-preview">
+                                <div class="drawio-name">${this.escapeHtml(name)}</div>
+                                <div class="drawio-svg-container">${svgContent}</div>
+                                <div class="drawio-edit-hint">Switch to Edit mode to modify</div>
+                            </div>
+                        `;
+
+                        // Make SVG responsive
+                        const svgEl = block.querySelector('svg');
+                        if (svgEl) {
+                            svgEl.style.width = '100%';
+                            svgEl.style.height = 'auto';
+                            svgEl.style.maxHeight = '400px';
+                        }
+                    }
+                }
+            } catch (e) {
+                Debug.warn('Failed to load cached draw.io SVG:', e);
             }
         });
     },
@@ -1110,6 +1188,45 @@ export const tiptapMixin = {
                     'data-original-code': node.attrs.code,
                     'contenteditable': 'false',
                 }), ['div', { class: 'mermaid-placeholder' }, 'Mermaid Diagram']];
+            },
+        });
+    },
+
+    // Create Draw.io extension for diagram blocks
+    createDrawioExtension() {
+        const { Node, mergeAttributes } = window.Tiptap;
+
+        return Node.create({
+            name: 'drawioBlock',
+            group: 'block',
+            atom: true,
+            selectable: true,
+
+            addAttributes() {
+                return {
+                    xml: { default: '' },
+                    name: { default: '' },
+                };
+            },
+
+            parseHTML() {
+                return [{
+                    tag: 'div.drawio-block',
+                    getAttrs: (dom) => ({
+                        xml: dom.dataset.originalXml || '',
+                        name: dom.dataset.diagramName || '',
+                    }),
+                }];
+            },
+
+            renderHTML({ node, HTMLAttributes }) {
+                const displayName = node.attrs.name || 'Draw.io Diagram';
+                return ['div', mergeAttributes(HTMLAttributes, {
+                    class: 'drawio-block',
+                    'data-original-xml': node.attrs.xml,
+                    'data-diagram-name': node.attrs.name,
+                    'contenteditable': 'false',
+                }), ['div', { class: 'drawio-placeholder' }, displayName]];
             },
         });
     },

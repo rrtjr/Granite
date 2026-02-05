@@ -4,6 +4,7 @@ Granite - API Routers
 
 from .api_config import router as api_config_router
 from .auth import router as auth_router
+from .drawio import router as drawio_router
 from .folders import router as folders_router
 from .formatter import router as formatter_router
 from .images import router as images_router
@@ -19,6 +20,7 @@ from .themes import router as themes_router
 __all__ = [
     "api_config_router",
     "auth_router",
+    "drawio_router",
     "folders_router",
     "formatter_router",
     "images_router",

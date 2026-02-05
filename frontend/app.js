@@ -22,6 +22,7 @@ import { pluginsMixin } from './modules/plugins.js';
 import { graphMixin } from './modules/graph.js';
 import { markdownMixin } from './modules/markdown.js';
 import { spreadsheetMixin } from './modules/spreadsheet.js';
+import { drawioMixin } from './modules/drawio.js';
 import { uiMixin } from './modules/ui.js';
 import { exportMixin } from './modules/export.js';
 import { initMixin } from './modules/init.js';
@@ -57,6 +58,7 @@ function noteApp() {
         ...graphMixin,
         ...markdownMixin,
         ...spreadsheetMixin,
+        ...drawioMixin,
         ...uiMixin,
         ...exportMixin,
         ...initMixin,

@@ -877,6 +877,11 @@ export const panesMixin = {
             html = this.transformSpreadsheetHtml(html, pane.content);
         }
 
+        // Transform draw.io diagram blocks
+        if (typeof this.transformDrawioHtml === 'function') {
+            html = this.transformDrawioHtml(html, pane.content);
+        }
+
         // Add banner if present
         if (bannerUrl) {
             const safeUrl = bannerUrl.replace(/"/g, '%22');

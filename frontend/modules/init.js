@@ -46,6 +46,11 @@ export const initMixin = {
             this.setupPaneKeyboardShortcuts();
         }
 
+        // Initialize draw.io diagram listeners
+        if (typeof this.initDrawioListeners === 'function') {
+            this.initDrawioListeners();
+        }
+
         // Try to restore panes from previous session
         let panesRestored = false;
         if (typeof this.restorePanesState === 'function') {

@@ -183,14 +183,19 @@ export const markdownMixin = {
             html = this.transformSpreadsheetHtml(html);
         }
 
+        // Transform draw.io diagram blocks
+        if (typeof this.transformDrawioHtml === 'function') {
+            html = this.transformDrawioHtml(html);
+        }
+
         this.typesetMath();
         this.renderMermaid();
 
         setTimeout(() => {
             const previewEl = this._domCache.previewContent || document.querySelector('.markdown-preview');
             if (previewEl) {
-                // Exclude mermaid and spreadsheet blocks from syntax highlighting
-                previewEl.querySelectorAll('pre code:not(.language-mermaid):not(.language-spreadsheet)').forEach((block) => {
+                // Exclude mermaid, spreadsheet, and drawio blocks from syntax highlighting
+                previewEl.querySelectorAll('pre code:not(.language-mermaid):not(.language-spreadsheet):not(.language-drawio)').forEach((block) => {
                     if (!block.classList.contains('hljs')) {
                         hljs.highlightElement(block);
                     }
