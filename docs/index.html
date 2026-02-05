@@ -105,7 +105,28 @@
         aside {
             position: sticky;
             top: 40px;
-            height: fit-content;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+            padding-right: 12px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        aside::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        aside::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        aside::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        aside::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
         }
 
         .sidebar-section { margin-bottom: 2.5rem; }

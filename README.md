@@ -7,9 +7,9 @@
 
   [![Test Suite](https://github.com/rrtjr/Granite/actions/workflows/test.yml/badge.svg)](https://github.com/rrtjr/Granite/actions/workflows/test.yml)
   [![Docker Publish](https://github.com/rrtjr/Granite/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/rrtjr/Granite/actions/workflows/docker-publish.yml)
-  [![Python 3.10+](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12-blue.svg)](https://www.python.org/downloads/)
+  [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-  [![Version](https://img.shields.io/badge/version-0.12.0-green.svg)](VERSION)
+  [![Version](https://img.shields.io/badge/version-0.15.0-green.svg)](VERSION)
 </div>
 
 A lightweight, self-hosted note-taking app with markdown support, wikilinks, tags, themes, and plugins. Your notes stay on your server as plain markdown files.
@@ -34,7 +34,7 @@ docker-compose up -d
 
 Access at [http://localhost:8000](http://localhost:8000)
 
-**Security:** Authentication is disabled by default. If exposing to a network, see [AUTHENTICATION.md](documentation/AUTHENTICATION.md).
+**Security:** Authentication is disabled by default. If exposing to a network, see [AUTHENTICATION.md](docs/AUTHENTICATION.md).
 
 ### Using Pre-built Image
 
@@ -58,32 +58,55 @@ Requires Python 3.10+. Access at [http://localhost:8000](http://localhost:8000)
 
 ## Features
 
-- **Markdown editor** with syntax highlighting (CodeMirror 6)
-- **Wikilinks** - `[[Note Name]]` internal linking
+### Editor
+
+- **Rich markdown editor** with syntax highlighting (CodeMirror 6)
+- **Three view modes** - Edit, Split, Preview
+- **Rich Editor mode** - WYSIWYG editing with Tiptap
+- **Multiple panes** - Work on multiple notes side-by-side
+- **Auto-save** - Never lose your work
+
+### Content
+
+- **Wikilinks** - `[[Note Name]]` Obsidian-style internal linking
 - **Tags & search** - YAML frontmatter tags with combined filtering
-- **Themes** - 8 built-in themes plus custom theme support
-- **Math & diagrams** - LaTeX/MathJax and Mermaid support
-- **Spreadsheets** - Excel-like tables with formulas
-- **Graph view** - Visualize note connections
+- **LaTeX/MathJax** - Beautiful mathematical equations
+- **Mermaid diagrams** - Flowcharts, sequence diagrams, and more
+- **Draw.io diagrams** - Full-featured diagram editor with SVG preview caching
+- **Spreadsheets** - Excel-like tables with formulas and cross-sheet references
+- **Image support** - Drag & drop, clipboard paste, Obsidian-compatible format
+
+### Organization
+
+- **Folder hierarchy** - Organize notes in nested folders
+- **Graph view** - Visualize note connections interactively
+- **Templates** - Reusable note templates with dynamic placeholders
+- **Direct URLs** - Deep linking to specific notes
+
+### Customization
+
+- **10 built-in themes** - Light, Dark, Dracula, Nord, Monokai, and more
+- **Custom themes** - Create your own CSS themes
 - **Plugins** - Git Sync, PDF Export, Note Statistics
-- **Templates** - Reusable note templates
 - **Optional authentication** - Password protection when needed
 
 ## Documentation
 
-Browse the [documentation/](documentation/) folder for detailed guides:
+Browse the [docs/](docs/) folder for detailed guides:
 
-- [FEATURES.md](documentation/FEATURES.md) - Full feature list and keyboard shortcuts
-- [AUTHENTICATION.md](documentation/AUTHENTICATION.md) - Enable password protection
-- [PLUGINS.md](documentation/PLUGINS.md) - Plugin system and development
-- [THEMES.md](documentation/THEMES.md) - Theme customization
-- [API.md](documentation/API.md) - REST API reference
-- [CONTRIBUTING.md](CONTRIBUTING.md) - Development and contributing guidelines
+- [FEATURES.md](docs/FEATURES.md) - Full feature list and keyboard shortcuts
+- [AUTHENTICATION.md](docs/AUTHENTICATION.md) - Enable password protection
+- [PLUGINS.md](docs/PLUGINS.md) - Plugin system and development
+- [THEMES.md](docs/THEMES.md) - Theme customization
+- [MERMAID.md](docs/MERMAID.md) - Mermaid diagram syntax
+- [DRAWIO.md](docs/DRAWIO.md) - Draw.io diagram editor
+- [SPREADSHEETS.md](docs/SPREADSHEETS.md) - Spreadsheet formulas and features
+- [API.md](docs/API.md) - REST API reference
 
 **Tip:** Mount the docs folder to view them in the app:
 ```yaml
 volumes:
-  - ./documentation:/app/data/docs:ro
+  - ./docs:/app/data/docs:ro
 ```
 
 ## Contributing
