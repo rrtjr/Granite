@@ -1429,21 +1429,20 @@
             color: inherit;
         }
 
-        /* Bubble Menu styling */
+        /* Bubble Menu styling - uses @floating-ui in Tiptap v3 */
         .tiptap-bubble-menu {
-            display: none; /* Hidden by default, Tippy will show it */
+            display: flex;
             gap: 2px;
             padding: 4px;
             background: var(--bg-primary);
             border: 1px solid var(--border-primary);
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            z-index: 1000;
-        }
-
-        /* Tippy shows the bubble menu by adding it to a tippy-box */
-        .tippy-box .tiptap-bubble-menu {
-            display: flex;
+            z-index: 10000;
+            /* floating-ui controls visibility via visibility/opacity */
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.1s ease;
         }
 
         .tiptap-bubble-menu button {

@@ -118,35 +118,29 @@ export const tiptapMixin = {
                 CharacterCount.configure({ limit: null }),  // Word/character count
                 BubbleMenu.configure({
                     element: bubbleMenuElement,
-                    shouldShow: ({ editor, state }) => {
+                    shouldShow: ({ editor, view, state }) => {
+                        // Don't show if editor doesn't have focus
+                        if (!view.hasFocus()) return false;
+
                         const { from, to } = state.selection;
                         const isTextSelected = from !== to;
-                        return isTextSelected;
+
+                        // Don't show for empty selections or code blocks
+                        if (!isTextSelected) return false;
+
+                        // Check if selection is in a code block
+                        const { $from } = state.selection;
+                        if ($from.parent.type.name === 'codeBlock') return false;
+
+                        return true;
                     },
-                    tippyOptions: {
-                        duration: 100,
+                    // Tiptap v3 uses @floating-ui options instead of tippyOptions
+                    options: {
                         placement: 'top',
-                        appendTo: () => document.body,
-                        interactive: true,
-                        maxWidth: 'none',
-                        zIndex: 10000,
-                        popperOptions: {
-                            strategy: 'fixed',
-                            modifiers: [
-                                {
-                                    name: 'flip',
-                                    options: {
-                                        fallbackPlacements: ['bottom', 'top'],
-                                    },
-                                },
-                                {
-                                    name: 'preventOverflow',
-                                    options: {
-                                        boundary: 'viewport',
-                                    },
-                                },
-                            ],
-                        },
+                        strategy: 'fixed',
+                        offset: 8,
+                        flip: { fallbackPlacements: ['bottom', 'top'] },
+                        shift: { padding: 8 },
                     },
                 }),
                 // Custom extensions
