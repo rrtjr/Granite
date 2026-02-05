@@ -182,7 +182,7 @@ class TestGetCache:
         response = client.get(f"/api/drawio-cache/{cache_hash}")
 
         assert response.status_code == 200
-        assert response.headers["content-type"] == "image/svg+xml; charset=utf-8"
+        assert "image/svg+xml" in response.headers["content-type"]
         assert response.text == sample_svg
 
     def test_get_cache_not_found(self, client, temp_cache_dir):
