@@ -67,9 +67,14 @@ export const initMixin = {
             window.history.replaceState({ homepageFolder: '' }, '', '/');
         }
 
-        // Setup mobile pane handling
+        // Setup mobile pane handling (legacy)
         if (typeof this.setupPaneMobileHandling === 'function') {
             this.setupPaneMobileHandling();
+        }
+
+        // Initialize mobile panes (tab bar, swipe gestures)
+        if (typeof this.initMobilePanes === 'function') {
+            this.initMobilePanes();
         }
 
         // Listen for browser back/forward navigation
@@ -169,6 +174,18 @@ export const initMixin = {
                     // Update Tiptap with new pane's content
                     this.updateTiptapContent(newPane.content);
                 }
+            }
+
+            // Update mobile tab bar when active pane changes
+            if (typeof this._onMobilePanesChanged === 'function') {
+                this._onMobilePanesChanged();
+            }
+        });
+
+        // Watch openPanes changes to update mobile tab bar
+        this.$watch('openPanes', () => {
+            if (typeof this._onMobilePanesChanged === 'function') {
+                this._onMobilePanesChanged();
             }
         });
 
