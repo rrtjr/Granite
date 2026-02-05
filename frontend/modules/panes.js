@@ -3,6 +3,45 @@
 
 import { CONFIG, Debug } from './config.js';
 
+/**
+ * Store for non-reactive pane data (editor instances, DOM refs, timeouts).
+ * These are kept outside Alpine's reactive system to avoid circular reference errors.
+ * Alpine tries to proxy all object properties, but CodeMirror/Tiptap editors have
+ * circular internal structures that break JSON serialization.
+ */
+const _paneEditors = new Map();  // paneId -> { editorView, tiptapEditor, saveTimeout, scrollSyncHandlers }
+
+/**
+ * Get editor data for a pane (creates entry if doesn't exist)
+ */
+function getPaneEditorData(paneId) {
+    if (!_paneEditors.has(paneId)) {
+        _paneEditors.set(paneId, {
+            editorView: null,
+            tiptapEditor: null,
+            saveTimeout: null,
+            scrollSyncHandlers: null,
+        });
+    }
+    return _paneEditors.get(paneId);
+}
+
+/**
+ * Clean up editor data for a pane
+ */
+function cleanupPaneEditorData(paneId) {
+    const data = _paneEditors.get(paneId);
+    if (data) {
+        if (data.editorView) {
+            data.editorView.destroy();
+        }
+        if (data.saveTimeout) {
+            clearTimeout(data.saveTimeout);
+        }
+        _paneEditors.delete(paneId);
+    }
+}
+
 export const panesMixin = {
     // Generate unique pane ID
     generatePaneId() {
@@ -52,14 +91,15 @@ export const panesMixin = {
 
             // Create new pane object
             // Panes only support 'edit' and 'split' modes (Rich Editor is a separate panel)
+            // NOTE: editorView, tiptapEditor, saveTimeout are stored in _paneEditors Map
+            // to avoid Alpine circular reference issues with CodeMirror/Tiptap instances
             const paneViewMode = viewMode || this.defaultPaneViewMode || 'split';
+            const paneId = this.generatePaneId();
             const newPane = {
-                id: this.generatePaneId(),
+                id: paneId,
                 path: notePath,
                 content: data.content,
                 name: notePath.split('/').pop().replace('.md', ''),
-                editorView: null,
-                tiptapEditor: null,
                 scrollPos: 0,
                 previewScrollPos: 0,
                 viewMode: paneViewMode, // Only 'edit' or 'split' - 'rich' is handled by Rich Editor panel
@@ -68,9 +108,11 @@ export const panesMixin = {
                 width: width,
                 undoHistory: [data.content],
                 redoHistory: [],
-                _saveTimeout: null,
                 metadataExpanded: false, // Frontmatter panel expanded state
             };
+
+            // Initialize editor storage for this pane
+            getPaneEditorData(paneId);
 
             // Insert after active pane or at end
             const activeIndex = this.openPanes.findIndex(p => p.id === this.activePaneId);
@@ -128,8 +170,9 @@ export const panesMixin = {
 
         // Restore focus to editor after DOM update
         this.$nextTick(() => {
-            if (pane.editorView) {
-                pane.editorView.focus();
+            const editorData = getPaneEditorData(paneId);
+            if (editorData.editorView) {
+                editorData.editorView.focus();
             }
             // Update Rich Editor panel content if open
             if (this.showRichEditorPanel && this.tiptapEditor) {
@@ -157,13 +200,8 @@ export const panesMixin = {
             await this.savePane(paneId);
         }
 
-        // Clear any pending save timeout
-        if (pane._saveTimeout) {
-            clearTimeout(pane._saveTimeout);
-        }
-
-        // Destroy editor instance
-        this.destroyPaneEditor(paneId);
+        // Clean up editor data (destroys editor, clears timeout)
+        cleanupPaneEditorData(paneId);
 
         // Remove from array
         const index = this.openPanes.findIndex(p => p.id === paneId);
@@ -204,8 +242,10 @@ export const panesMixin = {
         const pane = this.openPanes.find(p => p.id === paneId);
         if (!pane) return;
 
+        const editorData = getPaneEditorData(paneId);
+
         // Skip if editor already initialized
-        if (pane.editorView) return;
+        if (editorData.editorView) return;
 
         // Note: Panes only support 'edit' and 'split' modes
         // Rich Editor is a separate panel that syncs with the active pane
@@ -261,8 +301,8 @@ export const panesMixin = {
             ]
         });
 
-        // Create editor view
-        pane.editorView = new EditorView({
+        // Create editor view and store in separate map (not in pane object)
+        editorData.editorView = new EditorView({
             state: startState,
             parent: container
         });
@@ -271,7 +311,7 @@ export const panesMixin = {
         if (this.editorThemeCompartment && this.getEditorTheme) {
             try {
                 const theme = this.getEditorTheme();
-                pane.editorView.dispatch({
+                editorData.editorView.dispatch({
                     effects: themeCompartment.reconfigure(theme)
                 });
             } catch (e) {
@@ -281,7 +321,7 @@ export const panesMixin = {
 
         // Restore scroll position
         if (pane.scrollPos > 0) {
-            pane.editorView.scrollDOM.scrollTop = pane.scrollPos;
+            editorData.editorView.scrollDOM.scrollTop = pane.scrollPos;
         }
 
         // Setup scroll sync for split mode (with delay to ensure preview is rendered)
@@ -295,7 +335,8 @@ export const panesMixin = {
     // Initialize Tiptap for a pane (Rich mode)
     initPaneTiptap(paneId) {
         const pane = this.openPanes.find(p => p.id === paneId);
-        if (!pane || pane.tiptapEditor) return;
+        const editorData = getPaneEditorData(paneId);
+        if (!pane || editorData.tiptapEditor) return;
 
         // Use the existing Tiptap initialization but target pane container
         // This will be handled by tiptap.js integration
@@ -304,19 +345,19 @@ export const panesMixin = {
 
     // Destroy editor for a pane
     destroyPaneEditor(paneId) {
-        const pane = this.openPanes.find(p => p.id === paneId);
-        if (!pane) return;
-
         // Clean up scroll sync handlers
         this.cleanupPaneScrollSync(paneId);
 
-        if (pane.editorView) {
-            pane.editorView.destroy();
-            pane.editorView = null;
-        }
-        if (pane.tiptapEditor) {
-            pane.tiptapEditor.destroy();
-            pane.tiptapEditor = null;
+        const editorData = _paneEditors.get(paneId);
+        if (editorData) {
+            if (editorData.editorView) {
+                editorData.editorView.destroy();
+                editorData.editorView = null;
+            }
+            if (editorData.tiptapEditor) {
+                editorData.tiptapEditor.destroy();
+                editorData.tiptapEditor = null;
+            }
         }
 
         Debug.log('Destroyed editor for pane:', paneId);
@@ -325,12 +366,13 @@ export const panesMixin = {
     // Setup scroll sync between editor and preview for a pane
     setupPaneScrollSync(paneId) {
         const pane = this.openPanes.find(p => p.id === paneId);
-        if (!pane || !pane.editorView || pane.viewMode !== 'split') return;
+        const editorData = getPaneEditorData(paneId);
+        if (!pane || !editorData.editorView || pane.viewMode !== 'split') return;
 
         // Clean up any existing handlers first
         this.cleanupPaneScrollSync(paneId);
 
-        const editorScroller = pane.editorView.scrollDOM;
+        const editorScroller = editorData.editorView.scrollDOM;
         const previewEl = document.querySelector(`[data-pane-id="${paneId}"] .pane-preview`);
 
         if (!editorScroller || !previewEl) {
@@ -383,8 +425,8 @@ export const panesMixin = {
         editorScroller.addEventListener('scroll', editorScrollHandler);
         previewEl.addEventListener('scroll', previewScrollHandler);
 
-        // Store handlers on pane for cleanup
-        pane._scrollSyncHandlers = {
+        // Store handlers in editor data for cleanup
+        editorData.scrollSyncHandlers = {
             editor: editorScrollHandler,
             preview: previewScrollHandler,
             editorEl: editorScroller,
@@ -396,10 +438,10 @@ export const panesMixin = {
 
     // Cleanup scroll sync handlers for a pane
     cleanupPaneScrollSync(paneId) {
-        const pane = this.openPanes.find(p => p.id === paneId);
-        if (!pane || !pane._scrollSyncHandlers) return;
+        const editorData = _paneEditors.get(paneId);
+        if (!editorData || !editorData.scrollSyncHandlers) return;
 
-        const { editor, preview, editorEl, previewEl } = pane._scrollSyncHandlers;
+        const { editor, preview, editorEl, previewEl } = editorData.scrollSyncHandlers;
 
         if (editorEl && editor) {
             editorEl.removeEventListener('scroll', editor);
@@ -408,24 +450,24 @@ export const panesMixin = {
             previewEl.removeEventListener('scroll', preview);
         }
 
-        pane._scrollSyncHandlers = null;
+        editorData.scrollSyncHandlers = null;
         Debug.log('Scroll sync cleaned up for pane:', paneId);
     },
 
     // Update pane's CodeMirror editor content (from external source like Tiptap)
     updatePaneEditorContent(paneId, content) {
         const pane = this.openPanes.find(p => p.id === paneId);
-        if (!pane || !pane.editorView) return;
+        const editorData = getPaneEditorData(paneId);
+        if (!pane || !editorData.editorView) return;
 
-        const currentContent = pane.editorView.state.doc.toString();
+        const currentContent = editorData.editorView.state.doc.toString();
         if (currentContent === content) return; // No change needed
 
         // Update editor without triggering the change listener
-        const { EditorView } = window.CodeMirror;
-        pane.editorView.dispatch({
+        editorData.editorView.dispatch({
             changes: {
                 from: 0,
-                to: pane.editorView.state.doc.length,
+                to: editorData.editorView.state.doc.length,
                 insert: content
             }
         });
@@ -438,8 +480,9 @@ export const panesMixin = {
         const pane = this.openPanes.find(p => p.id === paneId);
         if (!pane) return;
 
-        if (pane.editorView) {
-            pane.scrollPos = pane.editorView.scrollDOM.scrollTop;
+        const editorData = _paneEditors.get(paneId);
+        if (editorData && editorData.editorView) {
+            pane.scrollPos = editorData.editorView.scrollDOM.scrollTop;
         }
 
         // Also save preview scroll if in split mode
@@ -462,11 +505,12 @@ export const panesMixin = {
         const pane = this.openPanes.find(p => p.id === paneId);
         if (!pane) return;
 
-        if (pane._saveTimeout) {
-            clearTimeout(pane._saveTimeout);
+        const editorData = getPaneEditorData(paneId);
+        if (editorData.saveTimeout) {
+            clearTimeout(editorData.saveTimeout);
         }
 
-        pane._saveTimeout = setTimeout(() => {
+        editorData.saveTimeout = setTimeout(() => {
             this.savePane(paneId);
         }, this.performanceSettings.autosaveDelay);
     },
@@ -642,18 +686,19 @@ export const panesMixin = {
         }
 
         // Handle editor transitions
+        const editorData = _paneEditors.get(paneId);
         if (oldMode === 'rich' && mode !== 'rich') {
             // Destroy Tiptap, init CodeMirror
-            if (pane.tiptapEditor) {
-                pane.tiptapEditor.destroy();
-                pane.tiptapEditor = null;
+            if (editorData && editorData.tiptapEditor) {
+                editorData.tiptapEditor.destroy();
+                editorData.tiptapEditor = null;
             }
             this.$nextTick(() => this.initPaneEditor(paneId));
         } else if (oldMode !== 'rich' && mode === 'rich') {
             // Destroy CodeMirror, init Tiptap
-            if (pane.editorView) {
-                pane.editorView.destroy();
-                pane.editorView = null;
+            if (editorData && editorData.editorView) {
+                editorData.editorView.destroy();
+                editorData.editorView = null;
             }
             this.$nextTick(() => this.initPaneTiptap(paneId));
         }
