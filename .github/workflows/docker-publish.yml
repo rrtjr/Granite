@@ -39,7 +39,7 @@ jobs:
           if ! git diff --quiet README.md; then
             git add README.md
             git commit -m "chore: update README version badge to ${VERSION}"
-            git push origin HEAD:main
+            git push origin HEAD:main || echo "Badge already up to date on main"
           fi
 
       - name: Set up QEMU for multi-architecture builds
