@@ -176,13 +176,13 @@ export const initMixin = {
                 }
             }
 
-            // Update mobile tab bar when active pane changes
+            // Update mobile toolbar when active pane changes
             if (typeof this._onMobilePanesChanged === 'function') {
                 this._onMobilePanesChanged();
             }
         });
 
-        // Watch openPanes changes to update mobile tab bar
+        // Watch openPanes changes to update mobile toolbar
         this.$watch('openPanes', () => {
             if (typeof this._onMobilePanesChanged === 'function') {
                 this._onMobilePanesChanged();

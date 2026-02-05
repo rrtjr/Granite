@@ -2,6 +2,7 @@
 // Obsidian-style sliding panes for multi-note viewing
 
 import { CONFIG, Debug } from './config.js';
+import { isMobileDevice } from './mobile-panes.js';
 
 /**
  * Store for non-reactive pane data (editor instances, DOM refs, timeouts).
@@ -66,8 +67,20 @@ export const panesMixin = {
             return existingPane;
         }
 
-        // Enforce max panes limit
-        if (this.openPanes.length >= this.maxPanes) {
+        // Mobile single-pane mode: close existing pane first
+        if (isMobileDevice() && this.openPanes.length > 0) {
+            const currentPane = this.openPanes[0];
+            if (currentPane.isDirty) {
+                const shouldSave = confirm(`Save changes to "${currentPane.name}"?`);
+                if (shouldSave) {
+                    await this.savePane(currentPane.id);
+                }
+            }
+            await this.closePane(currentPane.id, { save: false, prompt: false });
+        }
+
+        // Enforce max panes limit (desktop only - mobile is handled above)
+        if (!isMobileDevice() && this.openPanes.length >= this.maxPanes) {
             // Close oldest non-dirty pane
             const oldestClean = this.openPanes.find(p => !p.isDirty);
             if (oldestClean) {
