@@ -46,20 +46,28 @@ function isLandscape() {
 }
 
 /**
+ * Internal state stored outside Alpine to avoid circular reference issues.
+ * Alpine tries to make all mixin properties reactive, which fails for DOM elements
+ * and complex objects with circular references.
+ */
+const _mobileState = {
+    initialized: false,
+    tabBar: null,
+    swipeState: null,
+    tabletSplitEnabled: false,
+};
+
+/**
  * Mobile Panes Mixin - Extends the main app with mobile-specific functionality
  */
 export const mobilePanesMixin = {
-    // Mobile-specific state
-    _mobileInitialized: false,
-    _swipeState: null,
-    _tabletSplitEnabled: false,
 
     /**
      * Initialize mobile panes functionality
      * Called from init() if on mobile device
      */
     initMobilePanes() {
-        if (!isMobileDevice() || this._mobileInitialized) {
+        if (!isMobileDevice() || _mobileState.initialized) {
             return;
         }
 
@@ -67,7 +75,7 @@ export const mobilePanesMixin = {
             console.log('[Granite Mobile] Initializing mobile panes');
         }
 
-        this._mobileInitialized = true;
+        _mobileState.initialized = true;
 
         // Create tab bar element
         this._createMobileTabBar();
@@ -105,14 +113,14 @@ export const mobilePanesMixin = {
         }
 
         // Store reference
-        this._mobileTabBar = tabBar;
+        _mobileState.tabBar = tabBar;
     },
 
     /**
      * Render/update the mobile tab bar
      */
     _renderMobileTabBar() {
-        if (!this._mobileTabBar || !isMobileDevice()) {
+        if (!_mobileState.tabBar || !isMobileDevice()) {
             return;
         }
 
@@ -151,14 +159,14 @@ export const mobilePanesMixin = {
         // Add tablet split toggle if applicable
         if (isTablet() && isLandscape()) {
             html += `
-                <button class="tablet-split-toggle ${this._tabletSplitEnabled ? 'active' : ''}"
+                <button class="tablet-split-toggle ${_mobileState.tabletSplitEnabled ? 'active' : ''}"
                         title="Toggle split view">
                     Split
                 </button>
             `;
         }
 
-        this._mobileTabBar.innerHTML = html;
+        _mobileState.tabBar.innerHTML = html;
 
         // Attach event listeners
         this._attachMobileTabListeners();
@@ -168,10 +176,10 @@ export const mobilePanesMixin = {
      * Attach event listeners to mobile tab bar
      */
     _attachMobileTabListeners() {
-        if (!this._mobileTabBar) return;
+        if (!_mobileState.tabBar) return;
 
         // Tab click
-        this._mobileTabBar.querySelectorAll('.mobile-pane-tab').forEach(tab => {
+        _mobileState.tabBar.querySelectorAll('.mobile-pane-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 const paneId = tab.dataset.paneId;
                 if (paneId) {
@@ -181,7 +189,7 @@ export const mobilePanesMixin = {
         });
 
         // Close button click
-        this._mobileTabBar.querySelectorAll('.mobile-pane-tab-close').forEach(btn => {
+        _mobileState.tabBar.querySelectorAll('.mobile-pane-tab-close').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const paneId = btn.dataset.paneId;
@@ -192,7 +200,7 @@ export const mobilePanesMixin = {
         });
 
         // Add tab button
-        const addBtn = this._mobileTabBar.querySelector('.mobile-pane-tab-add');
+        const addBtn = _mobileState.tabBar.querySelector('.mobile-pane-tab-add');
         if (addBtn) {
             addBtn.addEventListener('click', () => {
                 // Show note selector or create new note
@@ -201,7 +209,7 @@ export const mobilePanesMixin = {
         }
 
         // Split toggle button
-        const splitToggle = this._mobileTabBar.querySelector('.tablet-split-toggle');
+        const splitToggle = _mobileState.tabBar.querySelector('.tablet-split-toggle');
         if (splitToggle) {
             splitToggle.addEventListener('click', () => {
                 this._toggleTabletSplitView();
@@ -232,7 +240,7 @@ export const mobilePanesMixin = {
             startY = e.touches[0].clientY;
             isDragging = true;
 
-            this._swipeState = {
+            _mobileState.swipeState = {
                 startX,
                 startY,
                 currentX: startX,
@@ -241,13 +249,13 @@ export const mobilePanesMixin = {
         }, { passive: true });
 
         panesContainer.addEventListener('touchmove', (e) => {
-            if (!isDragging || !this._swipeState) return;
+            if (!isDragging || !_mobileState.swipeState) return;
             if (!isPhone()) return;
 
             const currentX = e.touches[0].clientX;
             const currentY = e.touches[0].clientY;
-            const deltaX = currentX - this._swipeState.startX;
-            const deltaY = currentY - this._swipeState.startY;
+            const deltaX = currentX - _mobileState.swipeState.startX;
+            const deltaY = currentY - _mobileState.swipeState.startY;
 
             // Only handle horizontal swipes
             if (Math.abs(deltaY) > Math.abs(deltaX)) {
@@ -256,12 +264,12 @@ export const mobilePanesMixin = {
                 return;
             }
 
-            this._swipeState.currentX = currentX;
-            this._swipeState.direction = deltaX > 0 ? 'right' : 'left';
+            _mobileState.swipeState.currentX = currentX;
+            _mobileState.swipeState.direction = deltaX > 0 ? 'right' : 'left';
 
             // Show swipe indicator
             if (Math.abs(deltaX) > threshold / 2) {
-                this._showSwipeIndicator(this._swipeState.direction, Math.abs(deltaX) / threshold);
+                this._showSwipeIndicator(_mobileState.swipeState.direction, Math.abs(deltaX) / threshold);
             }
 
             // Prevent scrolling during horizontal swipe
@@ -273,7 +281,7 @@ export const mobilePanesMixin = {
         panesContainer.addEventListener('touchend', (e) => {
             panesContainer.classList.remove('swiping');
 
-            if (!isDragging || !this._swipeState) {
+            if (!isDragging || !_mobileState.swipeState) {
                 this._hideSwipeIndicators();
                 return;
             }
@@ -283,7 +291,7 @@ export const mobilePanesMixin = {
                 return;
             }
 
-            const deltaX = this._swipeState.currentX - this._swipeState.startX;
+            const deltaX = _mobileState.swipeState.currentX - _mobileState.swipeState.startX;
 
             if (Math.abs(deltaX) >= threshold) {
                 if (deltaX > 0) {
@@ -296,13 +304,13 @@ export const mobilePanesMixin = {
             }
 
             isDragging = false;
-            this._swipeState = null;
+            _mobileState.swipeState = null;
             this._hideSwipeIndicators();
         }, { passive: true });
 
         panesContainer.addEventListener('touchcancel', () => {
             isDragging = false;
-            this._swipeState = null;
+            _mobileState.swipeState = null;
             panesContainer.classList.remove('swiping');
             this._hideSwipeIndicators();
         }, { passive: true });
@@ -395,17 +403,17 @@ export const mobilePanesMixin = {
      * Toggle tablet split view
      */
     _toggleTabletSplitView() {
-        this._tabletSplitEnabled = !this._tabletSplitEnabled;
+        _mobileState.tabletSplitEnabled = !_mobileState.tabletSplitEnabled;
 
         const mainContainer = document.querySelector('.panes-container')?.parentElement;
         if (mainContainer) {
-            mainContainer.classList.toggle('tablet-split-view', this._tabletSplitEnabled);
+            mainContainer.classList.toggle('tablet-split-view', _mobileState.tabletSplitEnabled);
         }
 
         this._renderMobileTabBar();
 
         if (window.GRANITE_DEBUG) {
-            console.log('[Granite Mobile] Split view:', this._tabletSplitEnabled);
+            console.log('[Granite Mobile] Split view:', _mobileState.tabletSplitEnabled);
         }
     },
 
@@ -419,7 +427,7 @@ export const mobilePanesMixin = {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
                 if (isMobileDevice()) {
-                    if (!this._mobileInitialized) {
+                    if (!_mobileState.initialized) {
                         this.initMobilePanes();
                     }
                     this._renderMobileTabBar();
@@ -440,8 +448,8 @@ export const mobilePanesMixin = {
                 this._renderMobileTabBar();
 
                 // Disable split view when switching to portrait
-                if (!isLandscape() && this._tabletSplitEnabled) {
-                    this._tabletSplitEnabled = false;
+                if (!isLandscape() && _mobileState.tabletSplitEnabled) {
+                    _mobileState.tabletSplitEnabled = false;
                     const mainContainer = document.querySelector('.panes-container')?.parentElement;
                     if (mainContainer) {
                         mainContainer.classList.remove('tablet-split-view');
@@ -455,8 +463,8 @@ export const mobilePanesMixin = {
      * Hide mobile elements when switching to desktop
      */
     _hideMobileElements() {
-        if (this._mobileTabBar) {
-            this._mobileTabBar.style.display = 'none';
+        if (_mobileState.tabBar) {
+            _mobileState.tabBar.style.display = 'none';
         }
 
         const mainContainer = document.querySelector('.panes-container')?.parentElement;
@@ -486,7 +494,7 @@ export const mobilePanesMixin = {
 
             // Scroll active tab into view
             setTimeout(() => {
-                const activeTab = this._mobileTabBar?.querySelector('.mobile-pane-tab.active');
+                const activeTab = _mobileState.tabBar?.querySelector('.mobile-pane-tab.active');
                 if (activeTab) {
                     activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                 }
