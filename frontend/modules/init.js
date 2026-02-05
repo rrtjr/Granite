@@ -73,7 +73,9 @@ export const initMixin = {
         }
 
         // Initialize mobile panes (tab bar, swipe gestures)
+        console.log('[Init] Checking initMobilePanes:', typeof this.initMobilePanes);
         if (typeof this.initMobilePanes === 'function') {
+            console.log('[Init] Calling initMobilePanes');
             this.initMobilePanes();
         }
 

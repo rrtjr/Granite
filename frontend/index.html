@@ -2326,22 +2326,24 @@
            - Template modal: 1100 (must be above sidebar)
            - Dropdown menu: 50 (below everything)
         */
-        @media (max-width: 768px) {
-            /* Hide sidebar by default on mobile */
+        @media (max-width: 1024px) {
+            /* Hide sidebar by default on mobile/tablet */
             .mobile-sidebar {
                 position: fixed;
-                left: -100%;
+                left: 0;
                 top: 0;
                 height: 100vh;
-                width: 80% !important;
-                max-width: 300px !important;
-                z-index: 1000;
-                transition: left 0.3s ease;
+                width: 85% !important;
+                max-width: 320px !important;
+                z-index: 1200;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                padding-bottom: 80px; /* Space for bottom nav */
             }
 
             /* Show sidebar when open */
             .mobile-sidebar-open {
-                left: 0;
+                transform: translateX(0);
             }
 
             /* Mobile overlay */
@@ -2349,7 +2351,7 @@
                 position: fixed;
                 inset: 0;
                 background-color: rgba(0, 0, 0, 0.5);
-                z-index: 999;
+                z-index: 1199;
                 display: none;
             }
 
@@ -2357,9 +2359,9 @@
                 display: block;
             }
 
-            /* Hamburger button */
+            /* Hamburger button - hidden, using bottom nav instead */
             .mobile-menu-button {
-                display: flex !important;
+                display: none !important;
             }
 
             /* Hide desktop resize handle on mobile */
@@ -3011,6 +3013,15 @@
             .panes-toolbar {
                 flex-wrap: wrap;
                 gap: 0.5rem;
+                position: fixed;
+                top: calc(56px + env(safe-area-inset-top, 0)); /* Below mobile header */
+                left: 0;
+                right: 0;
+                z-index: 998;
+                padding-left: 16px !important;
+                padding-right: 16px !important;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
             }
 
             .rich-editor-panel {
@@ -6225,6 +6236,241 @@
                 </button>
             </div>
         </template>
+    </div>
+
+    <!-- =========================================================================
+         Mobile UI Components (shown on screens ≤1024px)
+         ========================================================================= -->
+
+    <!-- Mobile Header Bar (shown when note is open on phone) -->
+    <header class="mobile-header"
+            x-show="openPanes.length > 0 && isMobileOrTablet()"
+            x-cloak>
+        <!-- Back/Home Button -->
+        <button class="mobile-header-back" @click="_goMobileHome()" title="Back to home">
+            <svg viewBox="0 0 24 24">
+                <polyline points="15 18 9 12 15 6"/>
+            </svg>
+        </button>
+
+        <!-- Note Title + Path -->
+        <div class="mobile-header-title">
+            <span class="mobile-header-name" x-text="activePane?.name || 'Untitled'"></span>
+            <span class="mobile-header-path"
+                  x-text="activePane?.path?.replace(activePane?.name + '.md', '').replace(/\/$/, '')"
+                  x-show="activePane?.path?.includes('/')"></span>
+        </div>
+
+        <!-- Unsaved Indicator (Prominent) -->
+        <div class="mobile-header-status">
+            <div class="dirty-indicator-prominent" x-show="activePane?.isDirty">
+                <span class="dirty-pulse"></span>
+                <span class="dirty-text">Unsaved</span>
+            </div>
+            <div class="saved-indicator" x-show="!activePane?.isDirty && lastSaved">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="mobile-bottom-nav"
+         x-show="isMobileOrTablet()"
+         :class="{ 'keyboard-visible': mobileKeyboardVisible }"
+         x-cloak>
+
+        <!-- Primary Navigation Section -->
+        <div class="bottom-nav-primary">
+            <!-- Home Button -->
+            <button class="bottom-nav-item"
+                    @click="_goMobileHome()"
+                    :class="{ 'active': !openPanes.length }">
+                <svg class="bottom-nav-icon" viewBox="0 0 24 24">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <span class="bottom-nav-label">Home</span>
+            </button>
+
+            <!-- View Mode Toggle -->
+            <button class="bottom-nav-item"
+                    @click="_toggleMobileViewMode()"
+                    :disabled="!openPanes.length">
+                <!-- Edit mode icon -->
+                <svg class="bottom-nav-icon" viewBox="0 0 24 24" x-show="activePane?.viewMode === 'edit'">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                <!-- Split mode icon -->
+                <svg class="bottom-nav-icon" viewBox="0 0 24 24" x-show="activePane?.viewMode !== 'edit'">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="12" y1="3" x2="12" y2="21"/>
+                </svg>
+                <span class="bottom-nav-label" x-text="activePane?.viewMode === 'edit' ? 'Edit' : 'Split'">Edit</span>
+            </button>
+
+            <!-- More Actions (Opens Bottom Sheet) -->
+            <button class="bottom-nav-item"
+                    @click="_openMobileBottomSheet()">
+                <svg class="bottom-nav-icon" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="1"/>
+                    <circle cx="19" cy="12" r="1"/>
+                    <circle cx="5" cy="12" r="1"/>
+                </svg>
+                <span class="bottom-nav-label">More</span>
+            </button>
+        </div>
+
+        <!-- Contextual Actions (shown when note is open) -->
+        <div class="bottom-nav-contextual" x-show="openPanes.length > 0">
+            <!-- Save Status Indicator -->
+            <div class="save-indicator">
+                <span x-show="activePane?.isDirty && !isSaving" class="dirty-dot"></span>
+                <span x-show="isSaving" class="saving-spinner"></span>
+                <span x-show="!activePane?.isDirty && !isSaving && lastSaved" class="saved-check">✓</span>
+            </div>
+
+            <!-- Close Note -->
+            <button class="bottom-nav-action"
+                    @click="closePane(activePaneId)"
+                    title="Close note">
+                <svg viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Bottom Sheet Overlay -->
+    <div class="mobile-bottom-sheet-overlay"
+         :class="{ 'visible': mobileBottomSheetOpen }"
+         @click="_closeMobileBottomSheet()"
+         x-cloak>
+    </div>
+
+    <!-- Mobile Bottom Sheet -->
+    <div class="mobile-bottom-sheet"
+         :class="{ 'visible': mobileBottomSheetOpen }"
+         @touchstart="_handleSheetTouchStart($event)"
+         @touchmove="_handleSheetTouchMove($event)"
+         @touchend="_handleSheetTouchEnd($event)"
+         x-cloak>
+
+        <!-- Drag Handle -->
+        <div class="sheet-handle">
+            <div class="sheet-handle-bar"></div>
+        </div>
+
+        <!-- Sheet Header (when note is open) -->
+        <div class="sheet-header" x-show="activePane">
+            <div class="sheet-title-row">
+                <span class="sheet-note-title" x-text="activePane?.name || 'Menu'"></span>
+                <span class="sheet-dirty-badge" x-show="activePane?.isDirty">Unsaved</span>
+            </div>
+            <span class="sheet-note-path" x-text="activePane?.path" x-show="activePane"></span>
+        </div>
+
+        <!-- Sheet Content -->
+        <div class="sheet-content">
+            <!-- Quick Actions (when note is open) -->
+            <div class="sheet-section" x-show="activePane">
+                <div class="sheet-section-title">Quick Actions</div>
+                <div class="sheet-action-grid">
+                    <button class="sheet-action-btn" @click="savePane(activePaneId); _closeMobileBottomSheet()">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17 21 17 13 7 13 7 21"/>
+                            <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        <span>Save</span>
+                    </button>
+                    <button class="sheet-action-btn" @click="exportToPDF(); _closeMobileBottomSheet()">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                        <span>Export</span>
+                    </button>
+                    <button class="sheet-action-btn" @click="toggleFavorite(activePane?.path); _closeMobileBottomSheet()">
+                        <svg viewBox="0 0 24 24" :fill="isFavorite(activePane?.path) ? 'currentColor' : 'none'">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                        <span x-text="isFavorite(activePane?.path) ? 'Unfav' : 'Favorite'">Favorite</span>
+                    </button>
+                    <button class="sheet-action-btn" @click="copyLink(); _closeMobileBottomSheet()">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                        </svg>
+                        <span>Link</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- View Mode Section (when note is open) -->
+            <div class="sheet-section" x-show="activePane">
+                <div class="sheet-section-title">View Mode</div>
+                <div class="sheet-view-modes">
+                    <button class="sheet-view-btn"
+                            :class="{ 'active': activePane?.viewMode === 'edit' }"
+                            @click="_setMobileViewMode('edit')">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                        <span>Editor</span>
+                    </button>
+                    <button class="sheet-view-btn"
+                            :class="{ 'active': activePane?.viewMode === 'split' }"
+                            @click="_setMobileViewMode('split')">
+                        <svg viewBox="0 0 24 24">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="12" y1="3" x2="12" y2="21"/>
+                        </svg>
+                        <span>Split</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navigation Section -->
+            <div class="sheet-section">
+                <div class="sheet-section-title">Navigate</div>
+                <button class="sheet-nav-btn" @click="activePanel = 'files'; mobileSidebarOpen = true; _closeMobileBottomSheet()">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                    </svg>
+                    <span>Files</span>
+                    <svg class="sheet-nav-arrow" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+                <button class="sheet-nav-btn" @click="activePanel = 'search'; mobileSidebarOpen = true; _closeMobileBottomSheet()">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <span>Search</span>
+                    <svg class="sheet-nav-arrow" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+                <button class="sheet-nav-btn" @click="showGraph = true; initGraph(); _closeMobileBottomSheet()">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="6" cy="6" r="3"/>
+                        <circle cx="18" cy="18" r="3"/>
+                        <circle cx="6" cy="18" r="3"/>
+                        <line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/>
+                        <line x1="8.5" y1="15.5" x2="8.5" y2="8.5"/>
+                    </svg>
+                    <span>Graph View</span>
+                    <svg class="sheet-nav-arrow" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+                <button class="sheet-nav-btn" @click="activePanel = 'settings'; mobileSidebarOpen = true; _closeMobileBottomSheet()">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                    <span>Settings</span>
+                    <svg class="sheet-nav-arrow" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- App module loads and then dynamically loads Alpine.js -->

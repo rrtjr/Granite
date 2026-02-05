@@ -15,7 +15,7 @@ let statsMixin, metadataMixin, sidebarMixin, settingsMixin, editorMixin, tiptapM
 let notesMixin, foldersMixin, folderOperationsMixin, folderRenderMixin;
 let searchMixin, imagesMixin, pluginsMixin;
 let graphMixin, markdownMixin, uiMixin, exportMixin, initMixin;
-let spreadsheetMixin, drawioMixin, panesMixin;
+let spreadsheetMixin, drawioMixin, panesMixin, mobilePanesMixin;
 
 async function loadModules() {
     const modules = [
@@ -47,6 +47,7 @@ async function loadModules() {
         { name: 'spreadsheet', path: './modules/spreadsheet.js' },
         { name: 'drawio', path: './modules/drawio.js' },
         { name: 'panes', path: './modules/panes.js' },
+        { name: 'mobile-panes', path: './modules/mobile-panes.js' },
     ];
 
     const loaded = {};
@@ -92,6 +93,7 @@ async function loadModules() {
     spreadsheetMixin = loaded.spreadsheet.spreadsheetMixin;
     drawioMixin = loaded.drawio.drawioMixin;
     panesMixin = loaded.panes.panesMixin;
+    mobilePanesMixin = loaded['mobile-panes'].mobilePanesMixin;
 
     // Make CONFIG and ErrorHandler available globally
     window.CONFIG = CONFIG;
@@ -107,7 +109,7 @@ async function loadModules() {
         notesMixin, foldersMixin, folderOperationsMixin, folderRenderMixin,
         searchMixin, imagesMixin, pluginsMixin,
         graphMixin, markdownMixin, uiMixin, exportMixin, initMixin,
-        spreadsheetMixin, drawioMixin, panesMixin
+        spreadsheetMixin, drawioMixin, panesMixin, mobilePanesMixin
     };
 
     for (const [name, mixin] of Object.entries(mixins)) {
@@ -171,6 +173,7 @@ function noteApp() {
             spreadsheetMixin,
             drawioMixin,
             panesMixin,
+            mobilePanesMixin,
         );
         debugLog('[Granite] noteApp() built successfully with', Object.keys(result).length, 'properties');
         return result;

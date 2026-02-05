@@ -1,8 +1,7 @@
 // Granite Frontend - Stacked Panes Module
 // Obsidian-style sliding panes for multi-note viewing
 
-import { CONFIG, Debug } from './config.js';
-import { isMobileDevice } from './mobile-panes.js';
+import { CONFIG, Debug, isSinglePaneMode, isPhoneDevice } from './config.js';
 
 /**
  * Store for non-reactive pane data (editor instances, DOM refs, timeouts).
@@ -67,8 +66,8 @@ export const panesMixin = {
             return existingPane;
         }
 
-        // Mobile single-pane mode: close existing pane first
-        if (isMobileDevice() && this.openPanes.length > 0) {
+        // Single-pane mode (phones and phablets <900px): close existing pane first
+        if (isSinglePaneMode() && this.openPanes.length > 0) {
             const currentPane = this.openPanes[0];
             if (currentPane.isDirty) {
                 const shouldSave = confirm(`Save changes to "${currentPane.name}"?`);
@@ -79,8 +78,8 @@ export const panesMixin = {
             await this.closePane(currentPane.id, { save: false, prompt: false });
         }
 
-        // Enforce max panes limit (desktop only - mobile is handled above)
-        if (!isMobileDevice() && this.openPanes.length >= this.maxPanes) {
+        // Enforce max panes limit (tablets and desktop only - single-pane mode handled above)
+        if (!isSinglePaneMode() && this.openPanes.length >= this.maxPanes) {
             // Close oldest non-dirty pane
             const oldestClean = this.openPanes.find(p => !p.isDirty);
             if (oldestClean) {
@@ -106,7 +105,9 @@ export const panesMixin = {
             // Panes only support 'edit' and 'split' modes (Rich Editor is a separate panel)
             // NOTE: editorView, tiptapEditor, saveTimeout are stored in _paneEditors Map
             // to avoid Alpine circular reference issues with CodeMirror/Tiptap instances
-            const paneViewMode = viewMode || this.defaultPaneViewMode || 'split';
+            // On phones, default to 'edit' mode since split view is too cramped
+            const defaultMode = isPhoneDevice() ? 'edit' : (this.defaultPaneViewMode || 'split');
+            const paneViewMode = viewMode || defaultMode;
             const paneId = this.generatePaneId();
             const newPane = {
                 id: paneId,

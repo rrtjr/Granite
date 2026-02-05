@@ -183,6 +183,10 @@ export const stateMixin = {
     // Mobile sidebar state
     mobileSidebarOpen: false,
 
+    // Mobile UI state (bottom nav, bottom sheet, header)
+    mobileBottomSheetOpen: false,
+    mobileKeyboardVisible: false,
+
     // Toast notification state
     toasts: [],
     nextToastId: 1,
