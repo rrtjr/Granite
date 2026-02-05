@@ -11,13 +11,25 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Build CodeMirror 6 bundle
-COPY scripts/build/package.json scripts/build/codemirror-bundle-entry.js scripts/build/build-codemirror.js ./
+# Build editor bundles (CodeMirror + Tiptap)
+COPY scripts/build-codemirror/package.json scripts/build-codemirror/codemirror-bundle-entry.js scripts/build-codemirror/build-codemirror.js ./scripts/build-codemirror/
+COPY scripts/build-tiptap/package.json scripts/build-tiptap/package-lock.json scripts/build-tiptap/tiptap-bundle-entry.js scripts/build-tiptap/build-tiptap.js ./scripts/build-tiptap/
 COPY frontend ./frontend
-RUN npm install && \
-    npm run build && \
-    ls -lh frontend/static/codemirror6.bundle.js && \
-    echo "CodeMirror 6 bundle built successfully!"
+
+# Build CodeMirror
+RUN cd /app/scripts/build-codemirror && \
+    npm install && \
+    npm run build-codemirror && \
+    echo "[OK] CodeMirror 6 bundle built" && \
+    ls -lh /app/frontend/codemirror6.bundle.js
+
+# Build Tiptap
+RUN cd /app/scripts/build-tiptap && \
+    npm install && \
+    npm run build-tiptap && \
+    echo "[OK] Tiptap bundle built" && \
+    ls -lh /app/frontend/tiptap.bundle.js && \
+    echo "Editor bundles built successfully!"
 
 # Install uv for fast Python package management
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
@@ -64,7 +76,7 @@ RUN apt-get update && \
 # Copy virtual environment from builder
 COPY --from=builder /app/.venv /app/.venv
 
-# Copy frontend with built CodeMirror bundle
+# Copy frontend with built editor bundles
 COPY --from=builder /app/frontend ./frontend
 
 # Copy application files

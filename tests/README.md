@@ -87,6 +87,51 @@ Tests include:
 - Handling URLs with special characters
 - Banner field position handling (first/last)
 
+**`test_all.html`** - Master test runner that executes all frontend tests
+
+Features:
+- Runs all test suites sequentially
+- Aggregated pass/fail summary
+- Progress bar with visual feedback
+- Individual suite results with expandable details
+- Stop button to cancel running tests
+
+**`test_panes_ui.html`** - Interactive tests for the stacked panes feature
+
+Tests include:
+
+- Pane ID generation (uniqueness)
+- Pane object creation and initialization
+- Opening new panes
+- Focusing existing panes (no duplicates)
+- Max panes limit enforcement
+- Pane focus switching
+- Closing panes (with dirty state handling)
+- Close all panes except one
+- Next/previous pane navigation
+- Focus pane by index (keyboard shortcuts 1-9)
+- Backward compatibility (currentNote, noteContent getters/setters)
+- State serialization for localStorage persistence
+- API integration tests
+
+### E2E Tests (Playwright)
+
+**`e2e/test_panes.py`** - End-to-end tests for stacked panes
+
+Tests include:
+
+- App initializes panes state
+- Panes container exists
+- Clicking note opens pane
+- Active pane visual indicator
+- Close pane button exists
+- Opening same note focuses existing (no duplicates)
+- Keyboard shortcuts (Ctrl+W, Ctrl+Tab)
+- Per-pane view mode toggle
+- Rich Editor panel toggle
+- Pane state persistence to localStorage
+- Mobile responsive behavior
+
 ## Running the Tests
 
 ### Quick Start (Recommended - Docker)
@@ -147,6 +192,12 @@ pytest tests/test_plugin_api.py::TestPluginAPI::test_list_plugins -v
 ```
 
 ### Frontend Tests (Browser)
+
+**Run All Frontend Tests at Once:**
+```
+http://localhost:8000/tests/test_all.html
+```
+This test runner page executes all frontend test suites sequentially and shows aggregated results.
 
 **Prerequisites:**
 - Granite app must be running with tests enabled
@@ -299,6 +350,10 @@ cd /app
 | Git status display | Yes |
 | Unsplash banner picker | Yes |
 | Banner frontmatter insertion | Yes |
+| Stacked panes management | Yes |
+| Pane navigation (next/prev/index) | Yes |
+| Pane state persistence | Yes |
+| Rich Editor panel toggle | Yes |
 
 ## Continuous Integration
 
@@ -388,6 +443,7 @@ This means no plugins are installed. To test with plugins:
 
 Consider adding tests for:
 - [x] Plugin configuration UI (Git plugin settings modal)
+- [x] Stacked panes functionality (open, close, navigate, persist)
 - [ ] Plugin hook execution (more comprehensive tests)
 - [ ] Multiple concurrent plugin toggles
 - [ ] Plugin loading on app startup (basic test exists)

@@ -49,5 +49,5 @@ window.CodeMirror = {
 };
 
 window.CodeMirrorReady = true;
-console.log('CodeMirror 6 bundle loaded successfully (local bundle, single shared state)');
+if (window.GRANITE_DEBUG) console.log('[Granite] CodeMirror 6 bundle loaded successfully');
 window.dispatchEvent(new Event('codemirror-ready'));

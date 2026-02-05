@@ -33,6 +33,8 @@ Welcome to the Granite documentation - a self-hosted, markdown-based knowledge b
 ## Additional Features
 
 - [Mermaid Diagrams](MERMAID.md) - Create diagrams in markdown
+- [Draw.io Diagrams](DRAWIO.md) - Full-featured diagram editor
+- [Spreadsheets](SPREADSHEETS.md) - Excel-like tables with formulas
 - [MathJax Support](MATHJAX.md) - Mathematical notation
 - [CodeMirror Bundle](CODEMIRROR_BUNDLE.md) - Code editor features
 

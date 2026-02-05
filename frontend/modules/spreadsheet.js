@@ -17,7 +17,9 @@ export const spreadsheetMixin = {
 
     // Transform spreadsheet code blocks in HTML string to rendered wrappers
     // This runs synchronously before Alpine sets innerHTML, ensuring wrappers persist
-    transformSpreadsheetHtml(html) {
+    // Optional sourceContent parameter allows passing specific content for sheet name extraction
+    // (used when rendering non-active panes to avoid using this.noteContent which returns active pane content)
+    transformSpreadsheetHtml(html, sourceContent = null) {
         if (!html || !this.isHyperFormulaReady()) {
             return html;
         }
@@ -59,9 +61,10 @@ export const spreadsheetMixin = {
         });
 
         // Extract custom sheet names from source
+        // Use provided sourceContent if available, otherwise fall back to this.noteContent
         let names = [];
         try {
-            const src = this.noteContent || '';
+            const src = sourceContent || this.noteContent || '';
             names = this.extractSpreadsheetNamesFromContent(src);
         } catch (e) {
             Debug.warn('Failed to extract spreadsheet names:', e);

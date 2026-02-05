@@ -28,7 +28,8 @@ export const initMixin = {
         this.loadSidebarWidth();
         this.loadSidebarCollapsed();
         this.loadEditorWidth();
-        this.loadViewMode();
+        this.migrateViewModeToPane();  // Migrate old viewMode to new pane-based system
+        this.loadDefaultPaneViewMode();  // Load default pane view mode preference
         this.loadTagsExpanded();
 
         // Load all user settings from server
@@ -40,16 +41,45 @@ export const initMixin = {
         // Load homepage content
         await this.loadHomepageContent();
 
-        // Parse URL and load specific note if provided
-        this.loadNoteFromURL();
+        // Initialize stacked panes system
+        if (typeof this.setupPaneKeyboardShortcuts === 'function') {
+            this.setupPaneKeyboardShortcuts();
+        }
+
+        // Initialize draw.io diagram listeners
+        if (typeof this.initDrawioListeners === 'function') {
+            this.initDrawioListeners();
+        }
+
+        // Try to restore panes from previous session
+        let panesRestored = false;
+        if (typeof this.restorePanesState === 'function') {
+            panesRestored = await this.restorePanesState();
+        }
+
+        // Parse URL and load specific note if provided (only if no panes were restored)
+        if (!panesRestored) {
+            this.loadNoteFromURL();
+        }
 
         // Set initial homepage state
         if (window.location.pathname === '/') {
             window.history.replaceState({ homepageFolder: '' }, '', '/');
         }
 
+        // Setup mobile pane handling
+        if (typeof this.setupPaneMobileHandling === 'function') {
+            this.setupPaneMobileHandling();
+        }
+
         // Listen for browser back/forward navigation
         window.addEventListener('popstate', (e) => {
+            // Handle panes navigation if using stacked panes
+            if (e.state && e.state.panes && typeof this.handlePanesPopstate === 'function') {
+                this.handlePanesPopstate(e.state);
+                return;
+            }
+
             if (e.state && e.state.notePath) {
                 const searchQuery = e.state.searchQuery || '';
                 this.loadNote(e.state.notePath, false, searchQuery);
@@ -92,19 +122,6 @@ export const initMixin = {
         // Cache DOM references after initial render
         this.$nextTick(() => {
             this.refreshDOMCache();
-            this.initCodeMirror();
-        });
-
-        // Setup mobile view mode handler
-        this.setupMobileViewMode();
-
-        // Watch view mode changes and auto-save
-        this.$watch('viewMode', (newValue) => {
-            this.saveViewMode();
-            this.$nextTick(() => {
-                this.refreshDOMCache();
-                this.setupScrollSync();
-            });
         });
 
         // Watch tags expanded state
@@ -119,10 +136,56 @@ export const initMixin = {
             }
         });
 
+        // Watch reading preferences changes and update Tiptap editor
+        this.$watch('readingWidth', () => {
+            this.updateTiptapReadingPreferences();
+        });
+
+        this.$watch('contentAlign', () => {
+            this.updateTiptapReadingPreferences();
+        });
+
+        this.$watch('contentMargins', () => {
+            this.updateTiptapReadingPreferences();
+        });
+
+        this.$watch('bannerOpacity', () => {
+            this.updateTiptapBannerOpacity();
+        });
+
+        // Watch active pane changes to sync Rich Editor panel
+        this.$watch('activePaneId', (newPaneId, oldPaneId) => {
+            if (newPaneId && newPaneId !== oldPaneId && this.showRichEditorPanel) {
+                const newPane = this.openPanes.find(p => p.id === newPaneId);
+                if (newPane && this.tiptapEditor) {
+                    // Sync from old pane first if needed
+                    if (oldPaneId && this._tiptapSyncTimeout) {
+                        clearTimeout(this._tiptapSyncTimeout);
+                        const oldPane = this.openPanes.find(p => p.id === oldPaneId);
+                        if (oldPane && this.tiptapEditor) {
+                            oldPane.content = this.getTiptapContent();
+                        }
+                    }
+                    // Update Tiptap with new pane's content
+                    this.updateTiptapContent(newPane.content);
+                }
+            }
+        });
+
         // Close dropdowns when clicking outside
         document.addEventListener('click', () => {
             this.closeDropdown();
         });
+    },
+
+    // Migrate old global viewMode to new pane-based defaultPaneViewMode
+    migrateViewModeToPane() {
+        const oldViewMode = localStorage.getItem('viewMode');
+        if (oldViewMode && ['edit', 'split'].includes(oldViewMode)) {
+            localStorage.setItem('defaultPaneViewMode', oldViewMode);
+            localStorage.removeItem('viewMode');
+            Debug.log('Migrated viewMode to defaultPaneViewMode:', oldViewMode);
+        }
     },
 
     // Load app config

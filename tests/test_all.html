@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Granite - All Frontend Tests</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        button:hover {
+            background: #1976d2;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        button.secondary {
+            background: #757575;
+        }
+        button.secondary:hover {
+            background: #616161;
+        }
+        .summary {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .summary-item {
+            padding: 20px;
+            border-radius: 8px;
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary-item.total {
+            border-left: 4px solid #2196f3;
+        }
+        .summary-item.passed {
+            border-left: 4px solid #4caf50;
+        }
+        .summary-item.failed {
+            border-left: 4px solid #f44336;
+        }
+        .summary-item.suites {
+            border-left: 4px solid #9c27b0;
+        }
+        .summary-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .summary-label {
+            font-size: 14px;
+            color: #666;
+        }
+        .test-suites {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .test-suite {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .suite-header {
+            padding: 15px 20px;
+            background: #fafafa;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .suite-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .suite-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .suite-status.pending {
+            background: #e0e0e0;
+            color: #616161;
+        }
+        .suite-status.running {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        .suite-status.passed {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .suite-status.failed {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .suite-status.skipped {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        .suite-body {
+            padding: 15px 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .suite-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .suite-stats span {
+            color: #666;
+        }
+        .suite-stats .pass-count {
+            color: #4caf50;
+        }
+        .suite-stats .fail-count {
+            color: #f44336;
+        }
+        .test-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #f5f5f5;
+            font-size: 13px;
+        }
+        .test-item:last-child {
+            border-bottom: none;
+        }
+        .test-item.pass {
+            color: #2e7d32;
+        }
+        .test-item.pass::before {
+            content: "✓ ";
+        }
+        .test-item.fail {
+            color: #c62828;
+        }
+        .test-item.fail::before {
+            content: "✗ ";
+        }
+        .progress-bar {
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #4caf50;
+            transition: width 0.3s ease;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .error-box {
+            background: #ffebee;
+            border: 1px solid #f44336;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .running .suite-status {
+            animation: pulse 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <h1>Granite Frontend Tests</h1>
+    <p class="subtitle">Run all frontend test suites in one go</p>
+
+    <div class="info-box">
+        <strong>Note:</strong> This page runs all frontend tests using iframes.
+        Each test suite runs independently and results are aggregated here.
+    </div>
+
+    <div id="errorBox" class="error-box hidden"></div>
+
+    <div class="controls">
+        <button id="runAllBtn" onclick="runAllTests()">Run All Tests</button>
+        <button id="stopBtn" class="secondary" onclick="stopTests()" disabled>Stop</button>
+    </div>
+
+    <div class="summary">
+        <div class="summary-item suites">
+            <div class="summary-label">Test Suites</div>
+            <div class="summary-value" id="suitesCompleted">0/0</div>
+        </div>
+        <div class="summary-item total">
+            <div class="summary-label">Total Tests</div>
+            <div class="summary-value" id="totalTests">0</div>
+        </div>
+        <div class="summary-item passed">
+            <div class="summary-label">Passed</div>
+            <div class="summary-value" id="passedTests">0</div>
+        </div>
+        <div class="summary-item failed">
+            <div class="summary-label">Failed</div>
+            <div class="summary-value" id="failedTests">0</div>
+        </div>
+    </div>
+
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+    </div>
+
+    <div class="test-suites" id="testSuites"></div>
+
+    <!-- Hidden iframes for running tests -->
+    <div id="iframeContainer" style="display: none;"></div>
+
+    <script>
+        // Test suite definitions with their specific selectors
+        const TEST_SUITES = [
+            {
+                id: 'panes',
+                name: 'Stacked Panes',
+                url: '/tests/test_panes_ui.html',
+                description: 'Pane management, navigation, persistence',
+                // Standard selectors
+                runBtnId: 'runTests',
+                totalId: 'totalTests',
+                passedId: 'passedTests',
+                failedId: 'failedTests'
+            },
+            {
+                id: 'plugin',
+                name: 'Plugin UI',
+                url: '/tests/test_plugin_ui.html',
+                description: 'Plugin listing, toggle, state management',
+                runBtnId: 'runTests',
+                totalId: 'totalTests',
+                passedId: 'passedTests',
+                failedId: 'failedTests'
+            },
+            {
+                id: 'git',
+                name: 'Git Plugin',
+                url: '/tests/test_git_plugin_ui.html',
+                description: 'Git settings, backup, pull operations',
+                // Git plugin uses different IDs
+                runBtnId: 'run-button',
+                totalId: 'total-tests',
+                passedId: 'passed-tests',
+                failedId: 'failed-tests',
+                autoRuns: true,   // This test auto-runs on page load
+                initDelay: 3000,  // Wait longer for auto-run tests
+                timeout: 90000    // SSH tests can take time
+            },
+            {
+                id: 'favorites',
+                name: 'Favorites',
+                url: '/tests/test_favorites_ui.html',
+                description: 'Favorites persistence and API',
+                runBtnId: 'runTests',
+                totalId: 'totalTests',
+                passedId: 'passedTests',
+                failedId: 'failedTests'
+            },
+            {
+                id: 'unsplash',
+                name: 'Unsplash Banner',
+                url: '/tests/test_unsplash_banner.html',
+                description: 'Banner picker and frontmatter',
+                // Unsplash uses simple pattern - count .test-case elements
+                runBtnSelector: 'button',
+                useTestCaseCounting: true
+            },
+            {
+                id: 'toc',
+                name: 'Table of Contents',
+                url: '/tests/test_toc.html',
+                description: 'TOC generation and navigation',
+                // TOC uses simple pattern
+                runBtnSelector: 'button',
+                useTestCaseCounting: true
+            }
+        ];
+
+        let isRunning = false;
+        let shouldStop = false;
+        let suiteResults = {};
+        let totalPassed = 0;
+        let totalFailed = 0;
+        let totalTests = 0;
+        let suitesCompleted = 0;
+
+        // Initialize the UI
+        function initUI() {
+            const container = document.getElementById('testSuites');
+            container.innerHTML = TEST_SUITES.map(suite => `
+                <div class="test-suite" id="suite-${suite.id}">
+                    <div class="suite-header">
+                        <span class="suite-name">${suite.name}</span>
+                        <span class="suite-status pending">Pending</span>
+                    </div>
+                    <div class="suite-body">
+                        <div class="suite-stats">
+                            <span>Tests: <span class="total-count">-</span></span>
+                            <span>Pass: <span class="pass-count">-</span></span>
+                            <span>Fail: <span class="fail-count">-</span></span>
+                        </div>
+                        <div class="suite-description">${suite.description}</div>
+                        <div class="test-results"></div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('suitesCompleted').textContent = `0/${TEST_SUITES.length}`;
+        }
+
+        // Update summary display
+        function updateSummary() {
+            document.getElementById('totalTests').textContent = totalTests;
+            document.getElementById('passedTests').textContent = totalPassed;
+            document.getElementById('failedTests').textContent = totalFailed;
+            document.getElementById('suitesCompleted').textContent = `${suitesCompleted}/${TEST_SUITES.length}`;
+
+            const progress = TEST_SUITES.length > 0 ? (suitesCompleted / TEST_SUITES.length) * 100 : 0;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+
+            // Update progress bar color based on failures
+            const progressFill = document.getElementById('progressFill');
+            if (totalFailed > 0) {
+                progressFill.style.background = '#f44336';
+            } else {
+                progressFill.style.background = '#4caf50';
+            }
+        }
+
+        // Update suite status
+        function updateSuiteStatus(suiteId, status, results = null) {
+            const suiteEl = document.getElementById(`suite-${suiteId}`);
+            if (!suiteEl) return;
+
+            const statusEl = suiteEl.querySelector('.suite-status');
+            statusEl.className = `suite-status ${status}`;
+            statusEl.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+
+            if (status === 'running') {
+                suiteEl.classList.add('running');
+            } else {
+                suiteEl.classList.remove('running');
+            }
+
+            if (results) {
+                const statsEl = suiteEl.querySelector('.suite-stats');
+                statsEl.querySelector('.total-count').textContent = results.total;
+                statsEl.querySelector('.pass-count').textContent = results.passed;
+                statsEl.querySelector('.fail-count').textContent = results.failed;
+
+                // Show individual test results
+                const resultsEl = suiteEl.querySelector('.test-results');
+                if (results.tests && results.tests.length > 0) {
+                    resultsEl.innerHTML = results.tests.map(test =>
+                        `<div class="test-item ${test.status}">${test.name}</div>`
+                    ).join('');
+                }
+            }
+        }
+
+        // Get results from iframe based on suite config
+        function getResultsFromIframe(iframe, suite) {
+            try {
+                const iframeDoc = iframe.contentWindow.document;
+
+                let passed = 0, failed = 0, total = 0;
+                let tests = [];
+
+                if (suite.useTestCaseCounting) {
+                    // Count .test-case elements
+                    const passEls = iframeDoc.querySelectorAll('.test-case.pass');
+                    const failEls = iframeDoc.querySelectorAll('.test-case.fail');
+                    passed = passEls.length;
+                    failed = failEls.length;
+                    total = passed + failed;
+
+                    // Get test names
+                    const allTests = iframeDoc.querySelectorAll('.test-case');
+                    tests = Array.from(allTests).map(el => ({
+                        name: el.querySelector('.test-name')?.textContent || el.textContent.substring(0, 50),
+                        status: el.classList.contains('pass') ? 'pass' : 'fail'
+                    }));
+                } else {
+                    // Use ID-based selectors
+                    passed = parseInt(iframeDoc.getElementById(suite.passedId)?.textContent || '0');
+                    failed = parseInt(iframeDoc.getElementById(suite.failedId)?.textContent || '0');
+                    total = parseInt(iframeDoc.getElementById(suite.totalId)?.textContent || '0');
+
+                    // Get individual test results
+                    const testEls = iframeDoc.querySelectorAll('.test-case');
+                    tests = Array.from(testEls).map(el => ({
+                        name: el.querySelector('.test-name')?.textContent || 'Unknown',
+                        status: el.classList.contains('pass') ? 'pass' : 'fail'
+                    }));
+                }
+
+                return { total, passed, failed, tests };
+            } catch (e) {
+                console.error('Error getting results:', e);
+                return null;
+            }
+        }
+
+        // Check if tests are complete
+        function areTestsComplete(iframe, suite) {
+            try {
+                const iframeDoc = iframe.contentWindow.document;
+
+                if (suite.useTestCaseCounting) {
+                    // For simple tests, check if summary div has content or test cases exist
+                    const summary = iframeDoc.getElementById('summary');
+                    const testCases = iframeDoc.querySelectorAll('.test-case');
+                    return (summary && summary.textContent.trim() !== '') || testCases.length > 0;
+                } else {
+                    // Check if run button is re-enabled AND we have test results
+                    const runBtn = iframeDoc.getElementById(suite.runBtnId);
+                    const testCases = iframeDoc.querySelectorAll('.test-case');
+                    const totalEl = iframeDoc.getElementById(suite.totalId);
+                    const total = parseInt(totalEl?.textContent || '0');
+
+                    // Tests are complete when: button is enabled AND (we have test cases OR total > 0)
+                    return runBtn && !runBtn.disabled && (testCases.length > 0 || total > 0);
+                }
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Click the run button in iframe
+        function clickRunButton(iframe, suite) {
+            try {
+                const iframeDoc = iframe.contentWindow.document;
+                let btn;
+
+                if (suite.runBtnSelector) {
+                    btn = iframeDoc.querySelector(suite.runBtnSelector);
+                } else if (suite.runBtnId) {
+                    btn = iframeDoc.getElementById(suite.runBtnId);
+                }
+
+                if (btn && !btn.disabled) {
+                    btn.click();
+                    return true;
+                }
+            } catch (e) {
+                console.error('Error clicking run button:', e);
+            }
+            return false;
+        }
+
+        // Run a single test suite
+        function runSuite(suite) {
+            return new Promise((resolve) => {
+                if (shouldStop) {
+                    resolve({ total: 0, passed: 0, failed: 0, tests: [], skipped: true });
+                    return;
+                }
+
+                updateSuiteStatus(suite.id, 'running');
+
+                const iframe = document.createElement('iframe');
+                iframe.id = `iframe-${suite.id}`;
+                iframe.style.width = '1px';
+                iframe.style.height = '1px';
+                document.getElementById('iframeContainer').appendChild(iframe);
+
+                let resolved = false;
+                let checkAttempts = 0;
+                const suiteTimeout = suite.timeout || 60000;
+                const maxAttempts = Math.ceil(suiteTimeout / 500); // Based on suite timeout
+
+                const timeout = setTimeout(() => {
+                    if (!resolved) {
+                        resolved = true;
+                        updateSuiteStatus(suite.id, 'failed', {
+                            total: 1, passed: 0, failed: 1,
+                            tests: [{ name: 'Timeout - tests took too long', status: 'fail' }]
+                        });
+                        iframe.remove();
+                        resolve({ total: 1, passed: 0, failed: 1, tests: [] });
+                    }
+                }, suiteTimeout);
+
+                iframe.onload = () => {
+                    // Wait for page to initialize (longer for auto-running tests)
+                    const initDelay = suite.initDelay || 1000;
+                    setTimeout(() => {
+                        // Check if tests already ran (some test pages auto-run on load)
+                        const alreadyComplete = areTestsComplete(iframe, suite);
+                        if (alreadyComplete) {
+                            const results = getResultsFromIframe(iframe, suite);
+                            if (results && results.total > 0) {
+                                const status = results.failed > 0 ? 'failed' : 'passed';
+                                updateSuiteStatus(suite.id, status, results);
+                                clearTimeout(timeout);
+                                resolved = true;
+                                iframe.remove();
+                                resolve(results);
+                                return;
+                            }
+                        }
+
+                        // Click run button if tests haven't auto-run
+                        clickRunButton(iframe, suite);
+
+                        // Poll for completion
+                        const checkComplete = setInterval(() => {
+                            if (shouldStop || resolved) {
+                                clearInterval(checkComplete);
+                                clearTimeout(timeout);
+                                if (!resolved) {
+                                    resolved = true;
+                                    updateSuiteStatus(suite.id, 'skipped');
+                                    iframe.remove();
+                                    resolve({ total: 0, passed: 0, failed: 0, tests: [], skipped: true });
+                                }
+                                return;
+                            }
+
+                            checkAttempts++;
+
+                            try {
+                                if (areTestsComplete(iframe, suite)) {
+                                    const results = getResultsFromIframe(iframe, suite);
+
+                                    if (results && results.total > 0) {
+                                        const status = results.failed > 0 ? 'failed' : 'passed';
+                                        updateSuiteStatus(suite.id, status, results);
+
+                                        clearInterval(checkComplete);
+                                        clearTimeout(timeout);
+                                        resolved = true;
+                                        iframe.remove();
+                                        resolve(results);
+                                    }
+                                }
+                            } catch (e) {
+                                // Cross-origin or other error, keep waiting
+                            }
+
+                            // Give up after max attempts
+                            if (checkAttempts >= maxAttempts) {
+                                clearInterval(checkComplete);
+                                if (!resolved) {
+                                    resolved = true;
+                                    clearTimeout(timeout);
+                                    updateSuiteStatus(suite.id, 'failed', {
+                                        total: 1, passed: 0, failed: 1,
+                                        tests: [{ name: 'Timeout waiting for results', status: 'fail' }]
+                                    });
+                                    iframe.remove();
+                                    resolve({ total: 1, passed: 0, failed: 1, tests: [] });
+                                }
+                            }
+                        }, 500);
+                    }, 1000);
+                };
+
+                iframe.onerror = () => {
+                    if (!resolved) {
+                        resolved = true;
+                        clearTimeout(timeout);
+                        updateSuiteStatus(suite.id, 'failed', {
+                            total: 1, passed: 0, failed: 1,
+                            tests: [{ name: 'Failed to load test page', status: 'fail' }]
+                        });
+                        iframe.remove();
+                        resolve({ total: 1, passed: 0, failed: 1, tests: [] });
+                    }
+                };
+
+                iframe.src = suite.url;
+            });
+        }
+
+        // Run all tests
+        async function runAllTests() {
+            if (isRunning) return;
+
+            isRunning = true;
+            shouldStop = false;
+            totalPassed = 0;
+            totalFailed = 0;
+            totalTests = 0;
+            suitesCompleted = 0;
+            suiteResults = {};
+
+            document.getElementById('runAllBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('errorBox').classList.add('hidden');
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressFill').style.background = '#4caf50';
+
+            // Reset all suites
+            TEST_SUITES.forEach(suite => {
+                updateSuiteStatus(suite.id, 'pending');
+                const suiteEl = document.getElementById(`suite-${suite.id}`);
+                if (suiteEl) {
+                    suiteEl.querySelector('.total-count').textContent = '-';
+                    suiteEl.querySelector('.pass-count').textContent = '-';
+                    suiteEl.querySelector('.fail-count').textContent = '-';
+                    suiteEl.querySelector('.test-results').innerHTML = '';
+                }
+            });
+
+            updateSummary();
+
+            // Run suites sequentially
+            for (const suite of TEST_SUITES) {
+                if (shouldStop) break;
+
+                const results = await runSuite(suite);
+                suiteResults[suite.id] = results;
+
+                if (!results.skipped) {
+                    totalPassed += results.passed;
+                    totalFailed += results.failed;
+                    totalTests += results.total;
+                }
+                suitesCompleted++;
+
+                updateSummary();
+            }
+
+            isRunning = false;
+            document.getElementById('runAllBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+
+            // Show summary
+            if (totalFailed > 0) {
+                document.getElementById('errorBox').textContent =
+                    `${totalFailed} test(s) failed across ${Object.values(suiteResults).filter(r => r.failed > 0).length} suite(s)`;
+                document.getElementById('errorBox').classList.remove('hidden');
+            }
+
+            console.log('All tests complete:', { totalTests, totalPassed, totalFailed });
+        }
+
+        // Stop running tests
+        function stopTests() {
+            shouldStop = true;
+            document.getElementById('stopBtn').disabled = true;
+        }
+
+        // Initialize on page load
+        initUI();
+    </script>
+</body>
+</html>

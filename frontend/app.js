@@ -13,6 +13,7 @@ import { metadataMixin } from './modules/metadata.js';
 import { sidebarMixin } from './modules/sidebar.js';
 import { settingsMixin } from './modules/settings.js';
 import { editorMixin } from './modules/editor.js';
+import { tiptapMixin } from './modules/tiptap.js';
 import { notesMixin } from './modules/notes.js';
 import { foldersMixin } from './modules/folders.js';
 import { searchMixin } from './modules/search.js';
@@ -21,6 +22,7 @@ import { pluginsMixin } from './modules/plugins.js';
 import { graphMixin } from './modules/graph.js';
 import { markdownMixin } from './modules/markdown.js';
 import { spreadsheetMixin } from './modules/spreadsheet.js';
+import { drawioMixin } from './modules/drawio.js';
 import { uiMixin } from './modules/ui.js';
 import { exportMixin } from './modules/export.js';
 import { initMixin } from './modules/init.js';
@@ -47,6 +49,7 @@ function noteApp() {
         ...sidebarMixin,
         ...settingsMixin,
         ...editorMixin,
+        ...tiptapMixin,
         ...notesMixin,
         ...foldersMixin,
         ...searchMixin,
@@ -55,6 +58,7 @@ function noteApp() {
         ...graphMixin,
         ...markdownMixin,
         ...spreadsheetMixin,
+        ...drawioMixin,
         ...uiMixin,
         ...exportMixin,
         ...initMixin,

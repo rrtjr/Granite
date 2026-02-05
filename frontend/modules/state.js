@@ -11,11 +11,33 @@ export const stateMixin = {
     appVersion: '0.0.0',
     authEnabled: false,
     notes: [],
-    currentNote: '',
-    currentNoteName: '',
-    noteContent: '',
-    viewMode: 'split', // 'edit', 'split', 'preview'
     searchQuery: '',
+
+    // Stacked panes state
+    openPanes: [],           // Array of pane objects
+    activePaneId: null,      // Currently focused pane ID
+    maxPanes: 10,            // Maximum open panes limit
+    showRichEditorPanel: false, // Rich Editor right sidebar panel
+    panesCollapsed: false,       // Collapse panes to give Rich Editor more space
+    // Pane object structure:
+    // {
+    //   id: 'pane-uuid',
+    //   path: 'folder/note.md',
+    //   content: '# Content',
+    //   name: 'note',
+    //   editorView: null,         // CodeMirror instance
+    //   tiptapEditor: null,       // Tiptap instance (for rich mode)
+    //   scrollPos: 0,
+    //   previewScrollPos: 0,
+    //   viewMode: 'split',        // Per-pane view mode (edit/split only)
+    //   isDirty: false,
+    //   width: 500,
+    //   undoHistory: [],
+    //   redoHistory: [],
+    // }
+
+    // Default view mode for new panes
+    defaultPaneViewMode: 'split', // 'edit' or 'split' - default for new panes
 
     // Reading preferences
     readingWidth: 'full', // 'narrow', 'medium', 'wide', 'full'
@@ -34,6 +56,12 @@ export const stateMixin = {
         metadataDelay: 300,    // Delay before parsing metadata
         historyDelay: 500,     // Delay before updating undo history
         autosaveDelay: 1000    // Delay before triggering autosave
+    },
+
+    // Typography settings
+    typographySettings: {
+        fontSize: 'base',      // xs, sm, base, lg, xl, 2xl, 3xl
+        fontFamily: 'system'   // system, serif, mono, inter, open-sans
     },
 
     // Graph state (separate overlay, doesn't affect viewMode)
@@ -95,8 +123,6 @@ export const stateMixin = {
     currentTheme: 'light',
     availableThemes: [],
 
-    // CodeMirror editor instance
-    editorView: null,
     editorThemeCompartment: null,
 
     // Icon rail / panel state
@@ -321,5 +347,51 @@ export const stateMixin = {
         if (!this.currentNote || !this.notes) return [];
         const note = this.notes.find(n => n.path === this.currentNote);
         return note && note.tags ? note.tags : [];
+    },
+
+    // Stacked panes computed getters (backward compatibility)
+    get activePane() {
+        return this.openPanes.find(p => p.id === this.activePaneId) || null;
+    },
+
+    get currentNote() {
+        return this.activePane?.path || '';
+    },
+
+    set currentNote(value) {
+        if (this.activePane) {
+            this.activePane.path = value;
+        }
+    },
+
+    get noteContent() {
+        return this.activePane?.content || '';
+    },
+
+    set noteContent(value) {
+        if (this.activePane) {
+            this.activePane.content = value;
+            this.activePane.isDirty = true;
+        }
+    },
+
+    get currentNoteName() {
+        return this.activePane?.name || '';
+    },
+
+    set currentNoteName(value) {
+        if (this.activePane) {
+            this.activePane.name = value;
+        }
+    },
+
+    get editorView() {
+        return this.activePane?.editorView || null;
+    },
+
+    set editorView(value) {
+        if (this.activePane) {
+            this.activePane.editorView = value;
+        }
     },
 };

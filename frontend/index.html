@@ -72,6 +72,14 @@
     <!-- CodeMirror 6 - Local bundle (guaranteed single @codemirror/state instance) -->
     <script src="/static/codemirror6.bundle.js"></script>
 
+    <!-- KaTeX CSS for Tiptap Mathematics extension -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+    <!-- KaTeX JS for math rendering in Rich view -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+
+    <!-- Tiptap - Local bundle for Rich view WYSIWYG editing -->
+    <script src="/static/tiptap.bundle.js"></script>
+
     <!-- Theme styles will be loaded dynamically -->
     <link rel="stylesheet" id="theme-stylesheet" href="">
 
@@ -79,10 +87,463 @@
     <style>
         [x-cloak] { display: none !important; }
 
+        /* ============================================
+           UNIVERSAL ENHANCEMENTS - Applied to all themes
+           ============================================ */
+
+        :root {
+            /* Extended elevation scale */
+            --elevation-0: none;
+            --elevation-1: var(--shadow-sm);
+            --elevation-2: var(--shadow-md);
+            --elevation-3: var(--shadow-lg);
+            --elevation-4: 0 15px 25px -5px rgba(0, 0, 0, 0.15), 0 5px 10px -5px rgba(0, 0, 0, 0.1);
+            --elevation-floating: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+
+            /* Animation system */
+            --duration-instant: 100ms;
+            --duration-fast: 150ms;
+            --duration-normal: 250ms;
+            --duration-slow: 350ms;
+            --duration-slower: 500ms;
+
+            --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+            --ease-out: cubic-bezier(0, 0, 0.2, 1);
+            --ease-in: cubic-bezier(0.4, 0, 1, 1);
+            --ease-in-out: cubic-bezier(0.4, 0, 0.6, 1);
+
+            /* Glassmorphism */
+            --glass-blur: blur(12px);
+            --focus-ring-opacity: 0.4;
+        }
+
         /* Theme-aware styles using CSS variables */
         body {
             background-color: var(--bg-primary, #ffffff);
             color: var(--text-primary, #111827);
+            font-family: var(--font-family-base, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+        }
+
+        /* Enhanced button styles */
+        button.bg-accent,
+        .btn-primary {
+            transition: all var(--duration-fast) var(--ease-smooth);
+            box-shadow: var(--elevation-1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button.bg-accent::before,
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transition: opacity var(--duration-fast);
+        }
+
+        button.bg-accent:hover,
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--elevation-2);
+        }
+
+        button.bg-accent:hover::before,
+        .btn-primary:hover::before {
+            opacity: 1;
+        }
+
+        button.bg-accent:active,
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: var(--elevation-1);
+        }
+
+        button:not(.bg-accent):not(.btn-primary) {
+            transition: all var(--duration-fast) var(--ease-smooth);
+        }
+
+        button:not(.bg-accent):not(.btn-primary):hover {
+            transform: translateY(-1px);
+            box-shadow: var(--elevation-1);
+        }
+
+        /* Sidebar enhancements */
+        .sidebar,
+        aside {
+            box-shadow: var(--elevation-1);
+        }
+
+        .folder-item,
+        .note-item {
+            margin: 0.125rem 0.5rem;
+            border-radius: 8px;
+            transition: all var(--duration-fast) var(--ease-smooth);
+            position: relative;
+        }
+
+        .folder-item:hover,
+        .note-item:hover {
+            transform: translateX(3px);
+            box-shadow: var(--elevation-1);
+        }
+
+        .folder-item.active::before,
+        .note-item.active::before,
+        .folder-item[class*="bg-accent"]::before,
+        .note-item[class*="bg-accent"]::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 60%;
+            background: var(--accent-primary);
+            border-radius: 0 3px 3px 0;
+            box-shadow: 0 0 8px var(--accent-primary);
+        }
+
+        /* Modal enhancements */
+        .fixed.inset-0.bg-black {
+            backdrop-filter: var(--glass-blur);
+            transition: opacity var(--duration-normal) var(--ease-out);
+        }
+
+        [role="dialog"],
+        .modal {
+            border-radius: 16px;
+            box-shadow: var(--elevation-floating);
+            animation: modalSlideIn var(--duration-normal) var(--ease-out);
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* Input field enhancements */
+        input[type="text"],
+        input[type="search"],
+        input[type="email"],
+        input[type="password"],
+        input[type="url"],
+        textarea,
+        select {
+            border-width: 1.5px;
+            border-radius: 8px;
+            transition: all var(--duration-fast) var(--ease-smooth);
+            box-shadow: var(--elevation-1);
+        }
+
+        input:hover,
+        textarea:hover,
+        select:hover {
+            box-shadow: var(--elevation-2);
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb, 59, 130, 246), var(--focus-ring-opacity));
+            outline: none;
+            transform: scale(1.01);
+        }
+
+        /* Markdown preview enhancements */
+        .markdown-preview h1 {
+            position: relative;
+            padding-bottom: 0.75rem;
+        }
+
+        .markdown-preview h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent-primary);
+            border-radius: 2px;
+        }
+
+        .markdown-preview blockquote {
+            border-radius: 0 8px 8px 0;
+            box-shadow: var(--elevation-1);
+            transition: box-shadow var(--duration-fast);
+        }
+
+        .markdown-preview pre {
+            border-radius: 12px;
+            box-shadow: var(--elevation-1);
+        }
+
+        .markdown-preview code:not(pre code) {
+            border-radius: 6px;
+            font-weight: var(--font-weight-medium, 500);
+        }
+
+        .markdown-preview table {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--elevation-1);
+        }
+
+        /* Stacked panes enhancements */
+        .note-pane {
+            box-shadow: var(--elevation-1);
+            transition: all var(--duration-normal) var(--ease-smooth);
+        }
+
+        .note-pane.pane-active {
+            box-shadow: var(--elevation-2);
+            z-index: 10;
+        }
+
+        .note-pane:not(.pane-active) {
+            transition: all var(--duration-fast) var(--ease-smooth);
+            cursor: pointer;
+        }
+
+        .note-pane:not(.pane-active):hover {
+            transform: translateX(2px);
+            box-shadow: var(--elevation-1);
+        }
+
+        .pane-header {
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Resize handles */
+        .resize-handle,
+        .split-resize-handle {
+            transition: all var(--duration-fast) var(--ease-smooth);
+        }
+
+        .resize-handle:hover,
+        .split-resize-handle:hover {
+            box-shadow: 0 0 8px var(--accent-primary);
+        }
+
+        /* Wikilinks enhancement */
+        .markdown-preview a[data-wikilink],
+        .wikilink {
+            border-radius: 6px;
+            font-weight: var(--font-weight-medium, 500);
+            transition: all var(--duration-fast) var(--ease-smooth);
+        }
+
+        .markdown-preview a[data-wikilink]:hover,
+        .wikilink:hover {
+            box-shadow: 0 0 8px rgba(var(--accent-primary-rgb, 59, 130, 246), 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Tiptap bubble menu */
+        .tiptap-bubble-menu {
+            backdrop-filter: var(--glass-blur);
+            border-radius: 10px;
+            box-shadow: var(--elevation-floating);
+            animation: bubbleSlideUp var(--duration-fast) var(--ease-out);
+        }
+
+        @keyframes bubbleSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tiptap-bubble-menu button {
+            transition: all var(--duration-fast) var(--ease-smooth);
+            border-radius: 6px;
+        }
+
+        /* Spreadsheet enhancements */
+        .spreadsheet-container {
+            border-radius: 12px;
+            box-shadow: var(--elevation-1);
+            overflow: hidden;
+        }
+
+        .spreadsheet-btn {
+            transition: all var(--duration-fast) var(--ease-smooth);
+        }
+
+        .spreadsheet-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--elevation-1);
+        }
+
+        /* TOC panel */
+        .toc-panel {
+            backdrop-filter: var(--glass-blur);
+            border-radius: 12px;
+            box-shadow: var(--elevation-floating);
+        }
+
+        .toc-item {
+            transition: all var(--duration-fast) var(--ease-smooth);
+        }
+
+        .toc-item:hover {
+            transform: translateX(2px);
+        }
+
+        /* Graph legend */
+        .graph-legend {
+            backdrop-filter: var(--glass-blur);
+            border-radius: 10px;
+            box-shadow: var(--elevation-3);
+        }
+
+        /* Toast notifications */
+        .toast {
+            backdrop-filter: var(--glass-blur);
+            border-radius: 12px;
+            box-shadow: var(--elevation-floating);
+            animation: toastSlideIn var(--duration-normal) var(--ease-out);
+        }
+
+        .toast-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .toast-error {
+            background-color: var(--error);
+            color: white;
+        }
+
+        .toast-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+
+        .toast-info {
+            background-color: var(--info);
+            color: white;
+        }
+
+        @keyframes toastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-100%) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Enhanced scrollbar */
+        .custom-scrollbar::-webkit-scrollbar,
+        .cm-scroller::-webkit-scrollbar,
+        .markdown-preview::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track,
+        .cm-scroller::-webkit-scrollbar-track,
+        .markdown-preview::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb,
+        .cm-scroller::-webkit-scrollbar-thumb,
+        .markdown-preview::-webkit-scrollbar-thumb {
+            border-radius: 6px;
+            transition: background var(--duration-fast);
+        }
+
+        /* Loading states */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        .skeleton {
+            background: linear-gradient(
+                90deg,
+                var(--bg-secondary) 0%,
+                var(--bg-tertiary) 50%,
+                var(--bg-secondary) 100%
+            );
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+            border-radius: 6px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* Accessibility - focus states */
+        *:focus-visible {
+            outline: 2px solid var(--accent-primary);
+            outline-offset: 2px;
+            transition: outline var(--duration-fast);
+        }
+
+        button:focus-visible,
+        a:focus-visible {
+            box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb, 59, 130, 246), var(--focus-ring-opacity));
+        }
+
+        /* Smooth transitions for theme changes */
+        * {
+            transition-property: color, background-color, border-color, fill, stroke;
+            transition-duration: var(--duration-fast);
+            transition-timing-function: var(--ease-smooth);
+        }
+
+        /* Exclude elements that shouldn't transition */
+        input,
+        textarea,
+        .CodeMirror,
+        .cm-editor,
+        .tiptap-editor-content {
+            transition-property: border-color, box-shadow !important;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            button:hover,
+            .folder-item:hover,
+            .note-item:hover {
+                transform: none;
+            }
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+
+            button:hover,
+            .folder-item:hover,
+            .note-item:hover {
+                transform: none !important;
+            }
         }
 
         /* Truncate utility for long text */
@@ -134,6 +595,10 @@
 
         /* Remove top margin from first element */
         .markdown-preview > *:first-child {
+            margin-top: 0 !important;
+        }
+
+        .tiptap-editor-content > *:first-child {
             margin-top: 0 !important;
         }
 
@@ -407,7 +872,8 @@
         }
 
         /* Note Banner - translucent header image from frontmatter */
-        .markdown-preview .note-banner {
+        .markdown-preview .note-banner,
+        .tiptap-editor-content .note-banner {
             width: calc(100% + 3rem);
             margin-left: -1.5rem;
             margin-top: -1.5rem;
@@ -417,7 +883,8 @@
         }
 
         /* Banner image with opacity control */
-        .markdown-preview .note-banner .banner-image {
+        .markdown-preview .note-banner .banner-image,
+        .tiptap-editor-content .note-banner .banner-image {
             position: absolute;
             inset: 0;
             background-size: cover;
@@ -425,7 +892,8 @@
         }
 
         /* Gradient fade at bottom */
-        .markdown-preview .note-banner::after {
+        .markdown-preview .note-banner::after,
+        .tiptap-editor-content .note-banner::after {
             content: '';
             position: absolute;
             inset: 0;
@@ -436,26 +904,30 @@
         }
 
         /* Adjust banner for different margin settings */
-        .markdown-preview.margins-compact .note-banner {
+        .markdown-preview.margins-compact .note-banner,
+        .tiptap-editor-content.margins-compact .note-banner {
             width: calc(100% + 3rem);
             margin-left: -1.5rem;
             margin-top: -1rem;
         }
 
-        .markdown-preview.margins-relaxed .note-banner {
+        .markdown-preview.margins-relaxed .note-banner,
+        .tiptap-editor-content.margins-relaxed .note-banner {
             width: calc(100% + 6rem);
             margin-left: -3rem;
             margin-top: -2rem;
         }
 
-        .markdown-preview.margins-extra-relaxed .note-banner {
+        .markdown-preview.margins-extra-relaxed .note-banner,
+        .tiptap-editor-content.margins-extra-relaxed .note-banner {
             width: calc(100% + 8rem);
             margin-left: -4rem;
             margin-top: -3rem;
         }
 
         /* Banner title overlay */
-        .markdown-preview .note-banner .banner-title {
+        .markdown-preview .note-banner .banner-title,
+        .tiptap-editor-content .note-banner .banner-title {
             position: absolute;
             bottom: 0;
             left: 0;
@@ -619,6 +1091,523 @@
             box-shadow: 0 0 0 2px var(--accent-primary);
         }
 
+        /* Draw.io Diagram Styles */
+        .drawio-wrapper {
+            margin: 1rem 0;
+        }
+
+        .drawio-container {
+            border: 1px solid var(--border-primary);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background: var(--bg-secondary);
+        }
+
+        .drawio-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .drawio-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.125rem 0.5rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+            border-radius: 0.25rem;
+            color: var(--text-secondary);
+            margin-right: auto;
+        }
+
+        .drawio-btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border: 1px solid var(--border-primary);
+            border-radius: 0.25rem;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .drawio-btn:hover {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        .drawio-preview {
+            min-height: 200px;
+            padding: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .drawio-preview:hover {
+            background: var(--bg-hover);
+        }
+
+        .drawio-svg-container {
+            max-width: 100%;
+            overflow: auto;
+        }
+
+        .drawio-svg-container svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .drawio-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-tertiary);
+            text-align: center;
+        }
+
+        .drawio-icon {
+            opacity: 0.5;
+        }
+
+        .drawio-placeholder-text {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .drawio-edit-hint {
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+
+        /* Draw.io Modal */
+        .drawio-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+        }
+
+        .drawio-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .drawio-modal-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .drawio-modal-close {
+            padding: 0.5rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 0.25rem;
+            transition: all 0.2s;
+        }
+
+        .drawio-modal-close:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .drawio-iframe-container {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .drawio-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Tiptap Draw.io Block */
+        .tiptap-editor-content .drawio-block,
+        .drawio-block {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+
+        .drawio-block .drawio-placeholder {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .drawio-tiptap-preview {
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            background: var(--bg-secondary);
+        }
+
+        .drawio-tiptap-preview .drawio-name {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .drawio-tiptap-preview .drawio-svg-container {
+            display: flex;
+            justify-content: center;
+            padding: 0.5rem;
+        }
+
+        .drawio-tiptap-preview .drawio-edit-hint {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        /* Tiptap Editor Styles */
+        .tiptap-container {
+            padding: 1.5rem;
+            min-height: 100%;
+        }
+
+        .tiptap-container.reading-width-narrow {
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tiptap-container.reading-width-medium {
+            max-width: 850px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tiptap-container.reading-width-wide {
+            max-width: 1100px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tiptap-container.reading-width-full {
+            max-width: none;
+        }
+
+        .tiptap-editor-content {
+            outline: none;
+            min-height: 300px;
+        }
+
+        .tiptap-editor-content > * + * {
+            margin-top: 0.75em;
+        }
+
+        .tiptap-editor-content p {
+            line-height: 1.6;
+        }
+
+        .tiptap-editor-content h1,
+        .tiptap-editor-content h2,
+        .tiptap-editor-content h3,
+        .tiptap-editor-content h4,
+        .tiptap-editor-content h5,
+        .tiptap-editor-content h6 {
+            line-height: 1.3;
+            font-weight: 600;
+        }
+
+        .tiptap-editor-content h1 { font-size: 2em; margin-top: 1em; }
+        .tiptap-editor-content h2 { font-size: 1.5em; margin-top: 0.9em; }
+        .tiptap-editor-content h3 { font-size: 1.25em; margin-top: 0.8em; }
+        .tiptap-editor-content h4 { font-size: 1.1em; margin-top: 0.7em; }
+
+        .tiptap-editor-content ul,
+        .tiptap-editor-content ol {
+            padding-left: 1.5em;
+            margin: 0.5em 0;
+        }
+
+        .tiptap-editor-content ul {
+            list-style-type: disc;
+        }
+
+        .tiptap-editor-content ol {
+            list-style-type: decimal;
+        }
+
+        .tiptap-editor-content ul ul {
+            list-style-type: circle;
+        }
+
+        .tiptap-editor-content ul ul ul {
+            list-style-type: square;
+        }
+
+        .tiptap-editor-content li {
+            margin: 0.25em 0;
+            display: list-item;
+        }
+
+        .tiptap-editor-content li p {
+            margin: 0;
+        }
+
+        .tiptap-editor-content blockquote {
+            border-left: 3px solid var(--accent-primary);
+            padding-left: 1em;
+            margin-left: 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .tiptap-editor-content code {
+            background-color: var(--bg-tertiary);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-size: 0.9em;
+            font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+        }
+
+        .tiptap-editor-content pre {
+            background-color: var(--bg-tertiary);
+            padding: 1em;
+            border-radius: 0.5em;
+            overflow-x: auto;
+        }
+
+        .tiptap-editor-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        /* Wikilink styling in Tiptap */
+        .tiptap-editor-content .wikilink,
+        .wikilink {
+            color: var(--accent-primary);
+            text-decoration: none;
+            cursor: pointer;
+            background-color: var(--accent-light, rgba(124, 58, 237, 0.1));
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+
+        .tiptap-editor-content .wikilink:hover,
+        .wikilink:hover {
+            background-color: var(--accent-primary);
+            color: white;
+        }
+
+        /* Underline styling in Tiptap */
+        .tiptap-editor-content u {
+            text-decoration: underline;
+        }
+
+        /* Highlight/mark styling in Tiptap */
+        .tiptap-editor-content mark {
+            background-color: #fef08a;
+            padding: 0.1em 0.2em;
+            border-radius: 2px;
+            color: inherit;
+        }
+
+        /* Bubble Menu styling - uses @floating-ui in Tiptap v3 */
+        .tiptap-bubble-menu {
+            display: flex;
+            gap: 2px;
+            padding: 4px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 10000;
+            /* floating-ui controls visibility via visibility/opacity */
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+        }
+
+        .tiptap-bubble-menu button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.15s;
+        }
+
+        .tiptap-bubble-menu button:hover {
+            background: var(--bg-secondary);
+        }
+
+        .tiptap-bubble-menu button.is-active {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .tiptap-bubble-menu button code {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 11px;
+        }
+
+        .tiptap-bubble-menu button mark {
+            background: #fef08a;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+
+        /* Image embed styling in Tiptap */
+        .tiptap-editor-content .image-embed,
+        .tiptap-image-embed {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        /* Spreadsheet block in Tiptap */
+        .tiptap-editor-content .spreadsheet-block,
+        .spreadsheet-block {
+            margin: 1rem 0;
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--bg-secondary);
+        }
+
+        .spreadsheet-block .spreadsheet-placeholder,
+        .spreadsheet-block .spreadsheet-name {
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .spreadsheet-block .spreadsheet-edit-hint {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            text-align: center;
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border-primary);
+        }
+
+        .spreadsheet-block .tiptap-spreadsheet {
+            width: 100%;
+        }
+
+        /* Mermaid block in Tiptap */
+        .tiptap-editor-content .mermaid-block,
+        .mermaid-block {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .mermaid-block .mermaid-placeholder {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .mermaid-block .mermaid-error {
+            color: var(--error);
+            font-size: 0.875rem;
+        }
+
+        .mermaid-block svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Placeholder styling */
+        .tiptap-editor-content p.is-editor-empty:first-child::before {
+            content: attr(data-placeholder);
+            color: var(--text-tertiary);
+            float: left;
+            height: 0;
+            pointer-events: none;
+        }
+
+        /* Block selection styling */
+        .ProseMirror-selectednode {
+            outline: 2px solid var(--accent-primary);
+            outline-offset: 2px;
+        }
+
+        /* Table styling in Tiptap */
+        .tiptap-editor-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1rem 0;
+        }
+
+        .tiptap-editor-content th,
+        .tiptap-editor-content td {
+            border: 1px solid var(--border-primary);
+            padding: 0.5rem;
+            text-align: left;
+        }
+
+        .tiptap-editor-content th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+        }
+
+        /* Task list styling */
+        .tiptap-editor-content ul[data-type="taskList"] {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .tiptap-editor-content ul[data-type="taskList"] li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .tiptap-editor-content ul[data-type="taskList"] input[type="checkbox"] {
+            margin-top: 0.25rem;
+        }
+
+        /* Link styling in Tiptap */
+        .tiptap-editor-content a,
+        .tiptap-link {
+            color: var(--accent-primary);
+            text-decoration: underline;
+        }
+
+        .tiptap-editor-content a:hover,
+        .tiptap-link:hover {
+            text-decoration: none;
+        }
+
         /* Reading Preferences - Content Width */
         .markdown-preview.reading-width-narrow {
             max-width: 650px;
@@ -701,6 +1690,107 @@
 
         .markdown-preview.margins-extra-relaxed {
             line-height: 2.2;
+        }
+
+        /* Reading Preferences for Tiptap Editor */
+        .tiptap-editor-content.reading-width-narrow {
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tiptap-editor-content.reading-width-medium {
+            max-width: 850px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tiptap-editor-content.reading-width-wide {
+            max-width: 1100px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tiptap-editor-content.reading-width-full {
+            max-width: none;
+        }
+
+        /* Text Alignment for Tiptap */
+        .tiptap-editor-content.align-left {
+            text-align: left !important;
+        }
+
+        .tiptap-editor-content.align-left p,
+        .tiptap-editor-content.align-left ul,
+        .tiptap-editor-content.align-left ol {
+            text-align: left !important;
+        }
+
+        .tiptap-editor-content.align-center {
+            text-align: center !important;
+        }
+
+        .tiptap-editor-content.align-center p,
+        .tiptap-editor-content.align-center ul,
+        .tiptap-editor-content.align-center ol {
+            text-align: center !important;
+        }
+
+        .tiptap-editor-content.align-center h1,
+        .tiptap-editor-content.align-center h2,
+        .tiptap-editor-content.align-center h3,
+        .tiptap-editor-content.align-center h4,
+        .tiptap-editor-content.align-center h5,
+        .tiptap-editor-content.align-center h6 {
+            text-align: center !important;
+        }
+
+        .tiptap-editor-content.align-justified {
+            text-align: justify !important;
+        }
+
+        .tiptap-editor-content.align-justified p,
+        .tiptap-editor-content.align-justified ul,
+        .tiptap-editor-content.align-justified ol {
+            text-align: justify !important;
+        }
+
+        .tiptap-editor-content.align-justified h1,
+        .tiptap-editor-content.align-justified h2,
+        .tiptap-editor-content.align-justified h3,
+        .tiptap-editor-content.align-justified h4,
+        .tiptap-editor-content.align-justified h5,
+        .tiptap-editor-content.align-justified h6 {
+            text-align: left !important;
+        }
+
+        /* Content Spacing for Tiptap */
+        .tiptap-editor-content.margins-compact {
+            padding: 1rem 1.5rem !important;
+        }
+
+        .tiptap-editor-content.margins-compact p {
+            line-height: 1.6 !important;
+        }
+
+        .tiptap-editor-content.margins-normal {
+            padding: 1.5rem !important;
+        }
+
+        .tiptap-editor-content.margins-relaxed {
+            padding: 2rem 3rem !important;
+        }
+
+        .tiptap-editor-content.margins-relaxed p {
+            line-height: 2 !important;
+        }
+
+        .tiptap-editor-content.margins-extra-relaxed {
+            padding: 3rem 4rem !important;
+        }
+
+        .tiptap-editor-content.margins-extra-relaxed p {
+            line-height: 2.2 !important;
         }
 
         /* CodeMirror Editor styling */
@@ -1428,6 +2518,517 @@
             .toc-panel {
                 display: none !important;
             }
+        }
+
+        /* ===== Stacked Panes (Obsidian-style Accordion) ===== */
+
+        .panes-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Note Pane - Base styles */
+        .note-pane {
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-primary);
+            background-color: var(--bg-primary);
+            position: relative;
+            transition: width 0.3s ease, flex 0.3s ease, opacity 0.2s;
+            overflow: hidden;
+        }
+
+        .note-pane:last-child {
+            border-right: none;
+        }
+
+        /* Active pane - expanded */
+        .note-pane.pane-active {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        /* Collapsed panes (inactive) - vertical tab style */
+        .note-pane:not(.pane-active) {
+            width: 40px !important;
+            min-width: 40px !important;
+            max-width: 40px !important;
+            flex: 0 0 40px;
+            cursor: pointer;
+            overflow: hidden; /* Prevent title text from overflowing */
+            /* background and border-left set by tab color system below */
+        }
+
+        /* Pane Header - horizontal (for active pane) */
+        .pane-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-primary);
+            background-color: var(--bg-secondary);
+            min-height: 40px;
+            gap: 8px;
+        }
+
+        /* Collapsed pane header - vertical tab */
+        .note-pane:not(.pane-active) .pane-header {
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 12px 4px;
+            height: 100%;
+            border-bottom: none;
+            border-right: 1px solid var(--border-primary);
+            overflow: hidden; /* Contain vertical title */
+        }
+
+        .pane-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 200px;
+            transition: color var(--duration-fast, 150ms) ease;
+        }
+
+        /* Hover effect on pane header (changes title color) */
+        .pane-header:hover .pane-title {
+            color: var(--accent-primary);
+        }
+
+        /* Active pane title - slightly larger and bolder */
+        .note-pane.pane-active .pane-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Vertical title for collapsed panes */
+        .note-pane:not(.pane-active) .pane-title {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+            max-width: none;
+            max-height: 200px;
+            font-size: 13px;
+            padding: 8px 0;
+            font-weight: 500;
+        }
+
+        /* Collapsed pane hover effect */
+        .note-pane:not(.pane-active):hover .pane-title {
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .pane-dirty-indicator {
+            color: var(--warning, #f59e0b);
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+
+        .pane-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        /* Hide controls on collapsed panes */
+        .note-pane:not(.pane-active) .pane-controls {
+            flex-direction: column;
+            gap: 4px;
+            margin-top: auto;
+        }
+
+        .note-pane:not(.pane-active) .pane-view-toggle {
+            display: none;
+        }
+
+        .pane-view-toggle {
+            display: flex;
+            gap: 4px;
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 3px;
+            border: 1px solid var(--border-primary);
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .pane-view-toggle button {
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all var(--duration-fast, 150ms) var(--ease-smooth, ease);
+            position: relative;
+        }
+
+        .pane-view-toggle button:hover:not(.active) {
+            background-color: var(--bg-hover);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+
+        .pane-view-toggle button.active {
+            background: var(--accent-primary);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1);
+            transform: translateY(0);
+        }
+
+        .pane-view-toggle button.active::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            pointer-events: none;
+        }
+
+        .pane-close-btn {
+            padding: 5px 7px;
+            border: none;
+            background: transparent;
+            color: var(--text-tertiary);
+            border-radius: 6px;
+            cursor: pointer;
+            opacity: 0.7;
+            font-size: 16px;
+            line-height: 1;
+            transition: all var(--duration-fast, 150ms) var(--ease-smooth, ease);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pane-close-btn:hover {
+            background-color: rgba(239, 68, 68, 0.12);
+            color: var(--error, #ef4444);
+            opacity: 1;
+            transform: scale(1.15);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        }
+
+        .pane-close-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Pane Content - hidden on collapsed panes */
+        .pane-content {
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .note-pane:not(.pane-active) .pane-content {
+            display: none;
+        }
+
+        .pane-editor-container {
+            height: 100%;
+        }
+
+        .pane-preview {
+            border-left: 1px solid var(--border-primary);
+            background-color: var(--bg-primary);
+        }
+
+        /* Pane Resize Handle - only on active pane */
+        .pane-resize-handle {
+            position: absolute;
+            top: 0;
+            right: -3px;
+            width: 6px;
+            height: 100%;
+            cursor: col-resize;
+            z-index: 10;
+            transition: background-color 0.2s;
+            display: none;
+        }
+
+        .note-pane.pane-active .pane-resize-handle {
+            display: block;
+        }
+
+        .pane-resize-handle:hover,
+        .pane-resize-handle:active {
+            background-color: var(--accent-primary);
+        }
+
+        /* Active pane indicator */
+        .note-pane.pane-active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background-color: var(--accent-primary);
+            z-index: 5;
+        }
+
+        /* Collapsed pane left indicator (structure only, colors set by tab color system) */
+        .note-pane:not(.pane-active)::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 3px;
+            transition: opacity 0.2s;
+        }
+
+        /* Distinct colors for collapsed pane tabs - theme-aware
+           Uses color-mix() to blend accent with theme background for smooth integration */
+        .note-pane:not(.pane-active):nth-child(6n+1) {
+            --tab-accent: var(--tab-color-1, var(--accent-primary, #3b82f6));
+        }
+        .note-pane:not(.pane-active):nth-child(6n+2) {
+            --tab-accent: var(--tab-color-2, #8b5cf6); /* Purple */
+        }
+        .note-pane:not(.pane-active):nth-child(6n+3) {
+            --tab-accent: var(--tab-color-3, var(--success, #10b981)); /* Green */
+        }
+        .note-pane:not(.pane-active):nth-child(6n+4) {
+            --tab-accent: var(--tab-color-4, var(--warning, #f59e0b)); /* Amber */
+        }
+        .note-pane:not(.pane-active):nth-child(6n+5) {
+            --tab-accent: var(--tab-color-5, var(--error, #ef4444)); /* Red */
+        }
+        .note-pane:not(.pane-active):nth-child(6n+6) {
+            --tab-accent: var(--tab-color-6, #06b6d4); /* Cyan */
+        }
+
+        /* Apply tab colors - background blends with theme */
+        .note-pane:not(.pane-active) {
+            background: color-mix(in srgb, var(--tab-accent) 12%, var(--bg-secondary, #f9fafb));
+            border-left: 3px solid var(--tab-accent);
+        }
+
+        .note-pane:not(.pane-active)::after {
+            background-color: var(--tab-accent);
+            opacity: 0.4;
+        }
+
+        .note-pane:not(.pane-active):hover {
+            background: color-mix(in srgb, var(--tab-accent) 18%, var(--bg-tertiary, #f3f4f6));
+        }
+
+        .note-pane:not(.pane-active):hover::after {
+            opacity: 1;
+        }
+
+        /* Fallback for browsers without color-mix support */
+        @supports not (background: color-mix(in srgb, red 50%, blue)) {
+            .note-pane:not(.pane-active) {
+                background-color: var(--bg-secondary);
+                border-left: 3px solid var(--tab-accent);
+            }
+            .note-pane:not(.pane-active):hover {
+                background-color: var(--bg-tertiary);
+            }
+        }
+
+        /* Mobile: show only active pane, hide collapsed tabs */
+        @media (max-width: 768px) {
+            .panes-container {
+                overflow-x: hidden;
+            }
+
+            .note-pane.pane-active {
+                width: 100% !important;
+                min-width: 100% !important;
+            }
+
+            .note-pane:not(.pane-active) {
+                display: none;
+            }
+
+            .pane-view-toggle .mobile-hide-split {
+                display: none;
+            }
+        }
+
+        /* ============================================
+           PANES TOOLBAR
+           ============================================ */
+        .panes-toolbar {
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .panes-toolbar button:hover {
+            opacity: 0.9;
+        }
+
+        /* Rich Editor button active state animation */
+        .rich-editor-btn-active {
+            box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb, 99, 102, 241), 0.3);
+        }
+
+        /* ============================================
+           COLLAPSED PANES (When Rich Editor Expanded)
+           ============================================ */
+        .panes-collapsed .panes-container {
+            width: 48px !important;
+            min-width: 48px !important;
+            max-width: 48px !important;
+            flex: 0 0 48px !important;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .panes-collapsed .note-pane {
+            width: 48px !important;
+            min-width: 48px !important;
+        }
+
+        .panes-collapsed .note-pane .pane-content,
+        .panes-collapsed .note-pane .pane-resize-handle {
+            display: none !important;
+        }
+
+        .panes-collapsed .note-pane .pane-header {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            padding: 12px 8px;
+            justify-content: flex-start;
+            height: 100%;
+        }
+
+        .panes-collapsed .note-pane .pane-header .pane-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-height: 150px;
+        }
+
+        .panes-collapsed .note-pane .pane-header .pane-controls {
+            display: none;
+        }
+
+        .panes-collapsed .rich-editor-panel {
+            flex: 1 !important;
+            width: auto !important;
+            min-width: 0 !important;
+            max-width: none !important;
+        }
+
+        /* Collapse toggle button */
+        .panes-collapse-toggle {
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: transparent;
+            border: 1px solid var(--border-primary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            transition: all 0.15s ease;
+        }
+
+        .panes-collapse-toggle:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border-color: var(--border-secondary);
+        }
+
+        .panes-collapse-toggle svg {
+            width: 14px;
+            height: 14px;
+            transition: transform 0.2s ease;
+        }
+
+        .panes-collapsed .panes-collapse-toggle svg {
+            transform: rotate(180deg);
+        }
+
+        /* ============================================
+           RICH EDITOR PANEL (Right Sidebar)
+           ============================================ */
+        .rich-editor-panel {
+            flex-shrink: 0;
+            height: 100%;
+            overflow: hidden;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .rich-editor-header {
+            flex-shrink: 0;
+        }
+
+        /* Ensure Tiptap content in panel can scroll */
+        .rich-editor-panel .tiptap-container {
+            min-height: 100%;
+        }
+
+        .rich-editor-panel .tiptap-editor-content {
+            min-height: 100%;
+            padding: 1rem;
+        }
+
+        /* Sync indicator when content is being synced */
+        .rich-editor-panel.syncing .rich-editor-header::after {
+            content: 'Syncing...';
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            margin-left: 0.5rem;
+        }
+
+        /* Rich Editor panel responsive */
+        @media (max-width: 1024px) {
+            .rich-editor-panel {
+                width: 100% !important;
+                min-width: 100% !important;
+                max-width: 100% !important;
+                position: absolute;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                background-color: var(--bg-primary);
+                box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .panes-toolbar {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .rich-editor-panel {
+                position: fixed;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                left: 0;
+                width: 100% !important;
+                min-width: 100% !important;
+                max-width: 100% !important;
+                z-index: 100;
+            }
+        }
+
+        /* Main content area wrapper for panes + rich editor */
+        .main-editor-area {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
         }
     </style>
 </head>
@@ -2230,6 +3831,77 @@
                                     </div>
                                 </div>
 
+                                <!-- Typography Settings -->
+                                <div class="mb-4" x-data="{ typographyExpanded: false }">
+                                    <label class="block text-xs font-medium mb-2" style="color: var(--text-secondary);">Typography</label>
+
+                                    <!-- Toggle button -->
+                                    <button
+                                        @click="typographyExpanded = !typographyExpanded"
+                                        class="w-full px-3 py-2 text-sm rounded flex items-center justify-between transition-colors"
+                                        style="background-color: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-primary);"
+                                        onmouseover="this.style.backgroundColor='var(--bg-hover)'"
+                                        onmouseout="this.style.backgroundColor='var(--bg-secondary)'"
+                                    >
+                                        <span>Font Settings</span>
+                                        <span x-text="typographyExpanded ? '▲' : '▼'" class="text-xs"></span>
+                                    </button>
+
+                                    <!-- Collapsible content -->
+                                    <div x-show="typographyExpanded" x-cloak class="mt-3 p-3 rounded"
+                                         style="background-color: var(--bg-secondary); border: 1px solid var(--border-primary);">
+
+                                        <!-- Font Size -->
+                                        <div class="mb-3">
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Font Size</label>
+                                            <select
+                                                x-model="typographySettings.fontSize"
+                                                @change="saveTypographySettings()"
+                                                class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                                style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
+                                            >
+                                                <option value="xs">Extra Small (14px)</option>
+                                                <option value="sm">Small (15px)</option>
+                                                <option value="base">Normal (16px)</option>
+                                                <option value="lg">Large (17px)</option>
+                                                <option value="xl">Extra Large (18px)</option>
+                                                <option value="2xl">2X Large (20px)</option>
+                                                <option value="3xl">3X Large (22px)</option>
+                                            </select>
+                                            <p class="text-xs mt-1" style="color: var(--text-tertiary);">Adjusts the base font size for all text</p>
+                                        </div>
+
+                                        <!-- Font Family -->
+                                        <div class="mb-3">
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Font Family</label>
+                                            <select
+                                                x-model="typographySettings.fontFamily"
+                                                @change="saveTypographySettings()"
+                                                class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                                style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
+                                            >
+                                                <option value="system">System Default (Sans)</option>
+                                                <option value="serif">Serif (Georgia)</option>
+                                                <option value="mono">Monospace (Monaco)</option>
+                                                <option value="inter">Inter (Modern Sans)</option>
+                                                <option value="open-sans">Open Sans (Clean)</option>
+                                            </select>
+                                            <p class="text-xs mt-1" style="color: var(--text-tertiary);">Changes the font style for the entire app</p>
+                                        </div>
+
+                                        <!-- Reset Button -->
+                                        <button
+                                            @click="resetTypographySettings()"
+                                            class="w-full px-3 py-1.5 text-xs rounded transition-colors"
+                                            style="background-color: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border-primary);"
+                                            onmouseover="this.style.backgroundColor='var(--bg-hover)'"
+                                            onmouseout="this.style.backgroundColor='var(--bg-tertiary)'"
+                                        >
+                                            Reset to Defaults
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <!-- Advanced Performance Settings -->
                                 <div class="mb-4" x-data="{ advancedExpanded: false }">
                                     <label class="block text-xs font-medium mb-2" style="color: var(--text-secondary);">Advanced Settings</label>
@@ -2696,11 +4368,12 @@
                 </div>
             </template>
 
-            <template x-if="currentNote || currentImage">
-                <!-- Editor Area -->
+            <template x-if="currentNote || currentImage || openPanes.length > 0">
+                <!-- Editor Area (supports stacked panes) -->
                 <div class="flex-1 flex flex-col overflow-hidden" style="background-color: var(--bg-primary);">
-                    <!-- Toolbar -->
-                    <div class="py-3 flex items-center justify-between mobile-toolbar"
+                    <!-- Toolbar (hidden when using stacked panes - each pane has its own controls) -->
+                    <div x-show="openPanes.length === 0"
+                         class="py-3 flex items-center justify-between mobile-toolbar"
                          :class="sidebarCollapsed ? 'pl-14 pr-4' : 'pl-16 pr-4'"
                          style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-primary); transition: padding-left 0.3s ease;">
                         <div class="flex items-center space-x-2">
@@ -2782,43 +4455,25 @@
                         </div>
 
                         <div class="flex items-center space-x-2" x-show="currentNote">
-                            <!-- View Toggle (only for notes) -->
-                            <div class="flex rounded-lg p-1" style="background-color: var(--bg-tertiary);">
-                                <button
-                                    @click="viewMode = 'edit'"
-                                    class="px-2 md:px-3 py-1 text-xs md:text-sm rounded transition"
-                                    :style="viewMode === 'edit' ? 'background-color: var(--accent-primary); color: white;' : 'color: var(--text-secondary);'"
-                                    @mouseenter="if (viewMode !== 'edit') $el.style.backgroundColor = 'var(--bg-secondary)'"
-                                    @mouseleave="if (viewMode !== 'edit') $el.style.backgroundColor = 'transparent'"
-                                >
-                                    Edit
-                                </button>
-                                <button
-                                    @click="viewMode = 'split'"
-                                    class="mobile-hide-split px-2 md:px-3 py-1 text-xs md:text-sm rounded transition"
-                                    :style="viewMode === 'split' ? 'background-color: var(--accent-primary); color: white;' : 'color: var(--text-secondary);'"
-                                    @mouseenter="if (viewMode !== 'split') $el.style.backgroundColor = 'var(--bg-secondary)'"
-                                    @mouseleave="if (viewMode !== 'split') $el.style.backgroundColor = 'transparent'"
-                                >
-                                    Split
-                                </button>
-                                <button
-                                    @click="viewMode = 'preview'"
-                                    class="px-2 md:px-3 py-1 text-xs md:text-sm rounded transition"
-                                    :style="viewMode === 'preview' ? 'background-color: var(--accent-primary); color: white;' : 'color: var(--text-secondary);'"
-                                    @mouseenter="if (viewMode !== 'preview') $el.style.backgroundColor = 'var(--bg-secondary)'"
-                                    @mouseleave="if (viewMode !== 'preview') $el.style.backgroundColor = 'transparent'"
-                                >
-                                    Preview
-                                </button>
-                            </div>
-
                             <!-- Note Actions Toolbar -->
                             <div
                                 x-show="currentNote"
                                 class="flex items-center rounded overflow-hidden"
                                 style="background-color: var(--bg-tertiary); border: 1px solid var(--border-primary);"
                             >
+                                <button
+                                    @click="formatMarkdown()"
+                                    class="p-2 transition"
+                                    style="color: var(--text-secondary);"
+                                    title="Format Markdown"
+                                    @mouseenter="$el.style.backgroundColor = 'var(--bg-secondary)'"
+                                    @mouseleave="$el.style.backgroundColor = 'transparent'"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                                    </svg>
+                                </button>
+                                <div style="width: 1px; height: 20px; background-color: var(--border-primary);"></div>
                                 <button
                                     @click="exportToHTML()"
                                     class="p-2 transition"
@@ -2901,227 +4556,400 @@
                         </div>
                     </div>
 
-                    <!-- Editor/Preview/Graph -->
-                    <div class="flex-1 flex relative" style="min-height: 0;">
-                        <!-- Editor -->
-                        <div
-                            x-show="!currentImage && (viewMode === 'edit' || viewMode === 'split')"
-                            class="flex flex-col"
-                            style="min-height: 0;"
-                            :style="viewMode === 'split' ? `width: ${editorWidth}%;` : 'width: 100%;'"
-                        >
-                            <!-- CodeMirror Editor Container -->
-                            <div
-                                id="note-editor"
-                                x-ref="editorContainer"
-                                class="flex-1 w-full overflow-auto"
-                                :class="draggedItem && dropTarget === 'editor' ? 'link-drop-target' : ''"
-                                :style="draggedItem && dropTarget === 'editor' ? 'outline: 2px dashed var(--accent-primary); outline-offset: -2px; box-shadow: 0 0 20px var(--accent-light);' : ''"
-                                @drop="onEditorDrop($event)"
-                                @dragover.prevent="onEditorDragOver($event)"
-                                @dragenter="onEditorDragEnter($event)"
-                                @dragleave="onEditorDragLeave($event)"
-                            ></div>
+                    <!-- Panes Toolbar (shown when panes are active) -->
+                    <div x-show="openPanes.length > 0"
+                         class="panes-toolbar py-2 pr-4 flex items-center justify-between flex-wrap gap-2"
+                         :class="sidebarCollapsed ? 'pl-14' : 'pl-16'"
+                         style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-primary); transition: padding-left 0.3s ease;">
+                        <!-- Left side: pane count and status -->
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm font-medium" style="color: var(--text-secondary);">
+                                <span x-text="openPanes.length"></span> note<span x-show="openPanes.length !== 1">s</span> open
+                            </span>
+                            <span x-show="isSaving" class="text-xs" style="color: var(--text-secondary);">Saving...</span>
+                            <span x-show="!isSaving && lastSaved" class="text-xs" style="color: var(--success);">✓ Saved</span>
                         </div>
 
-                        <!-- Split view resize handle -->
-                        <div
-                            x-show="!currentImage && viewMode === 'split'"
-                            @mousedown="startSplitResize($event)"
-                            class="split-resize-handle"
-                            style="width: 6px; cursor: col-resize; background: linear-gradient(90deg, transparent 0%, var(--border-secondary) 50%, transparent 100%); transition: all 0.2s; position: relative; z-index: 10; opacity: 0.5;"
-                            @mouseover="$el.style.opacity='1'; $el.style.background='var(--accent-primary)'"
-                            @mouseout="if(!isResizingSplit) { $el.style.opacity='0.5'; $el.style.background='linear-gradient(90deg, transparent 0%, var(--border-secondary) 50%, transparent 100%)' }"
-                        ></div>
-
-                        <!-- Preview -->
-                        <div
-                            x-show="(viewMode === 'preview' || viewMode === 'split') && !currentImage"
-                            class="overflow-y-auto overflow-x-hidden custom-scrollbar"
-                            style="background-color: var(--bg-primary); min-height: 0;"
-                            :style="viewMode === 'split' ? `width: ${100 - editorWidth}%;` : 'width: 100%;'"
-                        >
-                            <!-- Note Properties/Metadata Panel -->
-                            <div
-                                x-show="getHasMetadata() && currentNote"
-                                class="note-properties mx-6 mt-4 mb-2"
-                            >
-                                <!-- Collapsed View -->
-                                <div
-                                    x-show="!metadataExpanded"
-                                    @click="metadataExpanded = true"
-                                    class="flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all"
-                                    style="background-color: var(--bg-tertiary); border: 1px solid var(--border-primary);"
-                                    onmouseover="this.style.borderColor='var(--accent-primary)'"
-                                    onmouseout="this.style.borderColor='var(--border-primary)'"
+                        <!-- Right side: action buttons -->
+                        <div class="flex items-center gap-2">
+                            <!-- Note Actions Toolbar -->
+                            <div class="flex items-center rounded overflow-hidden"
+                                 style="background-color: var(--bg-tertiary); border: 1px solid var(--border-primary);">
+                                <button
+                                    @click="formatMarkdown()"
+                                    class="p-2 transition"
+                                    style="color: var(--text-secondary);"
+                                    title="Format Markdown"
+                                    @mouseenter="$el.style.backgroundColor = 'var(--bg-secondary)'"
+                                    @mouseleave="$el.style.backgroundColor = 'transparent'"
                                 >
-                                    <!-- Property icon -->
-                                    <span class="text-xs opacity-60">⚙️</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                                    </svg>
+                                </button>
+                                <div style="width: 1px; height: 20px; background-color: var(--border-primary);"></div>
+                                <button
+                                    @click="exportToHTML()"
+                                    class="p-2 transition"
+                                    style="color: var(--text-secondary);"
+                                    title="Export as HTML"
+                                    @mouseenter="$el.style.backgroundColor = 'var(--bg-secondary)'"
+                                    @mouseleave="$el.style.backgroundColor = 'transparent'"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                </button>
+                                <button
+                                    @click="exportToPDF()"
+                                    class="p-2 transition relative"
+                                    style="color: var(--text-secondary);"
+                                    :title="isExportingPDF ? 'Exporting...' : 'Export as PDF'"
+                                    :disabled="isExportingPDF"
+                                    @mouseenter="$el.style.backgroundColor = 'var(--bg-secondary)'"
+                                    @mouseleave="$el.style.backgroundColor = 'transparent'"
+                                    :style="isExportingPDF ? 'opacity: 0.6; cursor: wait;' : ''"
+                                >
+                                    <svg x-show="!isExportingPDF" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <svg x-show="isExportingPDF" x-cloak class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </button>
+                                <div style="width: 1px; height: 20px; background-color: var(--border-primary);"></div>
+                                <button
+                                    @click="copyNoteLink()"
+                                    class="p-2 transition"
+                                    :title="linkCopied ? 'Copied!' : 'Copy link to clipboard'"
+                                    :style="'color: ' + (linkCopied ? 'var(--success, #22c55e)' : 'var(--text-secondary)') + ';'"
+                                    @mouseenter="$el.style.backgroundColor = 'var(--bg-secondary)'"
+                                    @mouseleave="$el.style.backgroundColor = 'transparent'"
+                                >
+                                    <svg x-show="!linkCopied" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                    </svg>
+                                    <svg x-show="linkCopied" x-cloak class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </button>
+                                <div style="width: 1px; height: 20px; background-color: var(--border-primary);"></div>
+                                <button
+                                    @click="openUnsplashPicker()"
+                                    class="p-2 transition"
+                                    style="color: var(--text-secondary);"
+                                    title="Add banner from Unsplash"
+                                    @mouseenter="$el.style.backgroundColor = 'var(--bg-secondary)'"
+                                    @mouseleave="$el.style.backgroundColor = 'transparent'"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </button>
+                                <div style="width: 1px; height: 20px; background-color: var(--border-primary);"></div>
+                                <button
+                                    @click="showToc = !showToc"
+                                    class="p-2 transition"
+                                    :style="showToc ? 'color: var(--accent-primary); background-color: var(--bg-secondary);' : 'color: var(--text-secondary);'"
+                                    title="Toggle Table of Contents"
+                                    @mouseenter="$el.style.backgroundColor = 'var(--bg-secondary)'"
+                                    @mouseleave="if (!showToc) $el.style.backgroundColor = 'transparent'"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                                    </svg>
+                                </button>
+                                <div style="width: 1px; height: 20px; background-color: var(--border-primary);"></div>
+                                <!-- Rich Editor Toggle (inside toolbar) -->
+                                <button
+                                    @click="showRichEditorPanel = !showRichEditorPanel; if(showRichEditorPanel && activePane) { $nextTick(() => { destroyTiptap(); initTiptap(); }); }"
+                                    class="px-2 py-1.5 transition flex items-center gap-1.5"
+                                    :style="showRichEditorPanel ? 'color: var(--accent-primary); background-color: var(--bg-secondary);' : 'color: var(--text-secondary);'"
+                                    title="Toggle Rich Editor panel"
+                                    @mouseenter="$el.style.backgroundColor = 'var(--bg-secondary)'"
+                                    @mouseleave="if (!showRichEditorPanel) $el.style.backgroundColor = 'transparent'"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                    <span class="text-xs font-medium hidden sm:inline">Rich</span>
+                                </button>
+                            </div>
 
-                                    <!-- Tags as pills -->
-                                    <template x-for="tag in getMetadataTags().slice(0, 5)" :key="tag">
-                                        <span
-                                            @click.stop="toggleTag(tag.toLowerCase())"
-                                            class="metadata-tag px-2 py-0.5 text-xs rounded-full cursor-pointer transition-colors"
-                                            style="background-color: var(--accent-light, rgba(124, 58, 237, 0.15)); color: var(--accent-primary);"
-                                            onmouseover="this.style.backgroundColor='var(--accent-primary)'; this.style.color='white'"
-                                            onmouseout="this.style.backgroundColor='var(--accent-light, rgba(124, 58, 237, 0.15))'; this.style.color='var(--accent-primary)'"
-                                            x-text="'#' + tag"
-                                        ></span>
-                                    </template>
-                                    <template x-if="getMetadataTags().length > 5">
-                                        <span class="text-xs" style="color: var(--text-tertiary);">+<span x-text="getMetadataTags().length - 5"></span> more</span>
-                                    </template>
+                            <!-- Close All Panes -->
+                            <button
+                                @click="closeAllPanes()"
+                                class="p-1.5 rounded transition"
+                                style="color: var(--text-tertiary);"
+                                title="Close all panes"
+                                @mouseenter="$el.style.backgroundColor = 'var(--bg-tertiary)'; $el.style.color = 'var(--error)'"
+                                @mouseleave="$el.style.backgroundColor = 'transparent'; $el.style.color = 'var(--text-tertiary)'"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
 
-                                    <!-- Priority fields (date, author, status) -->
-                                    <template x-for="field in getPriorityMetadataFields()" :key="field.key">
-                                        <span class="text-xs flex items-center gap-1" style="color: var(--text-secondary);">
-                                            <span class="opacity-50">·</span>
-                                            <span class="capitalize" x-text="field.key + ':'"></span>
-                                            <span style="color: var(--text-primary);" x-html="field.valueHtml" @click="field.isUrl && $event.stopPropagation()"></span>
-                                        </span>
-                                    </template>
-
-                                    <!-- Expand hint -->
-                                    <span class="ml-auto text-xs opacity-40">▼</span>
+                    <!-- Panes and Rich Editor Panel Container -->
+                    <div x-show="openPanes.length > 0" class="flex flex-1 overflow-hidden" :class="{ 'panes-collapsed': panesCollapsed && showRichEditorPanel }">
+                        <!-- Stacked Panes Container (Obsidian-style Accordion) -->
+                        <div class="panes-container flex-1">
+                        <template x-for="pane in openPanes" :key="pane.id">
+                            <div
+                                class="note-pane"
+                                :class="{ 'pane-active': pane.id === activePaneId }"
+                                :data-pane-id="pane.id"
+                                @click="focusPane(pane.id)"
+                            >
+                                <!-- Pane Header (horizontal for active, vertical tab for collapsed) -->
+                                <div class="pane-header">
+                                    <div class="flex items-center gap-2 min-w-0"
+                                         :class="{ 'flex-col': pane.id !== activePaneId }">
+                                        <span x-show="pane.isDirty" class="pane-dirty-indicator" title="Unsaved changes">●</span>
+                                        <span class="pane-title" x-text="pane.name" :title="pane.path"></span>
+                                    </div>
+                                    <div class="pane-controls">
+                                        <!-- View mode toggle (Edit/Split only - Rich is in separate panel) -->
+                                        <div class="pane-view-toggle">
+                                            <button
+                                                @click.stop="setPaneViewMode(pane.id, 'edit')"
+                                                :class="{ 'active': pane.viewMode === 'edit' }"
+                                                title="Raw markdown editor only"
+                                            >Editor</button>
+                                            <button
+                                                @click.stop="setPaneViewMode(pane.id, 'split')"
+                                                :class="{ 'active': pane.viewMode === 'split' }"
+                                                class="mobile-hide-split"
+                                                title="Editor + live preview side-by-side"
+                                            >Split View</button>
+                                        </div>
+                                        <!-- Close button -->
+                                        <button
+                                            @click.stop="closePane(pane.id)"
+                                            class="pane-close-btn"
+                                            title="Close pane"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <!-- Expanded View -->
-                                <div
-                                    x-show="metadataExpanded"
-                                    class="rounded-lg overflow-hidden"
-                                    style="background-color: var(--bg-tertiary); border: 1px solid var(--border-primary);"
-                                >
-                                    <!-- Header -->
+                                <!-- Pane Content -->
+                                <div class="pane-content flex">
+                                    <!-- Editor Container (shared for both edit/split modes) -->
                                     <div
-                                        @click="metadataExpanded = false"
-                                        class="flex items-center justify-between px-3 py-2 cursor-pointer"
-                                        style="border-bottom: 1px solid var(--border-primary);"
-                                    >
-                                        <span class="text-xs font-medium" style="color: var(--text-secondary);">
-                                            ⚙️ Properties
-                                        </span>
-                                        <span class="text-xs opacity-40">▲ Collapse</span>
-                                    </div>
+                                        class="pane-editor-container h-full"
+                                        :class="pane.viewMode === 'split' ? 'w-1/2' : 'w-full'"
+                                    ></div>
 
-                                    <!-- Properties Grid -->
-                                    <div class="px-3 py-2 space-y-2">
-                                        <!-- Tags row -->
-                                        <template x-if="getMetadataTags().length > 0">
-                                            <div class="flex flex-wrap gap-1.5 items-start">
-                                                <span class="text-xs w-16 shrink-0 pt-0.5" style="color: var(--text-tertiary);">tags</span>
-                                                <div class="flex flex-wrap gap-1">
-                                                    <template x-for="tag in getMetadataTags()" :key="tag">
-                                                        <span
-                                                            @click="toggleTag(tag.toLowerCase())"
-                                                            class="metadata-tag px-2 py-0.5 text-xs rounded-full cursor-pointer transition-colors"
-                                                            style="background-color: var(--accent-light, rgba(124, 58, 237, 0.15)); color: var(--accent-primary);"
-                                                            onmouseover="this.style.backgroundColor='var(--accent-primary)'; this.style.color='white'"
-                                                            onmouseout="this.style.backgroundColor='var(--accent-light, rgba(124, 58, 237, 0.15))'; this.style.color='var(--accent-primary)'"
-                                                            x-text="'#' + tag"
-                                                        ></span>
+                                    <!-- Preview (Split mode only) -->
+                                    <div
+                                        x-show="pane.viewMode === 'split'"
+                                        class="pane-preview w-1/2 h-full overflow-y-auto custom-scrollbar"
+                                    >
+                                        <!-- Pane Frontmatter/Metadata -->
+                                        <div
+                                            x-show="paneHasFrontmatter(pane)"
+                                            class="pane-metadata mx-4 mt-3 mb-2"
+                                        >
+                                            <!-- Collapsed View -->
+                                            <div
+                                                x-show="!pane.metadataExpanded"
+                                                @click="togglePaneMetadata(pane)"
+                                                class="flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all"
+                                                style="background-color: var(--bg-tertiary); border: 1px solid var(--border-primary);"
+                                                onmouseover="this.style.borderColor='var(--accent-primary)'"
+                                                onmouseout="this.style.borderColor='var(--border-primary)'"
+                                            >
+                                                <!-- Property icon (clickable indicator) -->
+                                                <span class="text-xs opacity-60" title="Click to expand">⚙️</span>
+
+                                                <!-- Tags as pills -->
+                                                <template x-for="tag in getPaneTags(pane).slice(0, 4)" :key="tag">
+                                                    <span
+                                                        @click.stop="toggleTag(String(tag).toLowerCase())"
+                                                        class="px-2 py-0.5 text-xs rounded-full cursor-pointer transition-colors"
+                                                        style="background-color: var(--accent-light, rgba(124, 58, 237, 0.15)); color: var(--accent-primary);"
+                                                        onmouseover="this.style.backgroundColor='var(--accent-primary)'; this.style.color='white'"
+                                                        onmouseout="this.style.backgroundColor='var(--accent-light, rgba(124, 58, 237, 0.15))'; this.style.color='var(--accent-primary)'"
+                                                        x-text="'#' + tag"
+                                                    ></span>
+                                                </template>
+                                                <template x-if="getPaneTags(pane).length > 4">
+                                                    <span class="text-xs" style="color: var(--text-tertiary);">+<span x-text="getPaneTags(pane).length - 4"></span></span>
+                                                </template>
+
+                                                <!-- Priority fields (date, author, etc.) -->
+                                                <template x-for="field in getPanePriorityFields(pane)" :key="field.key">
+                                                    <span class="text-xs flex items-center gap-1" style="color: var(--text-secondary);">
+                                                        <span class="opacity-50">·</span>
+                                                        <span class="capitalize" x-text="field.key + ':'"></span>
+                                                        <span style="color: var(--text-primary);" x-text="field.value"></span>
+                                                    </span>
+                                                </template>
+
+                                                <!-- Expand hint -->
+                                                <span class="ml-auto text-xs opacity-40">▼</span>
+                                            </div>
+
+                                            <!-- Expanded View -->
+                                            <div
+                                                x-show="pane.metadataExpanded"
+                                                class="rounded-lg overflow-hidden"
+                                                style="background-color: var(--bg-tertiary); border: 1px solid var(--border-primary);"
+                                            >
+                                                <!-- Header (click to collapse) -->
+                                                <div
+                                                    @click="togglePaneMetadata(pane)"
+                                                    class="flex items-center justify-between px-3 py-2 cursor-pointer"
+                                                    style="border-bottom: 1px solid var(--border-primary);"
+                                                >
+                                                    <span class="text-xs font-medium" style="color: var(--text-secondary);">
+                                                        ⚙️ Properties
+                                                    </span>
+                                                    <span class="text-xs opacity-40">▲ Collapse</span>
+                                                </div>
+
+                                                <!-- Properties Grid -->
+                                                <div class="px-3 py-2 space-y-2">
+                                                    <!-- Tags row -->
+                                                    <template x-if="getPaneTags(pane).length > 0">
+                                                        <div class="flex flex-wrap gap-1.5 items-start">
+                                                            <span class="text-xs w-16 shrink-0 pt-0.5" style="color: var(--text-tertiary);">tags</span>
+                                                            <div class="flex flex-wrap gap-1">
+                                                                <template x-for="tag in getPaneTags(pane)" :key="tag">
+                                                                    <span
+                                                                        @click="toggleTag(String(tag).toLowerCase())"
+                                                                        class="px-2 py-0.5 text-xs rounded-full cursor-pointer transition-colors"
+                                                                        style="background-color: var(--accent-light, rgba(124, 58, 237, 0.15)); color: var(--accent-primary);"
+                                                                        onmouseover="this.style.backgroundColor='var(--accent-primary)'; this.style.color='white'"
+                                                                        onmouseout="this.style.backgroundColor='var(--accent-light, rgba(124, 58, 237, 0.15))'; this.style.color='var(--accent-primary)'"
+                                                                        x-text="'#' + tag"
+                                                                    ></span>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+
+                                                    <!-- All other fields -->
+                                                    <template x-for="field in getPaneAllMetadataFields(pane)" :key="field.key">
+                                                        <div class="flex gap-1.5 items-start text-xs">
+                                                            <span class="w-16 shrink-0 pt-0.5 capitalize" style="color: var(--text-tertiary);" x-text="field.key"></span>
+                                                            <span style="color: var(--text-primary); word-break: break-word;" x-text="field.value"></span>
+                                                        </div>
                                                     </template>
                                                 </div>
                                             </div>
-                                        </template>
+                                        </div>
 
-                                        <!-- Other fields -->
-                                        <template x-for="field in getAllMetadataFields()" :key="field.key">
-                                            <div class="flex gap-1.5 items-start text-xs">
-                                                <span class="w-16 shrink-0 pt-0.5" style="color: var(--text-tertiary);" x-text="field.key"></span>
-                                                <!-- Array values -->
-                                                <template x-if="field.isArray">
-                                                    <div class="flex flex-wrap gap-1">
-                                                        <template x-for="item in field.value" :key="item">
-                                                            <span
-                                                                class="px-1.5 py-0.5 rounded text-xs"
-                                                                style="background-color: var(--bg-hover); color: var(--text-primary);"
-                                                                x-text="item"
-                                                            ></span>
-                                                        </template>
-                                                    </div>
-                                                </template>
-                                                <!-- Single values -->
-                                                <template x-if="!field.isArray">
-                                                    <span style="color: var(--text-primary);" x-html="field.valueHtml"></span>
-                                                </template>
-                                            </div>
-                                        </template>
+                                        <div
+                                            class="markdown-preview note-preview p-4"
+                                            :class="{
+                                                'reading-width-narrow': readingWidth === 'narrow',
+                                                'reading-width-medium': readingWidth === 'medium',
+                                                'reading-width-wide': readingWidth === 'wide',
+                                                'reading-width-full': readingWidth === 'full',
+                                                'align-left': contentAlign === 'left',
+                                                'align-center': contentAlign === 'center',
+                                                'align-justified': contentAlign === 'justified',
+                                                'margins-compact': contentMargins === 'compact',
+                                                'margins-normal': contentMargins === 'normal',
+                                                'margins-relaxed': contentMargins === 'relaxed',
+                                                'margins-extra-relaxed': contentMargins === 'extra-relaxed'
+                                            }"
+                                            x-html="renderPanePreview(pane)"
+                                            @click="handleInternalLink($event)"
+                                        ></div>
                                     </div>
                                 </div>
+
+                                <!-- Pane Resize Handle -->
+                                <div
+                                    class="pane-resize-handle"
+                                    @mousedown.stop="startPaneResize(pane.id, $event)"
+                                ></div>
                             </div>
+                        </template>
+                        </div>
 
-                            <div
-                                class="markdown-preview note-preview"
-                                :class="{
-                                    'pt-2': getHasMetadata() && currentNote,
-                                    'reading-width-narrow': readingWidth === 'narrow',
-                                    'reading-width-medium': readingWidth === 'medium',
-                                    'reading-width-wide': readingWidth === 'wide',
-                                    'reading-width-full': readingWidth === 'full',
-                                    'align-left': contentAlign === 'left',
-                                    'align-center': contentAlign === 'center',
-                                    'align-justified': contentAlign === 'justified',
-                                    'margins-compact': contentMargins === 'compact',
-                                    'margins-normal': contentMargins === 'normal',
-                                    'margins-relaxed': contentMargins === 'relaxed',
-                                    'margins-extra-relaxed': contentMargins === 'extra-relaxed'
-                                }"
-                                x-html="renderedMarkdown"
-                                @click="handleInternalLink($event)"
-                            ></div>
-
-                            <!-- Table of Contents Floating Panel -->
-                            <div
-                                x-show="showToc && tocHeadings.length > 0"
-                                x-transition:enter="transition ease-out duration-200"
-                                x-transition:enter-start="opacity-0 translate-x-4"
-                                x-transition:enter-end="opacity-100 translate-x-0"
-                                x-transition:leave="transition ease-in duration-150"
-                                x-transition:leave-start="opacity-100 translate-x-0"
-                                x-transition:leave-end="opacity-0 translate-x-4"
-                                class="toc-panel"
-                            >
-                                <div class="toc-header">
-                                    <span class="toc-title">Contents</span>
+                        <!-- Rich Editor Panel (Right Sidebar) -->
+                        <div
+                            x-show="showRichEditorPanel"
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 translate-x-4"
+                            x-transition:enter-end="opacity-100 translate-x-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 translate-x-0"
+                            x-transition:leave-end="opacity-0 translate-x-4"
+                            class="rich-editor-panel"
+                            style="width: 50%; min-width: 400px; max-width: 800px; border-left: 1px solid var(--border-primary); background-color: var(--bg-primary); display: flex; flex-direction: column;"
+                        >
+                            <!-- Rich Editor Header -->
+                            <div class="rich-editor-header px-4 py-3 flex items-center justify-between"
+                                 style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-primary);">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-5 h-5" style="color: var(--accent-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                    <span class="font-medium" style="color: var(--text-primary);">Rich Editor</span>
+                                    <span class="text-sm" style="color: var(--text-tertiary);" x-text="activePane ? '— ' + activePane.name : ''"></span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <!-- Collapse/Expand Panes Toggle -->
                                     <button
-                                        @click="showToc = false"
-                                        class="toc-close"
-                                        title="Close Table of Contents"
+                                        @click="panesCollapsed = !panesCollapsed"
+                                        class="panes-collapse-toggle"
+                                        :title="panesCollapsed ? 'Show editor panes' : 'Hide editor panes (expand Rich Editor)'"
                                     >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                                        </svg>
+                                        <span x-text="panesCollapsed ? 'Show' : 'Hide'"></span>
+                                    </button>
+                                    <!-- Close Rich Editor -->
+                                    <button
+                                        @click="showRichEditorPanel = false; panesCollapsed = false"
+                                        class="p-1.5 rounded transition"
+                                        style="color: var(--text-tertiary);"
+                                        title="Close Rich Editor"
+                                        @mouseenter="$el.style.backgroundColor = 'var(--bg-tertiary)'"
+                                        @mouseleave="$el.style.backgroundColor = 'transparent'"
+                                    >
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                         </svg>
                                     </button>
                                 </div>
-                                <div class="toc-list">
-                                    <template x-for="heading in tocHeadings" :key="heading.id">
-                                        <a
-                                            @click.prevent="scrollToHeading(heading.id)"
-                                            class="toc-item"
-                                            :class="'toc-h' + heading.level"
-                                            :title="heading.text"
-                                            x-text="heading.text"
-                                        ></a>
-                                    </template>
-                                </div>
+                            </div>
+                            <!-- Rich Editor Content (Tiptap) -->
+                            <div class="flex-1 overflow-y-auto custom-scrollbar">
+                                <div
+                                    id="tiptap-editor-panel"
+                                    x-ref="tiptapPanelContainer"
+                                    class="tiptap-container"
+                                    :class="{
+                                        'reading-width-narrow': readingWidth === 'narrow',
+                                        'reading-width-medium': readingWidth === 'medium',
+                                        'reading-width-wide': readingWidth === 'wide',
+                                        'reading-width-full': readingWidth === 'full',
+                                        'align-left': contentAlign === 'left',
+                                        'align-center': contentAlign === 'center',
+                                        'align-justified': contentAlign === 'justified',
+                                        'margins-compact': contentMargins === 'compact',
+                                        'margins-normal': contentMargins === 'normal',
+                                        'margins-relaxed': contentMargins === 'relaxed',
+                                        'margins-extra-relaxed': contentMargins === 'extra-relaxed'
+                                    }"
+                                ></div>
                             </div>
                         </div>
-
-                        <!-- Image Viewer -->
-                        <template x-if="currentImage">
-                            <div
-                                class="flex-1 flex items-center justify-center overflow-auto"
-                                style="background-color: var(--bg-primary); min-height: 0;"
-                            >
-                                <img
-                                    :src="`/api/images/${currentImage}`"
-                                    :alt="currentImage.split('/').pop()"
-                                    style="max-width: 100%; max-height: 100%; object-fit: contain; padding: 2rem;"
-                                />
-                            </div>
-                        </template>
                     </div>
+
 
                     <!-- Stats Status Bar (only shows if plugin enabled) -->
                     <div x-show="statsPluginEnabled && currentNote && noteStats"
@@ -4231,6 +6059,23 @@
         </div>
     </div>
 
+    <!-- Draw.io Editor Modal -->
+    <div x-show="showDrawioModal"
+         x-cloak
+         class="drawio-modal"
+         @keydown.escape.window="showDrawioModal && closeDrawioEditor()">
+        <div class="drawio-modal-header">
+            <span class="drawio-modal-title" x-text="drawioModalData?.name || 'Edit Diagram'"></span>
+            <button type="button" class="drawio-modal-close" @click="closeDrawioEditor()" title="Close">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div id="drawio-iframe-container" class="drawio-iframe-container"></div>
+    </div>
+
     <!-- Mobile Bottom Tabs -->
     <nav class="mobile-bottom-tabs" style="display: none;" role="navigation" aria-label="Main navigation">
         <button
@@ -4340,10 +6185,10 @@
                  x-transition:leave-end="opacity-0"
                  class="px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 min-w-[300px] max-w-md"
                  :class="{
-                     'bg-green-600 text-white': toast.type === 'success',
-                     'bg-red-600 text-white': toast.type === 'error',
-                     'bg-yellow-500 text-white': toast.type === 'warning',
-                     'bg-gray-700 text-white': toast.type === 'info'
+                     'toast-success': toast.type === 'success',
+                     'toast-error': toast.type === 'error',
+                     'toast-warning': toast.type === 'warning',
+                     'toast-info': toast.type === 'info'
                  }"
                  style="pointer-events: auto;">
                 <!-- Icon based on type -->

@@ -7,7 +7,7 @@ import aiofiles  # type: ignore[import-untyped]
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 
-from backend.config import static_path
+from backend.config import DEBUG_MODE, static_path
 from backend.dependencies import require_auth
 
 router = APIRouter(
@@ -16,12 +16,20 @@ router = APIRouter(
 )
 
 
+def inject_debug_flag(html: str) -> str:
+    """Inject GRANITE_DEBUG flag into HTML before other scripts run."""
+    debug_script = f"<script>window.GRANITE_DEBUG = {'true' if DEBUG_MODE else 'false'};</script>"
+    # Insert right after <head> so it runs before any other scripts
+    return html.replace("<head>", f"<head>\n    {debug_script}", 1)
+
+
 @router.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     """Serve the main application page"""
     index_path = static_path / "index.html"
     async with aiofiles.open(index_path, encoding="utf-8") as f:
-        return await f.read()
+        html = await f.read()
+    return inject_debug_flag(html)
 
 
 # Catch-all route for SPA (Single Page Application) routing
@@ -39,4 +47,5 @@ async def catch_all(full_path: str, request: Request):
     # Serve index.html for all other routes
     index_path = static_path / "index.html"
     async with aiofiles.open(index_path, encoding="utf-8") as f:
-        return await f.read()
+        html = await f.read()
+    return inject_debug_flag(html)

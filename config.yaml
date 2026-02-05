@@ -8,7 +8,7 @@ server:
   reload: false
   allowed_origins:
     - '*'
-  debug: false
+  debug: true
   https_only: false
 storage:
   notes_dir: ./data

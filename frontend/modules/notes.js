@@ -18,86 +18,27 @@ export const notesMixin = {
 
     async loadNote(notePath, updateHistory = true, searchQuery = '') {
         try {
+            // Always use pane system
             this.mobileSidebarOpen = false;
 
-            // Cleanup spreadsheet instances from previous note
-            if (typeof this.cleanupSpreadsheets === 'function') {
-                this.cleanupSpreadsheets();
-            }
+            if (typeof this.openInPane === 'function') {
+                await this.openInPane(notePath, { focusExisting: true });
 
-            const response = await fetch(`/api/notes/${notePath}`);
-
-            if (!response.ok) {
-                if (response.status === 404) {
-                    window.history.replaceState({ homepageFolder: this.selectedHomepageFolder || '' }, '', '/');
-                    this.currentNote = '';
-                    this.noteContent = '';
-                    this.currentImage = '';
-                    return;
-                }
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            this.currentNote = notePath;
-            this.noteContent = data.content;
-            this.updateEditorContent(data.content);
-            this.currentNoteName = notePath.split('/').pop().replace('.md', '');
-            this.currentImage = '';
-            this.lastSaved = false;
-
-            this.undoHistory = [data.content];
-            this.redoHistory = [];
-
-            if (updateHistory) {
-                const pathWithoutExtension = notePath.replace('.md', '');
-                const encodedPath = pathWithoutExtension.split('/').map(segment => encodeURIComponent(segment)).join('/');
-                let url = `/${encodedPath}`;
+                // Handle search highlighting in the new pane if needed
                 if (searchQuery) {
-                    url += `?search=${encodeURIComponent(searchQuery)}`;
-                }
-                window.history.pushState(
-                    { notePath: notePath, searchQuery: searchQuery, homepageFolder: this.selectedHomepageFolder || '' },
-                    '',
-                    url
-                );
-            }
-
-            if (this.statsPluginEnabled) {
-                this.calculateStats();
-            }
-
-            this.parseMetadata();
-
-            if (searchQuery) {
-                this.currentSearchHighlight = searchQuery;
-            } else {
-                this.currentSearchHighlight = '';
-            }
-
-            this.expandFolderForNote(notePath);
-
-            this.$nextTick(() => {
-                this.$nextTick(() => {
-                    this.refreshDOMCache();
-                    this.setupScrollSync();
-                    this.scrollToTop();
-
-                    if (searchQuery) {
+                    this.currentSearchHighlight = searchQuery;
+                    this.$nextTick(() => {
                         this.highlightSearchTerm(searchQuery, true);
-                    } else {
-                        this.clearSearchHighlights();
-                    }
-
-                    this.scrollNoteIntoView(notePath);
-                });
-            });
-
+                    });
+                }
+            } else {
+                Debug.error('openInPane function not available');
+            }
         } catch (error) {
             ErrorHandler.handle('load note', error);
         }
     },
+
 
     loadNoteFromURL() {
         let path = window.location.pathname;

@@ -110,24 +110,24 @@ export const sidebarMixin = {
         localStorage.setItem('editorWidth', this.editorWidth.toString());
     },
 
-    // Load view mode from localStorage
-    loadViewMode() {
+    // Load default pane view mode from localStorage
+    loadDefaultPaneViewMode() {
         try {
-            const saved = localStorage.getItem('viewMode');
-            if (saved && ['edit', 'split', 'preview'].includes(saved)) {
-                this.viewMode = saved;
+            const saved = localStorage.getItem('defaultPaneViewMode');
+            if (saved && ['edit', 'split'].includes(saved)) {
+                this.defaultPaneViewMode = saved;
             }
         } catch (error) {
-            Debug.error('Error loading view mode:', error);
+            Debug.error('Error loading default pane view mode:', error);
         }
     },
 
-    // Save view mode to localStorage
-    saveViewMode() {
+    // Save default pane view mode to localStorage
+    saveDefaultPaneViewMode() {
         try {
-            localStorage.setItem('viewMode', this.viewMode);
+            localStorage.setItem('defaultPaneViewMode', this.defaultPaneViewMode);
         } catch (error) {
-            Debug.error('Error saving view mode:', error);
+            Debug.error('Error saving default pane view mode:', error);
         }
     },
 
@@ -152,8 +152,8 @@ export const sidebarMixin = {
         }
     },
 
-    // Setup mobile view mode handler
-    setupMobileViewMode() {
+    // Setup mobile pane handler (pane-based system)
+    setupPaneMobileHandling() {
         const MOBILE_BREAKPOINT = 768;
         let previousWidth = window.innerWidth;
 
@@ -162,8 +162,20 @@ export const sidebarMixin = {
             const wasMobile = previousWidth <= MOBILE_BREAKPOINT;
             const isMobile = currentWidth <= MOBILE_BREAKPOINT;
 
-            if (!wasMobile && isMobile && this.viewMode === 'split') {
-                this.viewMode = 'edit';
+            // Switch all panes from split to edit when entering mobile viewport
+            if (!wasMobile && isMobile && this.openPanes) {
+                this.openPanes.forEach(pane => {
+                    if (pane.viewMode === 'split' && typeof this.setPaneViewMode === 'function') {
+                        this.setPaneViewMode(pane.id, 'edit');
+                    }
+                });
+            }
+
+            // Close extra panes on mobile (keep only active pane)
+            if (!wasMobile && isMobile && this.openPanes && this.openPanes.length > 1) {
+                if (typeof this.closePanesExcept === 'function') {
+                    this.closePanesExcept(this.activePaneId);
+                }
             }
 
             previousWidth = currentWidth;
@@ -171,8 +183,20 @@ export const sidebarMixin = {
 
         window.addEventListener('resize', handleResize);
 
-        if (window.innerWidth <= MOBILE_BREAKPOINT && this.viewMode === 'split') {
-            this.viewMode = 'edit';
+        // Check on initial load - switch panes to edit mode on mobile
+        if (window.innerWidth <= MOBILE_BREAKPOINT && this.openPanes) {
+            this.openPanes.forEach(pane => {
+                if (pane.viewMode === 'split' && typeof this.setPaneViewMode === 'function') {
+                    this.setPaneViewMode(pane.id, 'edit');
+                }
+            });
+        }
+
+        // Close extra panes on initial mobile load
+        if (window.innerWidth <= MOBILE_BREAKPOINT && this.openPanes && this.openPanes.length > 1) {
+            if (typeof this.closePanesExcept === 'function') {
+                this.closePanesExcept(this.activePaneId);
+            }
         }
     },
 };

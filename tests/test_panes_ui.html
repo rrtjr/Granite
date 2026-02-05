@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stacked Panes UI Tests</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #555;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .test-case {
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #ddd;
+            background: #f9f9f9;
+        }
+        .test-case.pass {
+            border-left-color: #4caf50;
+            background: #f1f8f4;
+        }
+        .test-case.fail {
+            border-left-color: #f44336;
+            background: #fef1f0;
+        }
+        .test-case.running {
+            border-left-color: #2196f3;
+            background: #e3f2fd;
+        }
+        .test-case.skipped {
+            border-left-color: #9e9e9e;
+            background: #f5f5f5;
+        }
+        .test-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .test-result {
+            font-size: 14px;
+            color: #666;
+        }
+        .summary {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .summary-item {
+            padding: 15px;
+            border-radius: 8px;
+            flex: 1;
+            text-align: center;
+        }
+        .summary-item.total {
+            background: #e3f2fd;
+        }
+        .summary-item.passed {
+            background: #f1f8f4;
+        }
+        .summary-item.failed {
+            background: #fef1f0;
+        }
+        .summary-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .summary-label {
+            font-size: 14px;
+            color: #666;
+        }
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #1976d2;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .info-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .info-box.info {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Stacked Panes UI Tests</h1>
+    <p>Automated tests for the stacked panes feature (pane management, state persistence, and keyboard shortcuts)</p>
+
+    <div class="info-box info">
+        <strong>Note:</strong> These tests simulate the panes module logic in isolation.
+        They test the core JavaScript functions without requiring the full Alpine.js app.
+    </div>
+
+    <button id="runTests" onclick="runAllTests()">Run All Tests</button>
+    <button id="runUnitTests" onclick="runUnitTests()">Run Unit Tests Only</button>
+
+    <div class="summary">
+        <div class="summary-item total">
+            <div class="summary-label">Total Tests</div>
+            <div class="summary-value" id="totalTests">0</div>
+        </div>
+        <div class="summary-item passed">
+            <div class="summary-label">Passed</div>
+            <div class="summary-value" id="passedTests">0</div>
+        </div>
+        <div class="summary-item failed">
+            <div class="summary-label">Failed</div>
+            <div class="summary-value" id="failedTests">0</div>
+        </div>
+    </div>
+
+    <div id="testResults"></div>
+
+    <script>
+        let testsPassed = 0;
+        let testsFailed = 0;
+        let testsTotal = 0;
+
+        // Mock panes module state and functions for testing
+        function createMockPanesContext() {
+            return {
+                // State
+                openPanes: [],
+                activePaneId: null,
+                maxPanes: 10,
+                showRichEditorPanel: false,
+                notes: [],
+
+                // Legacy state for backward compatibility
+                _legacyCurrentNote: '',
+                _legacyNoteContent: '',
+                _legacyCurrentNoteName: '',
+
+                // Mock methods
+                showToast(message) {
+                    this._lastToast = message;
+                },
+
+                refreshDOMCache() {},
+                initCodeMirror() {},
+                savePanesState() {
+                    this._savedState = JSON.stringify(this.openPanes);
+                },
+
+                // Getters (simulating Alpine.js computed properties)
+                get activePane() {
+                    return this.openPanes.find(p => p.id === this.activePaneId) || null;
+                },
+
+                get currentNote() {
+                    const pane = this.openPanes.find(p => p.id === this.activePaneId);
+                    return pane?.path || this._legacyCurrentNote || '';
+                },
+
+                set currentNote(value) {
+                    const pane = this.openPanes.find(p => p.id === this.activePaneId);
+                    if (pane) {
+                        pane.path = value;
+                    } else {
+                        this._legacyCurrentNote = value;
+                    }
+                },
+
+                get noteContent() {
+                    const pane = this.openPanes.find(p => p.id === this.activePaneId);
+                    return pane?.content || this._legacyNoteContent || '';
+                },
+
+                set noteContent(value) {
+                    const pane = this.openPanes.find(p => p.id === this.activePaneId);
+                    if (pane) {
+                        pane.content = value;
+                        pane.isDirty = true;
+                    } else {
+                        this._legacyNoteContent = value;
+                    }
+                }
+            };
+        }
+
+        // Core pane functions to test (copied from panes.js for isolation)
+        const panesFunctions = {
+            generatePaneId() {
+                return 'pane-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            },
+
+            createPaneObject(path, content, name) {
+                return {
+                    id: this.generatePaneId(),
+                    path: path,
+                    content: content || '',
+                    name: name || path.split('/').pop().replace(/\.md$/, ''),
+                    editorView: null,
+                    tiptapEditor: null,
+                    scrollPos: 0,
+                    previewScrollPos: 0,
+                    viewMode: 'split',
+                    isDirty: false,
+                    width: 500,
+                    undoHistory: [],
+                    redoHistory: []
+                };
+            },
+
+            findPaneByPath(ctx, path) {
+                return ctx.openPanes.find(p => p.path === path);
+            },
+
+            openInPane(ctx, path, content, options = {}) {
+                const existingPane = this.findPaneByPath(ctx, path);
+
+                if (existingPane) {
+                    // Focus existing pane
+                    ctx.activePaneId = existingPane.id;
+                    return existingPane;
+                }
+
+                // Create new pane
+                const pane = this.createPaneObject(path, content, options.name);
+
+                // Check max panes limit
+                if (ctx.openPanes.length >= ctx.maxPanes) {
+                    // Close oldest non-dirty pane
+                    const closeable = ctx.openPanes.find(p => !p.isDirty);
+                    if (closeable) {
+                        ctx.openPanes = ctx.openPanes.filter(p => p.id !== closeable.id);
+                    } else {
+                        // All panes dirty, remove oldest
+                        ctx.openPanes.shift();
+                    }
+                }
+
+                ctx.openPanes.push(pane);
+                ctx.activePaneId = pane.id;
+
+                return pane;
+            },
+
+            focusPane(ctx, paneId) {
+                const pane = ctx.openPanes.find(p => p.id === paneId);
+                if (pane) {
+                    ctx.activePaneId = paneId;
+                    return true;
+                }
+                return false;
+            },
+
+            closePane(ctx, paneId, force = false) {
+                const pane = ctx.openPanes.find(p => p.id === paneId);
+                if (!pane) return false;
+
+                // Check for unsaved changes
+                if (pane.isDirty && !force) {
+                    return { needsConfirm: true, pane };
+                }
+
+                const index = ctx.openPanes.findIndex(p => p.id === paneId);
+                ctx.openPanes = ctx.openPanes.filter(p => p.id !== paneId);
+
+                // Update active pane if needed
+                if (ctx.activePaneId === paneId) {
+                    if (ctx.openPanes.length > 0) {
+                        // Focus adjacent pane
+                        const newIndex = Math.min(index, ctx.openPanes.length - 1);
+                        ctx.activePaneId = ctx.openPanes[newIndex].id;
+                    } else {
+                        ctx.activePaneId = null;
+                    }
+                }
+
+                return true;
+            },
+
+            closePanesExcept(ctx, paneId) {
+                ctx.openPanes = ctx.openPanes.filter(p => p.id === paneId);
+                if (ctx.openPanes.length > 0) {
+                    ctx.activePaneId = ctx.openPanes[0].id;
+                }
+            },
+
+            focusNextPane(ctx) {
+                if (ctx.openPanes.length <= 1) return;
+                const currentIndex = ctx.openPanes.findIndex(p => p.id === ctx.activePaneId);
+                const nextIndex = (currentIndex + 1) % ctx.openPanes.length;
+                ctx.activePaneId = ctx.openPanes[nextIndex].id;
+            },
+
+            focusPreviousPane(ctx) {
+                if (ctx.openPanes.length <= 1) return;
+                const currentIndex = ctx.openPanes.findIndex(p => p.id === ctx.activePaneId);
+                const prevIndex = (currentIndex - 1 + ctx.openPanes.length) % ctx.openPanes.length;
+                ctx.activePaneId = ctx.openPanes[prevIndex].id;
+            },
+
+            focusPaneByIndex(ctx, index) {
+                if (index >= 0 && index < ctx.openPanes.length) {
+                    ctx.activePaneId = ctx.openPanes[index].id;
+                    return true;
+                }
+                return false;
+            }
+        };
+
+        // Helper function to display test results
+        function displayTest(name, status, message, section = null) {
+            const container = section || document.getElementById('testResults');
+            const testDiv = document.createElement('div');
+            testDiv.className = `test-case ${status}`;
+            testDiv.innerHTML = `
+                <div class="test-name">${name}</div>
+                <div class="test-result">${message}</div>
+            `;
+            container.appendChild(testDiv);
+
+            if (status === 'pass') {
+                testsPassed++;
+            } else if (status === 'fail') {
+                testsFailed++;
+            }
+
+            updateSummary();
+        }
+
+        function updateSummary() {
+            document.getElementById('totalTests').textContent = testsTotal;
+            document.getElementById('passedTests').textContent = testsPassed;
+            document.getElementById('failedTests').textContent = testsFailed;
+        }
+
+        function createSection(title) {
+            const section = document.createElement('div');
+            section.className = 'test-section';
+            section.innerHTML = `<h2>${title}</h2>`;
+            document.getElementById('testResults').appendChild(section);
+            return section;
+        }
+
+        // ==========================================
+        // UNIT TESTS - Core Pane Functions
+        // ==========================================
+
+        function testGeneratePaneId() {
+            testsTotal++;
+            try {
+                const id1 = panesFunctions.generatePaneId();
+                const id2 = panesFunctions.generatePaneId();
+
+                if (!id1.startsWith('pane-')) {
+                    throw new Error('ID should start with "pane-"');
+                }
+
+                if (id1 === id2) {
+                    throw new Error('IDs should be unique');
+                }
+
+                displayTest('generatePaneId() creates unique IDs', 'pass', `Generated: ${id1}, ${id2}`);
+            } catch (error) {
+                displayTest('generatePaneId() creates unique IDs', 'fail', error.message);
+            }
+        }
+
+        function testCreatePaneObject() {
+            testsTotal++;
+            try {
+                const pane = panesFunctions.createPaneObject('folder/test.md', '# Test Content', 'Test');
+
+                if (!pane.id) throw new Error('Pane should have an ID');
+                if (pane.path !== 'folder/test.md') throw new Error('Path not set correctly');
+                if (pane.content !== '# Test Content') throw new Error('Content not set correctly');
+                if (pane.name !== 'Test') throw new Error('Name not set correctly');
+                if (pane.viewMode !== 'split') throw new Error('Default viewMode should be split');
+                if (pane.isDirty !== false) throw new Error('New pane should not be dirty');
+                if (!Array.isArray(pane.undoHistory)) throw new Error('undoHistory should be array');
+
+                displayTest('createPaneObject() creates valid pane', 'pass', 'All pane properties correctly initialized');
+            } catch (error) {
+                displayTest('createPaneObject() creates valid pane', 'fail', error.message);
+            }
+        }
+
+        function testCreatePaneObjectNameFromPath() {
+            testsTotal++;
+            try {
+                const pane = panesFunctions.createPaneObject('folder/my-note.md', '');
+
+                if (pane.name !== 'my-note') {
+                    throw new Error(`Expected name "my-note", got "${pane.name}"`);
+                }
+
+                displayTest('createPaneObject() extracts name from path', 'pass', `Name extracted: "${pane.name}"`);
+            } catch (error) {
+                displayTest('createPaneObject() extracts name from path', 'fail', error.message);
+            }
+        }
+
+        function testOpenInPaneNew() {
+            testsTotal++;
+            try {
+                const ctx = createMockPanesContext();
+                const pane = panesFunctions.openInPane(ctx, 'test.md', '# Content');
+
+                if (ctx.openPanes.length !== 1) throw new Error('Should have 1 pane');
+                if (ctx.activePaneId !== pane.id) throw new Error('Active pane should be new pane');
+                if (pane.path !== 'test.md') throw new Error('Pane path incorrect');
+
+                displayTest('openInPane() creates new pane', 'pass', 'New pane created and activated');
+            } catch (error) {
+                displayTest('openInPane() creates new pane', 'fail', error.message);
+            }
+        }
+
+        function testOpenInPaneExisting() {
+            testsTotal++;
+            try {
+                const ctx = createMockPanesContext();
+
+                // Open first pane
+                const pane1 = panesFunctions.openInPane(ctx, 'note1.md', '# Note 1');
+
+                // Open second pane
+                const pane2 = panesFunctions.openInPane(ctx, 'note2.md', '# Note 2');
+
+                // Try to open first pane again
+                const pane3 = panesFunctions.openInPane(ctx, 'note1.md', '# Note 1');
+
+                if (ctx.openPanes.length !== 2) {
+                    throw new Error(`Should have 2 panes, got ${ctx.openPanes.length}`);
+                }
+
+                if (pane3.id !== pane1.id) {
+                    throw new Error('Should return existing pane, not create new one');
+                }
+
+                if (ctx.activePaneId !== pane1.id) {
+                    throw new Error('Should focus existing pane');
+                }
+
+                displayTest('openInPane() focuses existing pane', 'pass', 'Existing pane found and focused');
+            } catch (error) {
+                displayTest('openInPane() focuses existing pane', 'fail', error.message);
+            }
+        }
+
+        function testOpenInPaneMaxLimit() {
+            testsTotal++;
+            try {
+                const ctx = createMockPanesContext();
+                ctx.maxPanes = 3;
+
+                // Open 3 panes
+                panesFunctions.openInPane(ctx, 'note1.md', '');
+                panesFunctions.openInPane(ctx, 'note2.md', '');
+                panesFunctions.openInPane(ctx, 'note3.md', '');
+
+                if (ctx.openPanes.length !== 3) {
+                    throw new Error(`Should have 3 panes, got ${ctx.openPanes.length}`);
+                }
+
+                // Open 4th pane - should remove oldest
+                panesFunctions.openInPane(ctx, 'note4.md', '');
+
+                if (ctx.openPanes.length !== 3) {
+                    throw new Error(`Should still have 3 panes, got ${ctx.openPanes.length}`);
+                }
+
+                // First pane should be removed
+                if (ctx.openPanes.find(p => p.path === 'note1.md')) {
+                    throw new Error('Oldest pane should have been removed');
+                }
+
+                displayTest('openInPane() respects maxPanes limit', 'pass', 'Oldest pane removed when limit exceeded');
+            } catch (error) {
+                displayTest('openInPane() respects maxPanes limit', 'fail', error.message);
+            }
+        }
+
+        function testFocusPane() {
+            testsTotal++;
+            try {
+                const ctx = createMockPanesContext();
+
+                const pane1 = panesFunctions.openInPane(ctx, 'note1.md', '');
+                const pane2 = panesFunctions.openInPane(ctx, 'note2.md', '');
+
+                // Should be on pane2
+                if (ctx.activePaneId !== pane2.id) {
+                    throw new Error('Should be on pane2');
+                }
+
+                // Focus pane1
+                const result = panesFunctions.focusPane(ctx, pane1.id);
+
+                if (!result) throw new Error('focusPane should return true');
+                if (ctx.activePaneId !== pane1.id) {
+                    throw new Error('Active pane should be pane1');
+                }
+
+                displayTest('focusPane() switches active pane', 'pass', 'Successfully switched to specified pane');
+            } catch (error) {
+                displayTest('focusPane() switches active pane', 'fail', error.message);
+            }
+        }
+
+        function testFocusPaneInvalid() {
+            testsTotal++;
+            try {
+                const ctx = createMockPanesContext();
+                const pane = panesFunctions.openInPane(ctx, 'note.md', '');
+
+                const result = panesFunctions.focusPane(ctx, 'invalid-id');
+
+                if (result !== false) {
+                    throw new Error('Should return false for invalid ID');
+                }
+
+                if (ctx.activePaneId !== pane.id) {
+                    throw new Error('Active pane should remain unchanged');
+                }
+
+                displayTest('focusPane() handles invalid ID', 'pass', 'Returns false and keeps current pane');
+            } catch (error) {
+                displayTest('focusPane() handles invalid ID', 'fail', error.message);
+            }
+        }
+
+        function testClosePane() {
+            testsTotal++;
+            try {
+                const ctx = createMockPanesContext();
+
+                const pane1 = panesFunctions.openInPane(ctx, 'note1.md', '');
+                const pane2 = panesFunctions.openInPane(ctx, 'note2.md', '');
+
+                // Close pane2
+                const result = panesFunctions.closePane(ctx, pane2.id);
+
+                if (result !== true) throw new Error('closePane should return true');
+                if (ctx.openPanes.length !== 1) throw new Error('Should have 1 pane');
+                if (ctx.activePaneId !== pane1.id) throw new Error('Should focus remaining pane');
+
+                displayTest('closePane() removes pane', 'pass', 'Pane closed and focus updated');
+            } catch (error) {
+                displayTest('closePane() removes pane', 'fail', error.message);
+            }
+        }
+
+        function testClosePaneDirty() {
+            testsTotal++;
+            try {
+                const ctx = createMockPanesContext();
+
+                const pane = panesFunctions.openInPane(ctx, 'note.md', '');
+                pane.isDirty = true;
+
+                // Try to close without force
+                const result = panesFunctions.closePane(ctx, pane.id);
+
+                if (result === true) {
+                    throw new Error('Should not close dirty pane without force');
+                }
+
+                if (!result.needsConfirm) {
+                    throw new Error('Should return needsConfirm: true');
+                }
+
+                if (ctx.openPanes.length !== 1) {
+                    throw new Error('Pane should still be open');
+                }
+
+                displayTest('closePane() requires confirm for dirty pane', 'pass', 'Dirty pane requires confirmation');
+            } catch (error) {
+                displayTest('closePane() requires confirm for dirty pane', 'fail', error.message);
+            }
+        }
+
+        function testClosePaneDirtyForce() {
+            testsTotal++;
+            try {
+                const ctx = createMockPanesContext();
+
+                const pane = panesFunctions.openInPane(ctx, 'note.md', '');
+                pane.isDirty = true;
+
+                // Force close
+                const result = panesFunctions.closePane(ctx, pane.id, true);
+
+                if (result !== true) {
+                    throw new Error('Force close should return true');
+                }
+
+                if (ctx.openPanes.length !== 0) {
+                    throw new Error('Pane should be closed');
+                }
+
+                displayTest('closePane() with force closes dirty pane', 'pass', 'Dirty pane closed with force=true');
+            } catch (error) {
+                displayTest('closePane() with force closes dirty pane', 'fail', error.message);
+            }
+        }
+
+        function testClosePanesExcept() {
+            testsTotal++;
+            try {
+                const ctx = createMockPanesContext();
+
+                panesFunctions.openInPane(ctx, 'note1.md', '');
+                const pane2 = panesFunctions.openInPane(ctx, 'note2.md', '');
+                panesFunctions.openInPane(ctx, 'note3.md', '');
+
+                panesFunctions.closePanesExcept(ctx, pane2.id);
+
+                if (ctx.openPanes.length !== 1) {
+                    throw new Error(`Should have 1 pane, got ${ctx.openPanes.length}`);
+                }
+
+                if (ctx.openPanes[0].id !== pane2.id) {
+                    throw new Error('Should keep only pane2');
+                }
+
+                displayTest('closePanesExcept() keeps only specified pane', 'pass', 'All other panes closed');
+            } catch (error) {
+                displayTest('closePanesExcept() keeps only specified pane', 'fail', error.message);
+            }
+        }
+
+        function testFocusNextPane() {
+            testsTotal++;
+            try {
+                const ctx = createMockPanesContext();
+
+                const pane1 = panesFunctions.openInPane(ctx, 'note1.md', '');
+                const pane2 = panesFunctions.openInPane(ctx, 'note2.md', '');
+                const pane3 = panesFunctions.openInPane(ctx, 'note3.md', '');
+
+                // Currently on pane3
+                panesFunctions.focusPane(ctx, pane1.id);
+
+                panesFunctions.focusNextPane(ctx);
+                if (ctx.activePaneId !== pane2.id) {
+                    throw new Error('Should move to pane2');
+                }
+
+                panesFunctions.focusNextPane(ctx);
+                if (ctx.activePaneId !== pane3.id) {
+                    throw new Error('Should move to pane3');
+                }
+
+                // Should wrap around
+                panesFunctions.focusNextPane(ctx);
+                if (ctx.activePaneId !== pane1.id) {
+                    throw new Error('Should wrap to pane1');
+                }
+
+                displayTest('focusNextPane() cycles through panes', 'pass', 'Navigation wraps correctly');
+            } catch (error) {
+                displayTest('focusNextPane() cycles through panes', 'fail', error.message);
+            }
+        }
+
+        function testFocusPreviousPane() {
+            testsTotal++;
+            try {
+                const ctx = createMockPanesContext();
+
+                const pane1 = panesFunctions.openInPane(ctx, 'note1.md', '');
+                const pane2 = panesFunctions.openInPane(ctx, 'note2.md', '');
+                const pane3 = panesFunctions.openInPane(ctx, 'note3.md', '');
+
+                // Currently on pane3
+                panesFunctions.focusPreviousPane(ctx);
+                if (ctx.activePaneId !== pane2.id) {
+                    throw new Error('Should move to pane2');
+                }
+
+                panesFunctions.focusPreviousPane(ctx);
+                if (ctx.activePaneId !== pane1.id) {
+                    throw new Error('Should move to pane1');
+                }
+
+                // Should wrap around
+                panesFunctions.focusPreviousPane(ctx);
+                if (ctx.activePaneId !== pane3.id) {
+                    throw new Error('Should wrap to pane3');
+                }
+
+                displayTest('focusPreviousPane() cycles through panes', 'pass', 'Navigation wraps correctly');
+            } catch (error) {
+                displayTest('focusPreviousPane() cycles through panes', 'fail', error.message);
+            }
+        }
+
+        function testFocusPaneByIndex() {
+            testsTotal++;
+            try {
+                const ctx = createMockPanesContext();
+
+                const pane1 = panesFunctions.openInPane(ctx, 'note1.md', '');
+                const pane2 = panesFunctions.openInPane(ctx, 'note2.md', '');
+                const pane3 = panesFunctions.openInPane(ctx, 'note3.md', '');
+
+                // Focus by index
+                panesFunctions.focusPaneByIndex(ctx, 0);
+                if (ctx.activePaneId !== pane1.id) throw new Error('Index 0 should be pane1');
+
+                panesFunctions.focusPaneByIndex(ctx, 2);
+                if (ctx.activePaneId !== pane3.id) throw new Error('Index 2 should be pane3');
+
+                // Invalid index should return false
+                const result = panesFunctions.focusPaneByIndex(ctx, 10);
+                if (result !== false) throw new Error('Invalid index should return false');
+                if (ctx.activePaneId !== pane3.id) throw new Error('Active pane should not change');
+
+                displayTest('focusPaneByIndex() focuses correct pane', 'pass', 'Index-based navigation works');
+            } catch (error) {
+                displayTest('focusPaneByIndex() focuses correct pane', 'fail', error.message);
+            }
+        }
+
+        // ==========================================
+        // BACKWARD COMPATIBILITY TESTS
+        // ==========================================
+
+        function testBackwardCompatibilityCurrentNote() {
+            testsTotal++;
+            try {
+                const ctx = createMockPanesContext();
+
+                // No panes - should use legacy
+                ctx.currentNote = 'legacy.md';
+                if (ctx._legacyCurrentNote !== 'legacy.md') {
+                    throw new Error('Should set legacy value when no panes');
+                }
+
+                // With pane - should use pane
+                const pane = panesFunctions.openInPane(ctx, 'pane.md', '');
+                if (ctx.currentNote !== 'pane.md') {
+                    throw new Error('Should return pane path');
+                }
+
+                ctx.currentNote = 'updated.md';
+                if (ctx.activePane.path !== 'updated.md') {
+                    throw new Error('Should update pane path');
+                }
+
+                displayTest('currentNote getter/setter backward compatible', 'pass', 'Works with and without panes');
+            } catch (error) {
+                displayTest('currentNote getter/setter backward compatible', 'fail', error.message);
+            }
+        }
+
+        function testBackwardCompatibilityNoteContent() {
+            testsTotal++;
+            try {
+                const ctx = createMockPanesContext();
+
+                // No panes - should use legacy
+                ctx.noteContent = 'legacy content';
+                if (ctx._legacyNoteContent !== 'legacy content') {
+                    throw new Error('Should set legacy value when no panes');
+                }
+
+                // With pane - should use pane
+                const pane = panesFunctions.openInPane(ctx, 'test.md', '# Initial');
+                if (ctx.noteContent !== '# Initial') {
+                    throw new Error('Should return pane content');
+                }
+
+                ctx.noteContent = '# Updated';
+                if (ctx.activePane.content !== '# Updated') {
+                    throw new Error('Should update pane content');
+                }
+
+                if (!ctx.activePane.isDirty) {
+                    throw new Error('Should mark pane as dirty');
+                }
+
+                displayTest('noteContent getter/setter backward compatible', 'pass', 'Works with panes and sets dirty flag');
+            } catch (error) {
+                displayTest('noteContent getter/setter backward compatible', 'fail', error.message);
+            }
+        }
+
+        // ==========================================
+        // STATE PERSISTENCE TESTS
+        // ==========================================
+
+        function testPanesStateSerialization() {
+            testsTotal++;
+            try {
+                const ctx = createMockPanesContext();
+
+                panesFunctions.openInPane(ctx, 'note1.md', '# Note 1');
+                panesFunctions.openInPane(ctx, 'folder/note2.md', '# Note 2');
+                ctx.openPanes[0].scrollPos = 150;
+                ctx.openPanes[1].viewMode = 'edit';
+
+                // Simulate serialization
+                const serialized = JSON.stringify(ctx.openPanes.map(p => ({
+                    path: p.path,
+                    scrollPos: p.scrollPos,
+                    viewMode: p.viewMode
+                })));
+
+                const restored = JSON.parse(serialized);
+
+                if (restored.length !== 2) throw new Error('Should have 2 panes');
+                if (restored[0].path !== 'note1.md') throw new Error('Path not preserved');
+                if (restored[0].scrollPos !== 150) throw new Error('scrollPos not preserved');
+                if (restored[1].viewMode !== 'edit') throw new Error('viewMode not preserved');
+
+                displayTest('Pane state serialization works', 'pass', 'Pane properties correctly serialized');
+            } catch (error) {
+                displayTest('Pane state serialization works', 'fail', error.message);
+            }
+        }
+
+        // ==========================================
+        // INTEGRATION TESTS (API-based)
+        // ==========================================
+
+        async function testCreateAndLoadNote() {
+            testsTotal++;
+            try {
+                const API_BASE = window.location.origin;
+
+                // Create a test note
+                const testPath = '_test_panes_' + Date.now() + '.md';
+                const testContent = '# Panes Test Note\n\nThis is test content.';
+
+                const createResponse = await fetch(`${API_BASE}/api/notes/${testPath}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: testContent })
+                });
+
+                if (!createResponse.ok) {
+                    throw new Error(`Failed to create test note: ${createResponse.status}`);
+                }
+
+                // Load the note
+                const loadResponse = await fetch(`${API_BASE}/api/notes/${testPath}`);
+                if (!loadResponse.ok) {
+                    throw new Error(`Failed to load test note: ${loadResponse.status}`);
+                }
+
+                const noteData = await loadResponse.json();
+                if (noteData.content !== testContent) {
+                    throw new Error('Note content mismatch');
+                }
+
+                // Clean up - delete test note
+                await fetch(`${API_BASE}/api/notes/${testPath}`, { method: 'DELETE' });
+
+                displayTest('API: Create and load note for pane', 'pass', 'Note API works correctly');
+            } catch (error) {
+                displayTest('API: Create and load note for pane', 'fail', error.message);
+            }
+        }
+
+        // ==========================================
+        // RUN TESTS
+        // ==========================================
+
+        function runUnitTests() {
+            // Reset counters
+            testsPassed = 0;
+            testsFailed = 0;
+            testsTotal = 0;
+            document.getElementById('testResults').innerHTML = '';
+
+            const button = document.getElementById('runUnitTests');
+            button.disabled = true;
+            button.textContent = 'Running...';
+
+            // Pane Creation Tests
+            const creationSection = createSection('Pane Creation');
+            testGeneratePaneId();
+            testCreatePaneObject();
+            testCreatePaneObjectNameFromPath();
+
+            // Pane Opening Tests
+            const openingSection = createSection('Opening Panes');
+            testOpenInPaneNew();
+            testOpenInPaneExisting();
+            testOpenInPaneMaxLimit();
+
+            // Pane Focus Tests
+            const focusSection = createSection('Pane Focus');
+            testFocusPane();
+            testFocusPaneInvalid();
+            testFocusNextPane();
+            testFocusPreviousPane();
+            testFocusPaneByIndex();
+
+            // Pane Closing Tests
+            const closingSection = createSection('Closing Panes');
+            testClosePane();
+            testClosePaneDirty();
+            testClosePaneDirtyForce();
+            testClosePanesExcept();
+
+            // Backward Compatibility Tests
+            const compatSection = createSection('Backward Compatibility');
+            testBackwardCompatibilityCurrentNote();
+            testBackwardCompatibilityNoteContent();
+
+            // State Persistence Tests
+            const persistSection = createSection('State Persistence');
+            testPanesStateSerialization();
+
+            button.disabled = false;
+            button.textContent = 'Run Unit Tests Only';
+
+            console.log(`Unit tests complete: ${testsPassed}/${testsTotal} passed`);
+        }
+
+        async function runAllTests() {
+            // Reset counters
+            testsPassed = 0;
+            testsFailed = 0;
+            testsTotal = 0;
+            document.getElementById('testResults').innerHTML = '';
+
+            const button = document.getElementById('runTests');
+            button.disabled = true;
+            button.textContent = 'Running tests...';
+
+            // Run unit tests first
+            runUnitTests();
+
+            // Integration Tests (API-based)
+            const integrationSection = createSection('Integration Tests (API)');
+            await testCreateAndLoadNote();
+
+            button.disabled = false;
+            button.textContent = 'Run All Tests';
+
+            console.log(`All tests complete: ${testsPassed}/${testsTotal} passed`);
+        }
+    </script>
+</body>
+</html>
