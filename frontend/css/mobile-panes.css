@@ -879,3 +879,23 @@
 [data-theme="dark"] .mobile-sidebar-overlay {
     background: rgba(0, 0, 0, 0.7);
 }
+
+/* =============================================================================
+   Touch Device: Always show folder/note action buttons
+   On touch devices, :hover doesn't work so buttons must be permanently visible
+   ============================================================================= */
+
+@media (hover: none) {
+    .folder-item .hover-buttons {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    .note-item .note-delete-btn {
+        opacity: 1 !important;
+    }
+
+    .note-item .note-favorite-btn {
+        opacity: 1 !important;
+    }
+}
