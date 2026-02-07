@@ -236,7 +236,7 @@ export const imagesMixin = {
     openItem(path, type = 'note', searchHighlight = '') {
         this.showGraph = false;
         if (type === 'image' || path.match(/\.(png|jpg|jpeg|gif|webp)$/i)) {
-            this.viewImage(path);
+            this.openImageInPane(path);
         } else {
             this.loadNote(path, true, searchHighlight);
         }

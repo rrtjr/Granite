@@ -4674,8 +4674,8 @@
                                         <span class="pane-title" x-text="pane.name" :title="pane.path"></span>
                                     </div>
                                     <div class="pane-controls">
-                                        <!-- View mode toggle (Edit/Split only - Rich is in separate panel) -->
-                                        <div class="pane-view-toggle">
+                                        <!-- View mode toggle (Edit/Split only - hidden for image panes) -->
+                                        <div x-show="pane.type !== 'image'" class="pane-view-toggle">
                                             <button
                                                 @click.stop="setPaneViewMode(pane.id, 'edit')"
                                                 :class="{ 'active': pane.viewMode === 'edit' }"
@@ -4703,15 +4703,26 @@
 
                                 <!-- Pane Content -->
                                 <div class="pane-content flex">
+                                    <!-- Image Preview (for image panes) -->
+                                    <div x-show="pane.type === 'image'"
+                                         class="flex-1 flex flex-col items-center justify-center overflow-auto p-8"
+                                         style="background-color: var(--bg-primary);">
+                                        <img :src="'/api/images/' + pane.path.split('/').map(s => encodeURIComponent(s)).join('/')"
+                                             :alt="pane.name"
+                                             style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 0.5rem;" />
+                                        <p class="mt-3 text-sm" style="color: var(--text-tertiary);" x-text="pane.path"></p>
+                                    </div>
+
                                     <!-- Editor Container (shared for both edit/split modes) -->
                                     <div
+                                        x-show="pane.type !== 'image'"
                                         class="pane-editor-container h-full"
                                         :class="pane.viewMode === 'split' ? 'w-1/2' : 'w-full'"
                                     ></div>
 
                                     <!-- Preview (Split mode only) -->
                                     <div
-                                        x-show="pane.viewMode === 'split'"
+                                        x-show="pane.type !== 'image' && pane.viewMode === 'split'"
                                         class="pane-preview w-1/2 h-full overflow-y-auto custom-scrollbar"
                                     >
                                         <!-- Pane Frontmatter/Metadata -->

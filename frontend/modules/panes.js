@@ -158,6 +158,81 @@ export const panesMixin = {
         }
     },
 
+    // Open an image in a new pane (no editor, just preview)
+    async openImageInPane(imagePath) {
+        Debug.log('openImageInPane:', imagePath);
+
+        // Check if already open
+        const existingPane = this.openPanes.find(p => p.path === imagePath);
+        if (existingPane) {
+            this.focusPane(existingPane.id);
+            this.scrollPaneIntoView(existingPane.id);
+            return existingPane;
+        }
+
+        // Single-pane mode: close existing pane first
+        if (isSinglePaneMode() && this.openPanes.length > 0) {
+            const currentPane = this.openPanes[0];
+            if (currentPane.isDirty) {
+                const shouldSave = confirm(`Save changes to "${currentPane.name}"?`);
+                if (shouldSave) {
+                    await this.savePane(currentPane.id);
+                }
+            }
+            await this.closePane(currentPane.id, { save: false, prompt: false });
+        }
+
+        // Enforce max panes limit
+        if (!isSinglePaneMode() && this.openPanes.length >= this.maxPanes) {
+            const oldestClean = this.openPanes.find(p => !p.isDirty);
+            if (oldestClean) {
+                await this.closePane(oldestClean.id, { save: false, prompt: false });
+            } else {
+                this.addToast('Maximum panes reached. Close a pane first.', 'warning');
+                return null;
+            }
+        }
+
+        const paneId = this.generatePaneId();
+        const newPane = {
+            id: paneId,
+            path: imagePath,
+            content: '',
+            name: imagePath.split('/').pop(),
+            type: 'image',
+            scrollPos: 0,
+            previewScrollPos: 0,
+            viewMode: 'preview',
+            isDirty: false,
+            lastSaved: new Date(),
+            width: 500,
+            undoHistory: [],
+            redoHistory: [],
+            metadataExpanded: false,
+        };
+
+        // Insert after active pane or at end
+        const activeIndex = this.openPanes.findIndex(p => p.id === this.activePaneId);
+        const insertIndex = activeIndex !== -1 ? activeIndex + 1 : this.openPanes.length;
+        this.openPanes.splice(insertIndex, 0, newPane);
+
+        // Focus the new pane
+        this.activePaneId = newPane.id;
+
+        // Update URL
+        this.updatePanesUrl();
+
+        // Save panes state
+        this.savePanesState();
+
+        this.$nextTick(() => {
+            this.scrollPaneIntoView(newPane.id);
+        });
+
+        Debug.log('Image pane created:', newPane.id, newPane.path);
+        return newPane;
+    },
+
     // Focus a specific pane
     focusPane(paneId) {
         const paneIndex = this.openPanes.findIndex(p => p.id === paneId);
@@ -255,6 +330,9 @@ export const panesMixin = {
     initPaneEditor(paneId) {
         const pane = this.openPanes.find(p => p.id === paneId);
         if (!pane) return;
+
+        // No editor for image panes
+        if (pane.type === 'image') return;
 
         const editorData = getPaneEditorData(paneId);
 
@@ -517,7 +595,7 @@ export const panesMixin = {
     // Auto-save a specific pane (debounced)
     autoSavePane(paneId) {
         const pane = this.openPanes.find(p => p.id === paneId);
-        if (!pane) return;
+        if (!pane || pane.type === 'image') return;
 
         const editorData = getPaneEditorData(paneId);
         if (editorData.saveTimeout) {
@@ -532,7 +610,7 @@ export const panesMixin = {
     // Save a specific pane
     async savePane(paneId) {
         const pane = this.openPanes.find(p => p.id === paneId);
-        if (!pane || !pane.isDirty) return;
+        if (!pane || !pane.isDirty || pane.type === 'image') return;
 
         try {
             const response = await fetch(`/api/notes/${pane.path}`, {
@@ -561,7 +639,8 @@ export const panesMixin = {
     // Update URL to reflect active pane
     updatePanesUrl() {
         if (this.activePane) {
-            const pathWithoutExtension = this.activePane.path.replace('.md', '');
+            const isImage = this.activePane.type === 'image';
+            const pathWithoutExtension = isImage ? this.activePane.path : this.activePane.path.replace('.md', '');
             const encodedPath = pathWithoutExtension.split('/').map(segment => encodeURIComponent(segment)).join('/');
 
             window.history.pushState(
@@ -585,6 +664,7 @@ export const panesMixin = {
                     path: p.path,
                     viewMode: p.viewMode,
                     width: p.width,
+                    type: p.type || 'note',
                 })),
                 activePaneId: this.activePaneId,
             };
@@ -606,15 +686,19 @@ export const panesMixin = {
             Debug.log('Restoring panes state:', state);
 
             for (const paneData of state.panes) {
-                // Ensure viewMode is only 'edit' or 'split' (not 'rich')
-                const restoredMode = paneData.viewMode;
-                const finalViewMode = (restoredMode === 'edit' || restoredMode === 'split') ? restoredMode : (this.defaultPaneViewMode || 'split');
+                if (paneData.type === 'image') {
+                    await this.openImageInPane(paneData.path);
+                } else {
+                    // Ensure viewMode is only 'edit' or 'split' (not 'rich')
+                    const restoredMode = paneData.viewMode;
+                    const finalViewMode = (restoredMode === 'edit' || restoredMode === 'split') ? restoredMode : (this.defaultPaneViewMode || 'split');
 
-                await this.openInPane(paneData.path, {
-                    focusExisting: false,
-                    width: paneData.width || 500,
-                    viewMode: finalViewMode
-                });
+                    await this.openInPane(paneData.path, {
+                        focusExisting: false,
+                        width: paneData.width || 500,
+                        viewMode: finalViewMode
+                    });
+                }
             }
 
             // Restore active pane

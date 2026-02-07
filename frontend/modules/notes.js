@@ -56,7 +56,7 @@ export const notesMixin = {
         const matchedItem = this.notes.find(n => n.path === decodedPath);
 
         if (matchedItem && matchedItem.type === 'image') {
-            this.viewImage(decodedPath, false);
+            this.openImageInPane(decodedPath);
         } else {
             const notePath = decodedPath + '.md';
             const urlParams = new URLSearchParams(window.location.search);
