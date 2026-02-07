@@ -2068,68 +2068,16 @@
             height: 18px;
         }
 
-        /* Mobile bottom tabs */
-        @media (max-width: 768px) {
-            /* Hide desktop sidebar toggle on mobile */
+        /* Mobile/tablet bottom tabs */
+        @media (max-width: 1024px) {
+            /* Hide desktop sidebar toggle on mobile/tablet */
             .sidebar-toggle-btn {
                 display: none !important;
             }
 
+            /* Hide icon rail on mobile/tablet - navigation handled by bottom nav */
             .icon-rail {
                 display: none;
-            }
-
-            .mobile-bottom-tabs {
-                display: flex !important;
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                height: 56px;
-                background-color: var(--bg-secondary);
-                border-top: 1px solid var(--border-primary);
-                z-index: 1001;
-                padding-bottom: env(safe-area-inset-bottom);
-            }
-
-            .mobile-bottom-tab {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                gap: 2px;
-                color: var(--text-tertiary);
-                background: none;
-                border: none;
-                cursor: pointer;
-                transition: color 0.15s ease, background-color 0.15s ease;
-                min-width: 44px;
-                min-height: 44px;
-            }
-
-            .mobile-bottom-tab:active {
-                background-color: var(--bg-hover);
-            }
-
-            .mobile-bottom-tab.active {
-                color: var(--accent-primary);
-            }
-
-            .mobile-bottom-tab svg {
-                width: 22px;
-                height: 22px;
-            }
-
-            .mobile-bottom-tab span {
-                font-size: 10px;
-            }
-
-        }
-
-        @media (min-width: 769px) {
-            .mobile-bottom-tabs {
-                display: none !important;
             }
         }
 
@@ -6090,100 +6038,6 @@
         <div id="drawio-iframe-container" class="drawio-iframe-container"></div>
     </div>
 
-    <!-- Mobile Bottom Tabs -->
-    <nav class="mobile-bottom-tabs" style="display: none;" role="navigation" aria-label="Main navigation">
-        <button
-            class="mobile-bottom-tab"
-            :class="{'active': activePanel === 'files'}"
-            @click="activePanel = 'files'; mobileSidebarOpen = true;"
-            aria-label="Files"
-        >
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-            </svg>
-            <span>Files</span>
-        </button>
-        <button
-            class="mobile-bottom-tab relative"
-            :class="{'active': activePanel === 'favorites'}"
-            @click="activePanel = 'favorites'; mobileSidebarOpen = true;"
-            aria-label="Favorites"
-        >
-            <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-            </svg>
-            <span>Favorites</span>
-            <!-- Favorites count badge -->
-            <span
-                x-show="favoriteNotes.length > 0"
-                x-cloak
-                class="absolute top-1 right-1/4 w-4 h-4 text-[9px] font-bold rounded-full flex items-center justify-center"
-                style="background-color: var(--accent-primary); color: white;"
-                x-text="favoriteNotes.length > 9 ? '9+' : favoriteNotes.length"
-            ></span>
-        </button>
-        <button
-            class="mobile-bottom-tab relative"
-            :class="{'active': activePanel === 'search'}"
-            @click="activePanel = 'search'; mobileSidebarOpen = true;"
-            aria-label="Search"
-        >
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <span>Search</span>
-            <!-- Search results badge -->
-            <span
-                x-show="searchQuery.trim() && searchResults.length > 0"
-                x-cloak
-                class="absolute top-1 right-1/4 w-4 h-4 text-[9px] font-bold rounded-full flex items-center justify-center"
-                style="background-color: var(--accent-primary); color: white;"
-                x-text="searchResults.length > 9 ? '9+' : searchResults.length"
-            ></span>
-        </button>
-        <button
-            class="mobile-bottom-tab relative"
-            :class="{'active': activePanel === 'tags'}"
-            @click="activePanel = 'tags'; mobileSidebarOpen = true;"
-            aria-label="Tags"
-        >
-            <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
-            </svg>
-            <span>Tags</span>
-            <!-- Filtered notes badge (shows result count when tags selected) -->
-            <span
-                x-show="selectedTags.length > 0"
-                x-cloak
-                class="absolute top-1 right-1/4 w-4 h-4 text-[9px] font-bold rounded-full flex items-center justify-center"
-                style="background-color: var(--accent-primary); color: white;"
-                x-text="searchResults.length > 9 ? '9+' : searchResults.length"
-            ></span>
-        </button>
-        <button
-            class="mobile-bottom-tab"
-            :class="{'active': showGraph}"
-            @click="showGraph = true; initGraph(); mobileSidebarOpen = false;"
-            aria-label="Graph"
-        >
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
-            </svg>
-            <span>Graph</span>
-        </button>
-        <button
-            class="mobile-bottom-tab"
-            :class="{'active': activePanel === 'settings'}"
-            @click="activePanel = 'settings'; mobileSidebarOpen = true;"
-            aria-label="Settings"
-        >
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-            </svg>
-            <span>Settings</span>
-        </button>
-    </nav>
 
     <!-- Toast Notification Container -->
     <div x-show="toasts.length > 0"
@@ -6341,6 +6195,7 @@
 
     <!-- Mobile Bottom Sheet Overlay -->
     <div class="mobile-bottom-sheet-overlay"
+         x-show="mobileBottomSheetOpen"
          :class="{ 'visible': mobileBottomSheetOpen }"
          @click="_closeMobileBottomSheet()"
          x-cloak>
@@ -6348,6 +6203,7 @@
 
     <!-- Mobile Bottom Sheet -->
     <div class="mobile-bottom-sheet"
+         x-show="mobileBottomSheetOpen"
          :class="{ 'visible': mobileBottomSheetOpen }"
          @touchstart="_handleSheetTouchStart($event)"
          @touchmove="_handleSheetTouchMove($event)"
