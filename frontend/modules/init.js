@@ -35,8 +35,9 @@ export const initMixin = {
         // Load all user settings from server
         await this.loadUserSettings();
 
-        // Load favorites
+        // Load favorites and prune any stale paths (e.g. files moved outside the app)
         await this.loadFavorites();
+        await this.cleanupStaleFavorites();
 
         // Load homepage content
         await this.loadHomepageContent();

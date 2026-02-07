@@ -238,6 +238,10 @@ export const notesMixin = {
 
             if (response.ok) {
                 await fetch(`/api/notes/${oldPath}`, { method: 'DELETE' });
+                // Update favorites if this note was favorited
+                if (typeof this.updateFavoritePath === 'function') {
+                    await this.updateFavoritePath(oldPath, newPath);
+                }
                 this.currentNote = newPath;
                 await this.loadNotes();
             } else {
@@ -262,6 +266,10 @@ export const notesMixin = {
             });
 
             if (response.ok) {
+                // Remove from favorites if it was favorited
+                if (typeof this.removeFavorite === 'function') {
+                    await this.removeFavorite(notePath);
+                }
                 if (this.currentNote === notePath) {
                     this.currentNote = '';
                     this.noteContent = '';

@@ -418,6 +418,10 @@ export const imagesMixin = {
                 });
 
                 if (response.ok) {
+                    // Update favorites if this note was favorited
+                    if (!isImage && typeof this.updateFavoritePath === 'function') {
+                        await this.updateFavoritePath(this.draggedNote, newPath);
+                    }
                     await this.loadNotes();
                     if (isImage && this.currentImage === this.draggedNote) {
                         this.currentImage = newPath;
@@ -464,6 +468,17 @@ export const imagesMixin = {
                 });
 
                 if (response.ok) {
+                    // Update favorites for all notes inside the moved folder
+                    if (typeof this.updateFavoritePath === 'function') {
+                        const oldPrefix = this.draggedFolder + '/';
+                        const updatedFavorites = this.favoriteNotes.map(fav =>
+                            fav.startsWith(oldPrefix) ? newPath + '/' + fav.slice(oldPrefix.length) : fav
+                        );
+                        if (JSON.stringify(updatedFavorites) !== JSON.stringify(this.favoriteNotes)) {
+                            this.favoriteNotes = updatedFavorites;
+                            await this.saveFavorites();
+                        }
+                    }
                     await this.loadNotes();
                     if (this.currentNote && this.currentNote.startsWith(this.draggedFolder + '/')) {
                         this.currentNote = this.currentNote.replace(this.draggedFolder, newPath);

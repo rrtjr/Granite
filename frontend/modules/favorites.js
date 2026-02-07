@@ -68,6 +68,17 @@ export const favoritesMixin = {
         return this.notes.filter(note => this.favoriteNotes.includes(note.path));
     },
 
+    // Remove stale favorites whose paths no longer exist in loaded notes
+    async cleanupStaleFavorites() {
+        if (!this.notes || !this.favoriteNotes || this.favoriteNotes.length === 0) return;
+        const notePaths = new Set(this.notes.map(n => n.path));
+        const valid = this.favoriteNotes.filter(fav => notePaths.has(fav));
+        if (valid.length !== this.favoriteNotes.length) {
+            this.favoriteNotes = valid;
+            await this.saveFavorites();
+        }
+    },
+
     // Remove a note from favorites (used when note is deleted)
     async removeFavorite(notePath) {
         const index = this.favoriteNotes.indexOf(notePath);

@@ -3049,11 +3049,11 @@
                     </svg>
                     <!-- Favorites count badge -->
                     <span
-                        x-show="favoriteNotes.length > 0"
+                        x-show="favoriteNotesData.length > 0"
                         x-cloak
                         class="absolute -top-1 -right-1 w-4 h-4 text-[9px] font-bold rounded-full flex items-center justify-center"
                         style="background-color: var(--accent-primary); color: white;"
-                        x-text="favoriteNotes.length > 9 ? '9+' : favoriteNotes.length"
+                        x-text="favoriteNotesData.length > 9 ? '9+' : favoriteNotesData.length"
                     ></span>
                 </button>
 
@@ -3257,13 +3257,13 @@
                     <!-- Favorites Header -->
                     <div class="flex-shrink-0 px-3 py-2 border-b flex items-center justify-between" style="border-color: var(--border-primary);">
                         <span class="text-xs font-semibold uppercase tracking-wide" style="color: var(--text-tertiary);">Favorites</span>
-                        <span class="text-xs px-1.5 py-0.5 rounded" style="background-color: var(--bg-tertiary); color: var(--text-tertiary);" x-text="favoriteNotes.length"></span>
+                        <span class="text-xs px-1.5 py-0.5 rounded" style="background-color: var(--bg-tertiary); color: var(--text-tertiary);" x-text="favoriteNotesData.length"></span>
                     </div>
 
                     <!-- Scrollable content: Favorite Notes -->
                     <div class="flex-1 overflow-y-auto custom-scrollbar">
                         <!-- Favorite Notes List -->
-                        <template x-if="favoriteNotes.length > 0">
+                        <template x-if="favoriteNotesData.length > 0">
                             <div>
                                 <template x-for="note in favoriteNotesData" :key="note.path">
                                     <div
@@ -3296,7 +3296,7 @@
                         </template>
 
                         <!-- Empty state -->
-                        <template x-if="favoriteNotes.length === 0">
+                        <template x-if="favoriteNotesData.length === 0">
                             <div class="text-center py-8 px-4">
                                 <svg class="w-12 h-12 mx-auto mb-3 opacity-40" style="color: var(--text-tertiary);" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
@@ -4125,7 +4125,7 @@
                                     <p class="text-lg" style="color: var(--text-secondary);" x-text="appTagline"></p>
 
                                     <!-- Favorites Quick Access -->
-                                    <template x-if="favoriteNotes.length > 0">
+                                    <template x-if="favoriteNotesData.length > 0">
                                         <div class="mt-4 flex flex-wrap items-center gap-2">
                                             <svg class="w-4 h-4 flex-shrink-0" style="color: var(--accent-primary);" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
@@ -4142,10 +4142,10 @@
                                                 ></button>
                                             </template>
                                             <span
-                                                x-show="favoriteNotes.length > 8"
+                                                x-show="favoriteNotesData.length > 8"
                                                 class="text-xs px-2 py-1 rounded-full"
                                                 style="color: var(--text-tertiary); background-color: var(--bg-tertiary);"
-                                                x-text="'+' + (favoriteNotes.length - 8) + ' more'"
+                                                x-text="'+' + (favoriteNotesData.length - 8) + ' more'"
                                             ></span>
                                         </div>
                                     </template>

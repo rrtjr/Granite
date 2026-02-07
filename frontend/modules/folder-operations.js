@@ -88,6 +88,18 @@ export const folderOperationsMixin = {
                     this.expandedFolders.add(newPath);
                 }
 
+                // Update favorites for all notes inside the renamed folder
+                if (typeof this.updateFavoritePath === 'function' && this.favoriteNotes) {
+                    const oldPrefix = folderPath + '/';
+                    const updatedFavorites = this.favoriteNotes.map(fav =>
+                        fav.startsWith(oldPrefix) ? newPath + '/' + fav.slice(oldPrefix.length) : fav
+                    );
+                    if (JSON.stringify(updatedFavorites) !== JSON.stringify(this.favoriteNotes)) {
+                        this.favoriteNotes = updatedFavorites;
+                        await this.saveFavorites();
+                    }
+                }
+
                 if (this.currentNote && this.currentNote.startsWith(folderPath + '/')) {
                     this.currentNote = this.currentNote.replace(folderPath, newPath);
                 }
@@ -123,6 +135,16 @@ export const folderOperationsMixin = {
 
             if (response.ok) {
                 this.expandedFolders.delete(folderPath);
+
+                // Remove favorites for all notes inside the deleted folder
+                if (typeof this.removeFavorite === 'function' && this.favoriteNotes) {
+                    const oldPrefix = folderPath + '/';
+                    const remaining = this.favoriteNotes.filter(fav => !fav.startsWith(oldPrefix));
+                    if (remaining.length !== this.favoriteNotes.length) {
+                        this.favoriteNotes = remaining;
+                        await this.saveFavorites();
+                    }
+                }
 
                 if (this.currentNote && this.currentNote.startsWith(folderPath + '/')) {
                     this.currentNote = '';
