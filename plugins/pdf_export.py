@@ -58,6 +58,8 @@ class Plugin:
             # Content stripping settings
             "remove_frontmatter": True,  # Remove YAML frontmatter from exported PDF
             "remove_banner": True,  # Remove banner image reference from exported PDF
+            # Mermaid settings
+            "render_mermaid": True,  # Render mermaid diagrams as images (pre-rendered by frontend)
         }
 
     def _get_base_css(self) -> str:
@@ -233,6 +235,17 @@ class Plugin:
             border: none;
             border-top: 1px solid #ddd;
             margin: 2em 0;
+        }}
+
+        .mermaid-rendered-pdf {{
+            text-align: center;
+            page-break-inside: avoid;
+            margin: 1em 0;
+        }}
+
+        .mermaid-rendered-pdf svg {{
+            max-width: 100%;
+            height: auto;
         }}
 
         .metadata {{
@@ -419,6 +432,7 @@ class Plugin:
         output_path: str,
         title: str = "Untitled",
         note_path: str | None = None,
+        mermaid_svgs: list[str] | None = None,
     ) -> tuple[bool, str]:
         """
         Export markdown content to PDF
@@ -428,6 +442,7 @@ class Plugin:
             output_path: Path where PDF should be saved
             title: Title of the document
             note_path: Optional path to the source note
+            mermaid_svgs: Optional list of pre-rendered mermaid SVGs to inject
 
         Returns:
             Tuple of (success: bool, message: str)
@@ -459,6 +474,19 @@ class Plugin:
             print("[PDF Export] Converting markdown to HTML...")
             html_content = md.convert(content)
             print(f"[PDF Export] HTML length: {len(html_content)} chars")
+
+            # Inject pre-rendered mermaid SVGs (replace placeholders left by frontend)
+            if mermaid_svgs:
+                import re
+
+                for i, svg in enumerate(mermaid_svgs):
+                    placeholder = f"<!-- MERMAID_PLACEHOLDER_{i} -->"
+                    replacement = f'<div class="mermaid-rendered-pdf">{svg}</div>'
+                    html_content = html_content.replace(placeholder, replacement)
+                    # Also try the paragraph-wrapped version that markdown may produce
+                    wrapped = f"<p>{placeholder}</p>"
+                    html_content = html_content.replace(wrapped, replacement)
+                print(f"[PDF Export] Injected {len(mermaid_svgs)} mermaid SVG(s)")
 
             # Add Table of Contents if enabled
             toc_html = ""
@@ -519,7 +547,11 @@ class Plugin:
             return False, f"Failed to export PDF: {e!s}"
 
     def export_note(
-        self, note_path: str, content: str, output_filename: str | None = None
+        self,
+        note_path: str,
+        content: str,
+        output_filename: str | None = None,
+        mermaid_svgs: list[str] | None = None,
     ) -> tuple[bool, str, str | None]:
         """
         Export a single note to PDF
@@ -528,6 +560,7 @@ class Plugin:
             note_path: Path to the note being exported
             content: Content of the note
             output_filename: Optional custom output filename
+            mermaid_svgs: Optional list of pre-rendered mermaid SVGs to inject
 
         Returns:
             Tuple of (success: bool, message: str, pdf_path: Optional[str])
@@ -545,7 +578,7 @@ class Plugin:
 
             # Export to PDF
             success, message = self.export_to_pdf(
-                content=content, output_path=pdf_path, title=title, note_path=note_path
+                content=content, output_path=pdf_path, title=title, note_path=note_path, mermaid_svgs=mermaid_svgs
             )
 
             if success:

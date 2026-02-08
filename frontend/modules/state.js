@@ -111,6 +111,7 @@ export const stateMixin = {
         compress_tables: true,
         remove_frontmatter: true,
         remove_banner: true,
+        render_mermaid: true,
     },
 
     // Datetime settings state

@@ -75,6 +75,7 @@ async def export_note_to_pdf(request: Request, data: dict):
     note_path = data.get("note_path")
     content = data.get("content")
     output_filename = data.get("output_filename")
+    mermaid_svgs = data.get("mermaid_svgs")
 
     if not note_path:
         raise HTTPException(status_code=400, detail="note_path is required")
@@ -85,7 +86,7 @@ async def export_note_to_pdf(request: Request, data: dict):
         raise HTTPException(status_code=400, detail="Plugin does not support PDF export")
 
     success, message, pdf_path = plugin.export_note(  # type: ignore[attr-defined]
-        note_path=note_path, content=content, output_filename=output_filename
+        note_path=note_path, content=content, output_filename=output_filename, mermaid_svgs=mermaid_svgs
     )
 
     if success and pdf_path:

@@ -5818,6 +5818,19 @@
                                 <p class="text-xs" style="color: var(--text-tertiary);">Strip banner image reference from exported PDF</p>
                             </div>
                         </label>
+
+                        <!-- Render Mermaid -->
+                        <label class="flex items-start gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                x-model="pdfExportSettings.render_mermaid"
+                                class="cursor-pointer mt-1"
+                            />
+                            <div>
+                                <span style="color: var(--text-primary);">Render Mermaid diagrams</span>
+                                <p class="text-xs" style="color: var(--text-tertiary);">Render Mermaid diagrams as images instead of showing source code</p>
+                            </div>
+                        </label>
                     </div>
                 </div>
 
