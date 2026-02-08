@@ -24,6 +24,8 @@ export const folderRenderMixin = {
                     onmouseover="if(!window.$root.draggedNote && !window.$root.draggedFolder) this.style.backgroundColor='var(--bg-hover)'"
                     onmouseout="if(!window.$root.draggedNote && !window.$root.draggedFolder) this.style.backgroundColor='transparent'"
                     class="folder-item px-2 py-1 text-sm relative"
+                    role="treeitem"
+                    aria-expanded="${isExpanded}"
                     style="color: var(--text-primary); cursor: pointer;"
                 >
                     <div class="flex items-center gap-1">
@@ -68,7 +70,7 @@ export const folderRenderMixin = {
         `;
 
         if (isExpanded) {
-            html += `<div class="folder-contents" style="padding-left: 10px;">`;
+            html += `<div class="folder-contents" role="group" style="padding-left: 10px;">`;
 
             if (folder.children && Object.keys(folder.children).length > 0) {
                 const children = Object.entries(folder.children).sort((a, b) =>

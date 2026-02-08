@@ -48,7 +48,7 @@ export const markdownMixin = {
                 if (foundImage) {
                     const encodedPath = foundImage.path.split('/').map(segment => encodeURIComponent(segment)).join('/');
                     const safeAlt = imageAlt.replace(/"/g, '&quot;').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    return `<img src="/api/images/${encodedPath}" alt="${safeAlt}" title="${safeAlt}" />`;
+                    return `<img src="/api/images/${encodedPath}" alt="${safeAlt}" title="${safeAlt}" loading="lazy" />`;
                 } else {
                     const safeTarget = imageTarget.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                     return `<span class="wikilink-broken" title="Image not found">![[${safeTarget}]]</span>`;
@@ -173,6 +173,8 @@ export const markdownMixin = {
             if (altText) {
                 img.setAttribute('title', altText);
             }
+
+            img.setAttribute('loading', 'lazy');
         });
 
         html = tempDiv.innerHTML;
@@ -274,7 +276,7 @@ export const markdownMixin = {
                 if (foundImage) {
                     const encodedPath = foundImage.path.split('/').map(segment => encodeURIComponent(segment)).join('/');
                     const safeAlt = imageAlt.replace(/"/g, '&quot;').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    return `<img src="/api/images/${encodedPath}" alt="${safeAlt}" title="${safeAlt}" />`;
+                    return `<img src="/api/images/${encodedPath}" alt="${safeAlt}" title="${safeAlt}" loading="lazy" />`;
                 } else {
                     const safeTarget = imageTarget.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                     return `<span class="wikilink-broken" title="Image not found">![[${safeTarget}]]</span>`;

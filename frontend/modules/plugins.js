@@ -88,6 +88,7 @@ export const pluginsMixin = {
             if (data.success) {
                 this.gitSettings = data.settings;
                 this.showGitSettingsModal = false;
+                this.releaseFocus();
                 Debug.log('Git settings saved successfully');
             }
         } catch (error) {
@@ -192,6 +193,7 @@ export const pluginsMixin = {
             if (data.success) {
                 this.pdfExportSettings = data.settings;
                 this.showPdfExportSettingsModal = false;
+                this.releaseFocus();
                 Debug.info('PDF Export Settings', 'Settings saved successfully');
                 alert('PDF export settings saved successfully!');
             } else {
@@ -265,6 +267,7 @@ export const pluginsMixin = {
         this.showUnsplashModal = false;
         this.unsplashUrl = '';
         this.unsplashPreviewError = false;
+        this.releaseFocus();
 
         this.debouncedSave();
     },

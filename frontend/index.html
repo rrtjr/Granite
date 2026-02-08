@@ -497,6 +497,26 @@
             animation: spin 0.8s linear infinite;
         }
 
+        /* Accessibility - skip navigation */
+        .skip-nav {
+            position: absolute;
+            top: -100%;
+            left: 16px;
+            z-index: 10000;
+            padding: 8px 16px;
+            background-color: var(--accent-primary);
+            color: white;
+            border-radius: 0 0 8px 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: top var(--duration-fast) var(--ease-out);
+        }
+
+        .skip-nav:focus {
+            top: 0;
+        }
+
         /* Accessibility - focus states */
         *:focus-visible {
             outline: 2px solid var(--accent-primary);
@@ -2996,6 +3016,9 @@
 </head>
 <body x-data="noteApp()" x-init="init()" style="background-color: var(--bg-primary);">
 
+    <!-- Skip Navigation -->
+    <a href="#main-content" class="skip-nav">Skip to content</a>
+
     <!-- Mobile Overlay -->
     <div
         @click="mobileSidebarOpen = false"
@@ -4028,7 +4051,7 @@
         ></div>
 
         <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col overflow-hidden relative">
+        <div id="main-content" class="flex-1 flex flex-col overflow-hidden relative" tabindex="-1">
 
             <!-- Sidebar Toggle Button (Desktop only, hidden on mobile and when graph is shown) -->
             <button
@@ -4404,8 +4427,10 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                 </svg>
                             </button>
-                            <span x-show="isSaving" class="text-xs" style="color: var(--text-secondary);">Saving...</span>
-                            <span x-show="!isSaving && lastSaved" class="text-xs" style="color: var(--success);">✓ Saved</span>
+                            <span aria-live="polite">
+                                <span x-show="isSaving" class="text-xs" style="color: var(--text-secondary);">Saving...</span>
+                                <span x-show="!isSaving && lastSaved" class="text-xs" style="color: var(--success);">✓ Saved</span>
+                            </span>
                         </div>
 
                         <!-- Demo Mode Warning Banner -->
@@ -4528,8 +4553,10 @@
                             <span class="text-sm font-medium" style="color: var(--text-secondary);">
                                 <span x-text="openPanes.length"></span> note<span x-show="openPanes.length !== 1">s</span> open
                             </span>
-                            <span x-show="isSaving" class="text-xs" style="color: var(--text-secondary);">Saving...</span>
-                            <span x-show="!isSaving && lastSaved" class="text-xs" style="color: var(--success);">✓ Saved</span>
+                            <span aria-live="polite">
+                                <span x-show="isSaving" class="text-xs" style="color: var(--text-secondary);">Saving...</span>
+                                <span x-show="!isSaving && lastSaved" class="text-xs" style="color: var(--success);">✓ Saved</span>
+                            </span>
                         </div>
 
                         <!-- Right side: action buttons -->
@@ -4709,6 +4736,7 @@
                                          style="background-color: var(--bg-primary);">
                                         <img :src="'/api/images/' + pane.path.split('/').map(s => encodeURIComponent(s)).join('/')"
                                              :alt="pane.name"
+                                             loading="lazy"
                                              style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 0.5rem;" />
                                         <p class="mt-3 text-sm" style="color: var(--text-tertiary);" x-text="pane.path"></p>
                                     </div>
@@ -4734,6 +4762,7 @@
                                             <div
                                                 x-show="!pane.metadataExpanded"
                                                 @click="togglePaneMetadata(pane)"
+                                                :aria-expanded="pane.metadataExpanded.toString()"
                                                 class="flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all"
                                                 style="background-color: var(--bg-tertiary); border: 1px solid var(--border-primary);"
                                                 onmouseover="this.style.borderColor='var(--accent-primary)'"
@@ -4779,6 +4808,7 @@
                                                 <!-- Header (click to collapse) -->
                                                 <div
                                                     @click="togglePaneMetadata(pane)"
+                                                    :aria-expanded="pane.metadataExpanded.toString()"
                                                     class="flex items-center justify-between px-3 py-2 cursor-pointer"
                                                     style="border-bottom: 1px solid var(--border-primary);"
                                                 >
@@ -4877,6 +4907,7 @@
                                     <button
                                         @click="panesCollapsed = !panesCollapsed"
                                         class="panes-collapse-toggle"
+                                        :aria-expanded="(!panesCollapsed).toString()"
                                         :title="panesCollapsed ? 'Show editor panes' : 'Hide editor panes (expand Rich Editor)'"
                                     >
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -5119,16 +5150,20 @@
 
     <!-- Template Selection Modal -->
     <div x-show="showTemplateModal"
-         @click.self="showTemplateModal = false; selectedTemplate = ''; newTemplateNoteName = ''"
-         @keydown.escape.window="showTemplateModal && (showTemplateModal = false, selectedTemplate = '', newTemplateNoteName = '')"
+         @click.self="showTemplateModal = false; selectedTemplate = ''; newTemplateNoteName = ''; releaseFocus()"
+         @keydown.escape.window="showTemplateModal && (showTemplateModal = false, selectedTemplate = '', newTemplateNoteName = '', releaseFocus())"
          class="fixed inset-0 flex items-center justify-center"
          style="background-color: rgba(0, 0, 0, 0.5); z-index: 1100;"
          x-cloak>
         <div class="rounded-lg shadow-xl p-6 max-w-md w-full mx-4"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="template-modal-title"
              style="background-color: var(--bg-secondary); color: var(--text-primary);"
-             @click.stop>
+             @click.stop
+             x-effect="if (showTemplateModal) { $nextTick(() => trapFocus($el)) }">
 
-            <h2 class="text-xl font-bold mb-4" style="color: var(--text-primary);">Create from Template</h2>
+            <h2 id="template-modal-title" class="text-xl font-bold mb-4" style="color: var(--text-primary);">Create from Template</h2>
 
             <!-- Template Selection -->
             <div class="mb-4">
@@ -5191,7 +5226,7 @@
                     Create Note
                 </button>
                 <button
-                    @click="showTemplateModal = false; selectedTemplate = ''; newTemplateNoteName = ''"
+                    @click="showTemplateModal = false; selectedTemplate = ''; newTemplateNoteName = ''; releaseFocus()"
                     class="flex-1 px-4 py-2 rounded font-medium transition-colors"
                     style="background-color: var(--bg-tertiary); color: var(--text-primary);"
                     onmouseover="this.style.backgroundColor='var(--bg-hover)'"
@@ -5205,16 +5240,20 @@
 
     <!-- Git Plugin Settings Modal -->
     <div x-show="showGitSettingsModal"
-         @click.self="showGitSettingsModal = false"
-         @keydown.escape.window="showGitSettingsModal && (showGitSettingsModal = false)"
+         @click.self="showGitSettingsModal = false; releaseFocus()"
+         @keydown.escape.window="showGitSettingsModal && (showGitSettingsModal = false, releaseFocus())"
          class="fixed inset-0 flex items-center justify-center"
          style="background-color: rgba(0, 0, 0, 0.5); z-index: 1100;"
          x-cloak>
         <div class="rounded-lg shadow-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto custom-scrollbar"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="git-settings-modal-title"
              style="background-color: var(--bg-secondary); color: var(--text-primary);"
-             @click.stop>
+             @click.stop
+             x-effect="if (showGitSettingsModal) { $nextTick(() => trapFocus($el)) }">
 
-            <h2 class="text-xl font-bold mb-4" style="color: var(--text-primary);">Git Sync Settings</h2>
+            <h2 id="git-settings-modal-title" class="text-xl font-bold mb-4" style="color: var(--text-primary);">Git Sync Settings</h2>
 
             <!-- Loading state -->
             <div x-show="gitSettings === null" class="text-sm mb-4" style="color: var(--text-tertiary);">
@@ -5559,7 +5598,7 @@
                     Save Settings
                 </button>
                 <button
-                    @click="showGitSettingsModal = false"
+                    @click="showGitSettingsModal = false; releaseFocus()"
                     class="flex-1 px-4 py-2 rounded font-medium transition-colors"
                     style="background-color: var(--bg-tertiary); color: var(--text-primary);"
                     onmouseover="this.style.backgroundColor='var(--bg-hover)'"
@@ -5577,16 +5616,21 @@
         x-cloak
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
         style="background-color: rgba(0, 0, 0, 0.5);"
-        @click.self="showPdfExportSettingsModal = false"
+        @click.self="showPdfExportSettingsModal = false; releaseFocus()"
+        @keydown.escape.window="showPdfExportSettingsModal && (showPdfExportSettingsModal = false, releaseFocus())"
     >
         <div
             class="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg shadow-xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pdf-export-modal-title"
             style="background-color: var(--bg-primary);"
             @click.stop
+            x-effect="if (showPdfExportSettingsModal) { $nextTick(() => trapFocus($el)) }"
         >
             <!-- Header -->
             <div class="sticky top-0 px-6 py-4 border-b" style="background-color: var(--bg-primary); border-color: var(--border-primary);">
-                <h2 class="text-xl font-semibold" style="color: var(--text-primary);">PDF Export Settings</h2>
+                <h2 id="pdf-export-modal-title" class="text-xl font-semibold" style="color: var(--text-primary);">PDF Export Settings</h2>
                 <p class="text-sm mt-1" style="color: var(--text-secondary);">Configure how your notes are exported to PDF</p>
             </div>
 
@@ -5926,7 +5970,7 @@
                     Save Settings
                 </button>
                 <button
-                    @click="showPdfExportSettingsModal = false"
+                    @click="showPdfExportSettingsModal = false; releaseFocus()"
                     class="flex-1 px-4 py-2 rounded font-medium transition-colors"
                     style="background-color: var(--bg-tertiary); color: var(--text-primary);"
                     onmouseover="this.style.backgroundColor='var(--bg-hover)'"
@@ -5940,18 +5984,22 @@
 
     <!-- Unsplash Banner Picker Modal -->
     <div x-show="showUnsplashModal"
-         @click.self="showUnsplashModal = false; unsplashUrl = ''; unsplashPreviewError = false"
-         @keydown.escape.window="showUnsplashModal && (showUnsplashModal = false, unsplashUrl = '', unsplashPreviewError = false)"
+         @click.self="showUnsplashModal = false; unsplashUrl = ''; unsplashPreviewError = false; releaseFocus()"
+         @keydown.escape.window="showUnsplashModal && (showUnsplashModal = false, unsplashUrl = '', unsplashPreviewError = false, releaseFocus())"
          class="fixed inset-0 flex items-center justify-center"
          style="background-color: rgba(0, 0, 0, 0.5); z-index: 1100;"
          x-cloak>
         <div class="rounded-lg shadow-xl max-w-lg w-full mx-4"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="unsplash-modal-title"
              style="background-color: var(--bg-secondary); color: var(--text-primary);"
-             @click.stop>
+             @click.stop
+             x-effect="if (showUnsplashModal) { $nextTick(() => trapFocus($el)) }">
 
             <!-- Header -->
             <div class="px-6 py-4 border-b" style="border-color: var(--border-primary);">
-                <h2 class="text-lg font-bold">Add Banner from Unsplash</h2>
+                <h2 id="unsplash-modal-title" class="text-lg font-bold">Add Banner from Unsplash</h2>
                 <p class="text-sm mt-1" style="color: var(--text-secondary);">
                     Browse <a href="https://unsplash.com" target="_blank" rel="noopener" class="underline" style="color: var(--accent-primary);">unsplash.com</a>, copy an image URL, and paste it below.
                 </p>
@@ -6020,7 +6068,7 @@
                     Set as Banner
                 </button>
                 <button
-                    @click="showUnsplashModal = false; unsplashUrl = ''; unsplashPreviewError = false"
+                    @click="showUnsplashModal = false; unsplashUrl = ''; unsplashPreviewError = false; releaseFocus()"
                     class="flex-1 px-4 py-2 rounded font-medium transition-colors"
                     style="background-color: var(--bg-tertiary); color: var(--text-primary);"
                     onmouseover="this.style.backgroundColor='var(--bg-hover)'"
@@ -6036,9 +6084,13 @@
     <div x-show="showDrawioModal"
          x-cloak
          class="drawio-modal"
-         @keydown.escape.window="showDrawioModal && closeDrawioEditor()">
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="drawio-modal-title"
+         @keydown.escape.window="showDrawioModal && (closeDrawioEditor(), releaseFocus())"
+         x-effect="if (showDrawioModal) { $nextTick(() => trapFocus($el)) }">
         <div class="drawio-modal-header">
-            <span class="drawio-modal-title" x-text="drawioModalData?.name || 'Edit Diagram'"></span>
+            <span id="drawio-modal-title" class="drawio-modal-title" x-text="drawioModalData?.name || 'Edit Diagram'"></span>
             <button type="button" class="drawio-modal-close" @click="closeDrawioEditor()" title="Close">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -6052,10 +6104,13 @@
 
     <!-- Toast Notification Container -->
     <div x-show="toasts.length > 0"
+         aria-live="polite"
+         aria-atomic="true"
          class="fixed bottom-4 right-4 z-[2000] flex flex-col gap-2"
          style="pointer-events: none;">
         <template x-for="toast in toasts" :key="toast.id">
             <div x-show="true"
+                 :role="toast.type === 'error' || toast.type === 'warning' ? 'alert' : 'status'"
                  x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0 transform translate-x-full"
                  x-transition:enter-end="opacity-100 transform translate-x-0"
