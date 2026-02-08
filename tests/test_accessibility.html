@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Granite - Accessibility Tests</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #333; margin-bottom: 5px; }
+        .subtitle { color: #666; margin-bottom: 20px; }
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        button:hover { background: #1976d2; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .summary {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .summary-item {
+            padding: 15px 20px;
+            border-radius: 8px;
+            flex: 1;
+            text-align: center;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary-item.total { border-left: 4px solid #2196f3; }
+        .summary-item.passed { border-left: 4px solid #4caf50; }
+        .summary-item.failed { border-left: 4px solid #f44336; }
+        .summary-value { font-size: 36px; font-weight: bold; margin: 5px 0; }
+        .summary-label { font-size: 14px; color: #666; }
+        .test-case {
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 4px solid #e0e0e0;
+            background: white;
+        }
+        .test-case.pass { border-left-color: #4caf50; background: #f1f8f4; }
+        .test-case.fail { border-left-color: #f44336; background: #fef1f0; }
+        .test-name { font-weight: 600; margin-bottom: 4px; }
+        .test-result { font-size: 13px; color: #555; }
+    </style>
+</head>
+<body>
+    <h1>Accessibility Tests</h1>
+    <p class="subtitle">Tests for skip-nav, aria-live, aria-expanded, focus trap, and modal accessibility</p>
+
+    <button id="runTests" onclick="runAllTests()">Run All Tests</button>
+
+    <div class="summary">
+        <div class="summary-item total">
+            <div class="summary-label">Total</div>
+            <div class="summary-value" id="totalTests">0</div>
+        </div>
+        <div class="summary-item passed">
+            <div class="summary-label">Passed</div>
+            <div class="summary-value" id="passedTests">0</div>
+        </div>
+        <div class="summary-item failed">
+            <div class="summary-label">Failed</div>
+            <div class="summary-value" id="failedTests">0</div>
+        </div>
+    </div>
+
+    <div id="testResults"></div>
+
+    <!-- Hidden DOM for testing -->
+    <div id="test-sandbox" style="position: absolute; left: -9999px; top: -9999px;"></div>
+
+    <script>
+        let passed = 0, failed = 0, total = 0;
+
+        function displayTest(name, status, message) {
+            total++;
+            if (status === 'pass') passed++;
+            else failed++;
+            const div = document.createElement('div');
+            div.className = `test-case ${status}`;
+            div.innerHTML = `<div class="test-name">${status === 'pass' ? '✓' : '✗'} ${name}</div><div class="test-result">${message}</div>`;
+            document.getElementById('testResults').appendChild(div);
+            updateSummary();
+        }
+
+        function updateSummary() {
+            document.getElementById('totalTests').textContent = total;
+            document.getElementById('passedTests').textContent = passed;
+            document.getElementById('failedTests').textContent = failed;
+        }
+
+        // --- Focus trap utility (same as ui.js) ---
+
+        function createFocusTrap(modalElement) {
+            const focusableSelectors = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+            let cleanup = null;
+
+            const handler = (e) => {
+                if (e.key !== 'Tab') return;
+
+                const focusable = [...modalElement.querySelectorAll(focusableSelectors)];
+                if (focusable.length === 0) return;
+
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+
+                if (e.shiftKey) {
+                    if (document.activeElement === first) {
+                        e.preventDefault();
+                        last.focus();
+                    }
+                } else {
+                    if (document.activeElement === last) {
+                        e.preventDefault();
+                        first.focus();
+                    }
+                }
+            };
+
+            modalElement.addEventListener('keydown', handler);
+            cleanup = () => modalElement.removeEventListener('keydown', handler);
+
+            return { cleanup, focusableSelectors, handler };
+        }
+
+        // --- Folder tree rendering (same as folder-render.js) ---
+
+        function renderFolderItem(path, isExpanded) {
+            const escapedPath = path.replace(/'/g, "\\'").replace(/\\/g, "\\\\");
+            return `<div
+                class="folder-item"
+                role="treeitem"
+                aria-expanded="${isExpanded}"
+                onclick="window.$root && window.$root.toggleFolder('${escapedPath}')"
+            >
+                <span>${path.split('/').pop()}</span>
+            </div>`;
+        }
+
+        function renderFolderContents(children) {
+            return `<div class="folder-contents" role="group">${children}</div>`;
+        }
+
+        // --- Test cases ---
+
+        const tests = [
+            // Skip navigation
+            {
+                name: 'Skip-nav link exists in the app',
+                run: async () => {
+                    const res = await fetch(window.location.origin + '/');
+                    const html = await res.text();
+                    if (!html.includes('class="skip-nav"')) throw new Error('No .skip-nav element found');
+                    if (!html.includes('#main-content')) throw new Error('Skip-nav does not point to #main-content');
+                    return 'Found skip-nav link pointing to #main-content';
+                }
+            },
+            {
+                name: 'Skip-nav target (#main-content) exists',
+                run: async () => {
+                    const res = await fetch(window.location.origin + '/');
+                    const html = await res.text();
+                    if (!html.includes('id="main-content"')) throw new Error('No element with id="main-content" found');
+                    return 'Found #main-content target element';
+                }
+            },
+            {
+                name: 'Skip-nav CSS hides link off-screen by default',
+                run: async () => {
+                    const res = await fetch(window.location.origin + '/');
+                    const html = await res.text();
+                    if (!html.includes('.skip-nav')) throw new Error('No .skip-nav CSS rule found');
+                    if (!html.includes('top: -100%') && !html.includes('top:-100%')) throw new Error('Skip-nav not positioned off-screen');
+                    return 'Skip-nav positioned off-screen with top: -100%';
+                }
+            },
+
+            // aria-live on toast container
+            {
+                name: 'Toast container has aria-live="polite"',
+                run: async () => {
+                    const res = await fetch(window.location.origin + '/');
+                    const html = await res.text();
+                    // Look for the toast container with aria-live
+                    if (!html.includes('aria-live="polite"')) throw new Error('No aria-live="polite" found');
+                    if (!html.includes('aria-atomic="true"')) throw new Error('No aria-atomic="true" found');
+                    return 'Toast container has aria-live="polite" and aria-atomic="true"';
+                }
+            },
+            {
+                name: 'Toast items have dynamic role (alert for errors, status for info)',
+                run: async () => {
+                    const res = await fetch(window.location.origin + '/');
+                    const html = await res.text();
+                    // Check for the Alpine.js dynamic role binding
+                    if (!html.includes("toast.type === 'error' || toast.type === 'warning' ? 'alert' : 'status'")) {
+                        throw new Error('Toast items missing dynamic role binding');
+                    }
+                    return 'Toast items use role="alert" for errors/warnings, role="status" for info/success';
+                }
+            },
+
+            // aria-live on save status
+            {
+                name: 'Save status indicators wrapped in aria-live region',
+                run: async () => {
+                    const res = await fetch(window.location.origin + '/');
+                    const html = await res.text();
+                    // Check that aria-live="polite" appears near the saving/saved indicators
+                    const ariaLiveCount = (html.match(/aria-live="polite"/g) || []).length;
+                    // Should have at least 3: toast container + 2 save status regions
+                    if (ariaLiveCount < 3) throw new Error(`Expected at least 3 aria-live regions, found ${ariaLiveCount}`);
+                    return `Found ${ariaLiveCount} aria-live regions (toast + save status indicators)`;
+                }
+            },
+
+            // aria-expanded on folder tree
+            {
+                name: 'Folder items render with role="treeitem" and aria-expanded',
+                run: () => {
+                    const sandbox = document.getElementById('test-sandbox');
+                    sandbox.innerHTML = renderFolderItem('Projects', true);
+
+                    const el = sandbox.querySelector('.folder-item');
+                    if (el.getAttribute('role') !== 'treeitem') throw new Error('Missing role="treeitem"');
+                    if (el.getAttribute('aria-expanded') !== 'true') throw new Error('aria-expanded should be "true"');
+
+                    sandbox.innerHTML = renderFolderItem('Archive', false);
+                    const el2 = sandbox.querySelector('.folder-item');
+                    if (el2.getAttribute('aria-expanded') !== 'false') throw new Error('aria-expanded should be "false" for collapsed');
+
+                    sandbox.innerHTML = '';
+                    return 'Folder items have role="treeitem" with correct aria-expanded values';
+                }
+            },
+            {
+                name: 'Folder contents container has role="group"',
+                run: () => {
+                    const sandbox = document.getElementById('test-sandbox');
+                    sandbox.innerHTML = renderFolderContents('<div>child</div>');
+
+                    const el = sandbox.querySelector('.folder-contents');
+                    if (el.getAttribute('role') !== 'group') throw new Error('Missing role="group"');
+
+                    sandbox.innerHTML = '';
+                    return 'Folder contents container has role="group"';
+                }
+            },
+
+            // aria-expanded on metadata and pane collapse
+            {
+                name: 'Metadata panel toggle has aria-expanded binding',
+                run: async () => {
+                    const res = await fetch(window.location.origin + '/');
+                    const html = await res.text();
+                    if (!html.includes(':aria-expanded="pane.metadataExpanded.toString()"')) {
+                        throw new Error('Metadata toggle missing :aria-expanded binding');
+                    }
+                    return 'Metadata panel toggle has :aria-expanded="pane.metadataExpanded.toString()"';
+                }
+            },
+            {
+                name: 'Panes collapse toggle has aria-expanded binding',
+                run: async () => {
+                    const res = await fetch(window.location.origin + '/');
+                    const html = await res.text();
+                    if (!html.includes(':aria-expanded="(!panesCollapsed).toString()"')) {
+                        throw new Error('Panes collapse toggle missing :aria-expanded binding');
+                    }
+                    return 'Panes collapse toggle has :aria-expanded="(!panesCollapsed).toString()"';
+                }
+            },
+
+            // Modal accessibility attributes
+            {
+                name: 'All modals have role="dialog" and aria-modal="true"',
+                run: async () => {
+                    const res = await fetch(window.location.origin + '/');
+                    const html = await res.text();
+                    const dialogCount = (html.match(/role="dialog"/g) || []).length;
+                    const ariaModalCount = (html.match(/aria-modal="true"/g) || []).length;
+                    // We have 5 modals: template, git, pdf, unsplash, drawio
+                    if (dialogCount < 5) throw new Error(`Expected 5 role="dialog", found ${dialogCount}`);
+                    if (ariaModalCount < 5) throw new Error(`Expected 5 aria-modal="true", found ${ariaModalCount}`);
+                    return `Found ${dialogCount} dialogs with ${ariaModalCount} aria-modal attributes`;
+                }
+            },
+            {
+                name: 'Modals have aria-labelledby pointing to heading IDs',
+                run: async () => {
+                    const res = await fetch(window.location.origin + '/');
+                    const html = await res.text();
+                    const expectedIds = [
+                        'template-modal-title',
+                        'git-settings-modal-title',
+                        'pdf-export-modal-title',
+                        'unsplash-modal-title',
+                        'drawio-modal-title',
+                    ];
+                    const missing = [];
+                    for (const id of expectedIds) {
+                        if (!html.includes(`aria-labelledby="${id}"`)) missing.push(`aria-labelledby="${id}"`);
+                        if (!html.includes(`id="${id}"`)) missing.push(`id="${id}"`);
+                    }
+                    if (missing.length > 0) throw new Error(`Missing: ${missing.join(', ')}`);
+                    return `All 5 modal heading IDs and aria-labelledby attributes present`;
+                }
+            },
+
+            // Focus trap utility
+            {
+                name: 'Focus trap wraps Tab from last to first element',
+                run: () => {
+                    const sandbox = document.getElementById('test-sandbox');
+                    sandbox.innerHTML = `
+                        <div id="test-modal">
+                            <button id="btn1">First</button>
+                            <input id="input1" type="text" />
+                            <button id="btn2">Last</button>
+                        </div>
+                    `;
+
+                    const modal = sandbox.querySelector('#test-modal');
+                    const { cleanup, focusableSelectors, handler } = createFocusTrap(modal);
+                    const focusable = [...modal.querySelectorAll(focusableSelectors)];
+                    const first = focusable[0];
+                    const last = focusable[focusable.length - 1];
+
+                    // Test the algorithm directly: when activeElement is last, Tab should wrap
+                    const origGetter = Object.getOwnPropertyDescriptor(Document.prototype, 'activeElement').get;
+                    Object.defineProperty(document, 'activeElement', { get: () => last, configurable: true });
+
+                    let prevented = false;
+                    let focusedEl = null;
+                    const origFocus = first.focus;
+                    first.focus = function() { focusedEl = this; };
+
+                    handler({ key: 'Tab', shiftKey: false, preventDefault: () => { prevented = true; } });
+
+                    first.focus = origFocus;
+                    Object.defineProperty(document, 'activeElement', { get: origGetter, configurable: true });
+
+                    if (!prevented) throw new Error('Tab on last element should call preventDefault');
+                    if (focusedEl !== first) throw new Error('Focus should move to first element');
+
+                    cleanup();
+                    sandbox.innerHTML = '';
+                    return 'Tab on last focusable element wraps to first';
+                }
+            },
+            {
+                name: 'Focus trap wraps Shift+Tab from first to last element',
+                run: () => {
+                    const sandbox = document.getElementById('test-sandbox');
+                    sandbox.innerHTML = `
+                        <div id="test-modal">
+                            <button id="btn1">First</button>
+                            <input id="input1" type="text" />
+                            <button id="btn2">Last</button>
+                        </div>
+                    `;
+
+                    const modal = sandbox.querySelector('#test-modal');
+                    const { cleanup, focusableSelectors, handler } = createFocusTrap(modal);
+                    const focusable = [...modal.querySelectorAll(focusableSelectors)];
+                    const first = focusable[0];
+                    const last = focusable[focusable.length - 1];
+
+                    // Test the algorithm: when activeElement is first, Shift+Tab should wrap
+                    const origGetter = Object.getOwnPropertyDescriptor(Document.prototype, 'activeElement').get;
+                    Object.defineProperty(document, 'activeElement', { get: () => first, configurable: true });
+
+                    let prevented = false;
+                    let focusedEl = null;
+                    const origFocus = last.focus;
+                    last.focus = function() { focusedEl = this; };
+
+                    handler({ key: 'Tab', shiftKey: true, preventDefault: () => { prevented = true; } });
+
+                    last.focus = origFocus;
+                    Object.defineProperty(document, 'activeElement', { get: origGetter, configurable: true });
+
+                    if (!prevented) throw new Error('Shift+Tab on first element should call preventDefault');
+                    if (focusedEl !== last) throw new Error('Focus should move to last element');
+
+                    cleanup();
+                    sandbox.innerHTML = '';
+                    return 'Shift+Tab on first focusable element wraps to last';
+                }
+            },
+            {
+                name: 'Focus trap ignores non-Tab keys',
+                run: () => {
+                    const sandbox = document.getElementById('test-sandbox');
+                    sandbox.innerHTML = `
+                        <div id="test-modal">
+                            <button id="btn1">First</button>
+                            <button id="btn2">Last</button>
+                        </div>
+                    `;
+
+                    const modal = sandbox.querySelector('#test-modal');
+                    const { cleanup } = createFocusTrap(modal);
+
+                    sandbox.querySelector('#btn2').focus();
+
+                    const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+                    modal.dispatchEvent(enterEvent);
+                    if (enterEvent.defaultPrevented) throw new Error('Enter key should not be trapped');
+
+                    const escEvent = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+                    modal.dispatchEvent(escEvent);
+                    if (escEvent.defaultPrevented) throw new Error('Escape key should not be trapped');
+
+                    cleanup();
+                    sandbox.innerHTML = '';
+                    return 'Non-Tab keys pass through unaffected';
+                }
+            },
+            {
+                name: 'Focus trap skips disabled elements',
+                run: () => {
+                    const sandbox = document.getElementById('test-sandbox');
+                    sandbox.innerHTML = `
+                        <div id="test-modal">
+                            <button id="btn1">First</button>
+                            <button id="btn2" disabled>Disabled</button>
+                            <button id="btn3">Last</button>
+                        </div>
+                    `;
+
+                    const modal = sandbox.querySelector('#test-modal');
+                    const { cleanup, focusableSelectors, handler } = createFocusTrap(modal);
+
+                    const focusable = [...modal.querySelectorAll(focusableSelectors)];
+                    const disabledIncluded = focusable.some(el => el.id === 'btn2');
+                    if (disabledIncluded) throw new Error('Disabled button should be excluded from focusable elements');
+                    if (focusable.length !== 2) throw new Error(`Expected 2 focusable elements, got ${focusable.length}`);
+
+                    cleanup();
+                    sandbox.innerHTML = '';
+                    return 'Disabled elements excluded from focus trap cycle';
+                }
+            },
+
+            // Image lazy loading
+            {
+                name: 'Rendered images include loading="lazy"',
+                run: async () => {
+                    const res = await fetch(window.location.origin + '/');
+                    const html = await res.text();
+                    // Check that the image pane img tag has loading="lazy"
+                    if (!html.includes('loading="lazy"')) {
+                        throw new Error('No loading="lazy" attribute found in page source');
+                    }
+                    return 'Found loading="lazy" in page HTML';
+                }
+            },
+
+            // PDF export modal escape key
+            {
+                name: 'PDF export modal has Escape key handler',
+                run: async () => {
+                    const res = await fetch(window.location.origin + '/');
+                    const html = await res.text();
+                    // Check that PDF export modal has @keydown.escape
+                    if (!html.includes('showPdfExportSettingsModal && (showPdfExportSettingsModal = false')) {
+                        throw new Error('PDF export modal missing Escape key handler');
+                    }
+                    return 'PDF export modal has @keydown.escape handler';
+                }
+            },
+        ];
+
+        // --- Runner ---
+
+        async function runAllTests() {
+            document.getElementById('runTests').disabled = true;
+            document.getElementById('testResults').innerHTML = '';
+            passed = 0; failed = 0; total = 0;
+            updateSummary();
+
+            for (const test of tests) {
+                try {
+                    const msg = await test.run();
+                    displayTest(test.name, 'pass', msg);
+                } catch (err) {
+                    displayTest(test.name, 'fail', err.message);
+                }
+            }
+
+            document.getElementById('runTests').disabled = false;
+        }
+
+        window.onload = runAllTests;
+    </script>
+</body>
+</html>
