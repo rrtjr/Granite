@@ -1,6 +1,7 @@
 // Granite Frontend - User Settings Module
 
 import { Debug } from './config.js';
+import { refreshAllPaneEditors } from './panes.js';
 
 export const settingsMixin = {
     // Load all user settings from server (with localStorage migration)
@@ -48,13 +49,17 @@ export const settingsMixin = {
                 if (settings.typography) {
                     this.typographySettings = {
                         fontSize: settings.typography.fontSize || 'base',
-                        fontFamily: settings.typography.fontFamily || 'system'
+                        fontFamily: settings.typography.fontFamily || 'system',
+                        editorFontFamily: settings.typography.editorFontFamily || 'mono',
+                        editorFontSize: settings.typography.editorFontSize || 'base'
                     };
                 } else {
                     // Initialize with defaults if not present
                     this.typographySettings = {
                         fontSize: 'base',
-                        fontFamily: 'system'
+                        fontFamily: 'system',
+                        editorFontFamily: 'mono',
+                        editorFontSize: 'base'
                     };
                 }
                 // Always apply typography on load
@@ -71,7 +76,9 @@ export const settingsMixin = {
         if (!this.typographySettings) {
             this.typographySettings = {
                 fontSize: 'base',
-                fontFamily: 'system'
+                fontFamily: 'system',
+                editorFontFamily: 'mono',
+                editorFontSize: 'base'
             };
         }
         this.applyTypographySettings();
@@ -220,13 +227,23 @@ export const settingsMixin = {
             Debug.warn('Typography settings not initialized, using defaults');
             this.typographySettings = {
                 fontSize: 'base',
-                fontFamily: 'system'
+                fontFamily: 'system',
+                editorFontFamily: 'mono',
+                editorFontSize: 'base'
             };
+        }
+
+        // Backfill new editor settings for existing configs that don't have them
+        if (!this.typographySettings.editorFontFamily) {
+            this.typographySettings.editorFontFamily = 'mono';
+        }
+        if (!this.typographySettings.editorFontSize) {
+            this.typographySettings.editorFontSize = 'base';
         }
 
         const root = document.documentElement;
 
-        // Font size mapping
+        // Font size mapping (multiplier × 16px)
         const fontSizeMap = {
             'xs': 0.875,     // 87.5% = 14px base
             'sm': 0.9375,    // 93.75% = 15px base
@@ -255,19 +272,40 @@ export const settingsMixin = {
         const fontFamily = fontFamilyMap[this.typographySettings.fontFamily] || fontFamilyMap['system'];
         root.style.setProperty('--font-family-base', fontFamily);
 
+        // Apply editor font family to CSS variable
+        const editorFontFamily = fontFamilyMap[this.typographySettings.editorFontFamily] || fontFamilyMap['mono'];
+        root.style.setProperty('--font-family-editor', editorFontFamily);
+
+        // Apply editor font size to CSS variable
+        const editorFontSizeMultiplier = fontSizeMap[this.typographySettings.editorFontSize] || 1.0;
+        const editorFontSize = editorFontSizeMultiplier * 16;
+        root.style.setProperty('--font-size-editor', `${editorFontSize}px`);
+
         Debug.log('Typography settings applied:', {
             fontSize: this.typographySettings.fontSize,
             fontFamily: this.typographySettings.fontFamily,
+            editorFontFamily: this.typographySettings.editorFontFamily,
+            editorFontSize: this.typographySettings.editorFontSize,
             computedFontSize: `${baseFontSize}px`,
-            computedFontFamily: fontFamily
+            computedFontFamily: fontFamily,
+            computedEditorFontFamily: editorFontFamily,
+            computedEditorFontSize: `${editorFontSize}px`
         });
+
+        // Tell CodeMirror editors to re-measure after CSS variable changes
+        if (this.editorView) {
+            this.editorView.requestMeasure();
+        }
+        refreshAllPaneEditors();
     },
 
     // Reset typography settings to defaults
     resetTypographySettings() {
         this.typographySettings = {
             fontSize: 'base',
-            fontFamily: 'system'
+            fontFamily: 'system',
+            editorFontFamily: 'mono',
+            editorFontSize: 'base'
         };
         this.saveTypographySettings();
     },

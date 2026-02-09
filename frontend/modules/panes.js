@@ -42,6 +42,17 @@ function cleanupPaneEditorData(paneId) {
     }
 }
 
+/**
+ * Request all pane CodeMirror editors to re-measure (e.g. after font CSS variable changes)
+ */
+export function refreshAllPaneEditors() {
+    for (const [, data] of _paneEditors) {
+        if (data.editorView) {
+            data.editorView.requestMeasure();
+        }
+    }
+}
+
 export const panesMixin = {
     // Generate unique pane ID
     generatePaneId() {

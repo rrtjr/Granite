@@ -1818,18 +1818,19 @@
 
         /* CodeMirror Editor styling */
         #note-editor {
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-family: var(--font-family-editor, 'Monaco', 'Menlo', 'Ubuntu Mono', monospace);
         }
 
         .cm-editor {
             height: 100%;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 16px;
+            font-family: var(--font-family-editor, 'Monaco', 'Menlo', 'Ubuntu Mono', monospace);
+            font-size: var(--font-size-editor, 16px);
         }
 
         .cm-scroller {
             overflow: auto;
-            font-family: inherit;
+            font-family: var(--font-family-editor, 'Monaco', 'Menlo', 'Ubuntu Mono', monospace) !important;
+            font-size: var(--font-size-editor, 16px) !important;
         }
 
         .cm-content {
@@ -3872,6 +3873,44 @@
                                                 <option value="open-sans">Open Sans (Clean)</option>
                                             </select>
                                             <p class="text-xs mt-1" style="color: var(--text-tertiary);">Changes the font style for the entire app</p>
+                                        </div>
+
+                                        <!-- Editor Font Family -->
+                                        <div class="mb-3">
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Editor Font Family</label>
+                                            <select
+                                                x-model="typographySettings.editorFontFamily"
+                                                @change="saveTypographySettings()"
+                                                class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                                style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
+                                            >
+                                                <option value="mono">Monospace (Monaco)</option>
+                                                <option value="system">System Default (Sans)</option>
+                                                <option value="serif">Serif (Georgia)</option>
+                                                <option value="inter">Inter (Modern Sans)</option>
+                                                <option value="open-sans">Open Sans (Clean)</option>
+                                            </select>
+                                            <p class="text-xs mt-1" style="color: var(--text-tertiary);">Font for the markdown editor</p>
+                                        </div>
+
+                                        <!-- Editor Font Size -->
+                                        <div class="mb-3">
+                                            <label class="block text-xs mb-1.5" style="color: var(--text-tertiary);">Editor Font Size</label>
+                                            <select
+                                                x-model="typographySettings.editorFontSize"
+                                                @change="saveTypographySettings()"
+                                                class="w-full px-2 py-1.5 text-sm rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                                                style="background-color: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-primary); cursor: pointer;"
+                                            >
+                                                <option value="xs">Extra Small (14px)</option>
+                                                <option value="sm">Small (15px)</option>
+                                                <option value="base">Normal (16px)</option>
+                                                <option value="lg">Large (17px)</option>
+                                                <option value="xl">Extra Large (18px)</option>
+                                                <option value="2xl">2X Large (20px)</option>
+                                                <option value="3xl">3X Large (22px)</option>
+                                            </select>
+                                            <p class="text-xs mt-1" style="color: var(--text-tertiary);">Font size for the markdown editor</p>
                                         </div>
 
                                         <!-- Reset Button -->
