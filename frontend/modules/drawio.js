@@ -713,6 +713,7 @@ export const drawioMixin = {
         this._drawioLoaded = false;
         this._pendingSvgExport = false;
         this._closeAfterSvgExport = false;
+        this.releaseFocus();
 
         // Clear timeout
         if (this._drawioLoadTimeout) {

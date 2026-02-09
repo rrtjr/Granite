@@ -60,8 +60,10 @@ export const stateMixin = {
 
     // Typography settings
     typographySettings: {
-        fontSize: 'base',      // xs, sm, base, lg, xl, 2xl, 3xl
-        fontFamily: 'system'   // system, serif, mono, inter, open-sans
+        fontSize: 'base',           // xs, sm, base, lg, xl, 2xl, 3xl
+        fontFamily: 'system',       // system, serif, mono, inter, open-sans
+        editorFontFamily: 'mono',   // mono, system, serif, inter, open-sans
+        editorFontSize: 'base'      // xs, sm, base, lg, xl, 2xl, 3xl
     },
 
     // Graph state (separate overlay, doesn't affect viewMode)
@@ -111,6 +113,7 @@ export const stateMixin = {
         compress_tables: true,
         remove_frontmatter: true,
         remove_banner: true,
+        render_mermaid: true,
     },
 
     // Datetime settings state
@@ -182,6 +185,10 @@ export const stateMixin = {
 
     // Mobile sidebar state
     mobileSidebarOpen: false,
+
+    // Mobile UI state (bottom nav, bottom sheet, header)
+    mobileBottomSheetOpen: false,
+    mobileKeyboardVisible: false,
 
     // Toast notification state
     toasts: [],

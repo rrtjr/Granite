@@ -26,6 +26,7 @@ import { drawioMixin } from './modules/drawio.js';
 import { uiMixin } from './modules/ui.js';
 import { exportMixin } from './modules/export.js';
 import { initMixin } from './modules/init.js';
+import { mobilePanesMixin } from './modules/mobile-panes.js';
 
 // Make CONFIG and ErrorHandler available globally for modules that need them
 window.CONFIG = CONFIG;
@@ -62,6 +63,7 @@ function noteApp() {
         ...uiMixin,
         ...exportMixin,
         ...initMixin,
+        ...mobilePanesMixin,
 
         // Check if app is empty (no notes and no folders)
         get isAppEmpty() {

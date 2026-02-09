@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Granite - Search UI Tests</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #333; margin-bottom: 5px; }
+        .subtitle { color: #666; margin-bottom: 20px; }
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        button:hover { background: #1976d2; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .summary {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .summary-item {
+            padding: 15px 20px;
+            border-radius: 8px;
+            flex: 1;
+            text-align: center;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary-item.total { border-left: 4px solid #2196f3; }
+        .summary-item.passed { border-left: 4px solid #4caf50; }
+        .summary-item.failed { border-left: 4px solid #f44336; }
+        .summary-value { font-size: 36px; font-weight: bold; margin: 5px 0; }
+        .summary-label { font-size: 14px; color: #666; }
+        .test-case {
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 4px solid #e0e0e0;
+            background: white;
+        }
+        .test-case.pass { border-left-color: #4caf50; background: #f1f8f4; }
+        .test-case.fail { border-left-color: #f44336; background: #fef1f0; }
+        .test-name { font-weight: 600; margin-bottom: 4px; }
+        .test-result { font-size: 13px; color: #555; }
+    </style>
+</head>
+<body>
+    <h1>Search API Tests</h1>
+    <p class="subtitle">Tests for /api/search endpoint, result structure, and edge cases</p>
+
+    <button id="runTests" onclick="runAllTests()">Run All Tests</button>
+
+    <div class="summary">
+        <div class="summary-item total">
+            <div class="summary-label">Total</div>
+            <div class="summary-value" id="totalTests">0</div>
+        </div>
+        <div class="summary-item passed">
+            <div class="summary-label">Passed</div>
+            <div class="summary-value" id="passedTests">0</div>
+        </div>
+        <div class="summary-item failed">
+            <div class="summary-label">Failed</div>
+            <div class="summary-value" id="failedTests">0</div>
+        </div>
+    </div>
+
+    <div id="testResults"></div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let passed = 0, failed = 0, total = 0;
+        const TEST_NOTE_PATH = `_test_search_${Date.now()}.md`;
+        const TEST_CONTENT = `---\ntags:\n  - searchtest\n  - automation\n---\n# Search Test Note\n\nThis note contains a unique marker: XYZZY_SEARCH_MARKER_42\n\nSome additional content with [[wikilink]] references.\n`;
+
+        function displayTest(name, status, message) {
+            total++;
+            if (status === 'pass') passed++;
+            else failed++;
+            const div = document.createElement('div');
+            div.className = `test-case ${status}`;
+            div.innerHTML = `<div class="test-name">${status === 'pass' ? '✓' : '✗'} ${name}</div><div class="test-result">${message}</div>`;
+            document.getElementById('testResults').appendChild(div);
+            updateSummary();
+        }
+
+        function updateSummary() {
+            document.getElementById('totalTests').textContent = total;
+            document.getElementById('passedTests').textContent = passed;
+            document.getElementById('failedTests').textContent = failed;
+        }
+
+        async function setup() {
+            await fetch(`${API_BASE}/api/notes/${TEST_NOTE_PATH}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: TEST_CONTENT })
+            });
+            // Small delay for indexing
+            await new Promise(r => setTimeout(r, 300));
+        }
+
+        async function cleanup() {
+            await fetch(`${API_BASE}/api/notes/${TEST_NOTE_PATH}`, { method: 'DELETE' });
+        }
+
+        // --- Tests ---
+
+        async function testSearchEndpointReturns200() {
+            const res = await fetch(`${API_BASE}/api/search?q=test`);
+            if (!res.ok) throw new Error(`Expected 200, got ${res.status}`);
+            const data = await res.json();
+            if (!Array.isArray(data.results)) throw new Error('Response.results should be an array');
+            if (typeof data.query !== 'string') throw new Error('Response.query should be a string');
+            displayTest('GET /api/search returns 200 with results array', 'pass', `Returned ${data.results.length} results`);
+        }
+
+        async function testSearchFindsTestNote() {
+            const res = await fetch(`${API_BASE}/api/search?q=XYZZY_SEARCH_MARKER_42`);
+            const data = await res.json();
+            const results = data.results;
+            const found = results.some(r => r.path === TEST_NOTE_PATH || r.path.endsWith(TEST_NOTE_PATH));
+            if (!found) throw new Error(`Test note not found in results. Got ${results.length} results: ${results.map(r => r.path).join(', ')}`);
+            displayTest('Search finds note by unique content', 'pass', `Found test note among ${results.length} results`);
+        }
+
+        async function testSearchResultStructure() {
+            const res = await fetch(`${API_BASE}/api/search?q=XYZZY_SEARCH_MARKER_42`);
+            const data = await res.json();
+            const results = data.results;
+            const note = results.find(r => r.path === TEST_NOTE_PATH || r.path.endsWith(TEST_NOTE_PATH));
+            if (!note) throw new Error('Test note not in results');
+            if (typeof note.path !== 'string') throw new Error('Missing path field');
+            if (typeof note.name !== 'string') throw new Error('Missing name field');
+            if (!Array.isArray(note.matches)) throw new Error('Missing matches array');
+            displayTest('Search result has required fields (path, name, matches)', 'pass', `path="${note.path}", name="${note.name}", ${note.matches.length} match(es)`);
+        }
+
+        async function testSearchByTag() {
+            const res = await fetch(`${API_BASE}/api/tags/searchtest`);
+            if (!res.ok) throw new Error(`Tag endpoint returned ${res.status}`);
+            const data = await res.json();
+            const notes = data.notes || data;
+            const arr = Array.isArray(notes) ? notes : [];
+            const found = arr.some(n => (n.path || n).toString().includes(TEST_NOTE_PATH.replace('.md', '')));
+            if (!found) throw new Error(`Test note not found under tag "searchtest". Got ${arr.length} results`);
+            displayTest('GET /api/tags/{tag} finds tagged note', 'pass', `Found note under "searchtest" tag`);
+        }
+
+        async function testSearchEmptyQuery() {
+            const res = await fetch(`${API_BASE}/api/search?q=`);
+            // Empty query should return 200 with empty or all results
+            if (!res.ok) throw new Error(`Expected 200 for empty query, got ${res.status}`);
+            const data = await res.json();
+            if (!Array.isArray(data.results)) throw new Error('Response.results should be an array');
+            displayTest('Empty search query returns valid response', 'pass', `Returned ${data.results.length} results`);
+        }
+
+        async function testSearchNoResults() {
+            const res = await fetch(`${API_BASE}/api/search?q=ZZZNONEXISTENT_TERM_999999`);
+            if (!res.ok) throw new Error(`Expected 200, got ${res.status}`);
+            const data = await res.json();
+            if (data.results.length !== 0) throw new Error(`Expected 0 results, got ${data.results.length}`);
+            displayTest('Search for nonexistent term returns empty array', 'pass', '0 results as expected');
+        }
+
+        async function testSearchSpecialCharacters() {
+            const res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent('[[wikilink]]')}`);
+            if (!res.ok) throw new Error(`Expected 200, got ${res.status}`);
+            const data = await res.json();
+            if (!Array.isArray(data.results)) throw new Error('Response.results should be an array');
+            displayTest('Search with special characters does not error', 'pass', `Returned ${data.results.length} results`);
+        }
+
+        async function testSearchCaseInsensitive() {
+            const resLower = await fetch(`${API_BASE}/api/search?q=xyzzy_search_marker_42`);
+            const dataLower = await resLower.json();
+            const resUpper = await fetch(`${API_BASE}/api/search?q=XYZZY_SEARCH_MARKER_42`);
+            const dataUpper = await resUpper.json();
+            const resultsLower = dataLower.results;
+            const resultsUpper = dataUpper.results;
+            const foundLower = resultsLower.some(r => r.path.includes(TEST_NOTE_PATH.replace('.md', '')));
+            const foundUpper = resultsUpper.some(r => r.path.includes(TEST_NOTE_PATH.replace('.md', '')));
+            if (!foundUpper) throw new Error('Uppercase search did not find note');
+            if (!foundLower) throw new Error('Lowercase search did not find note');
+            displayTest('Search is case-insensitive', 'pass', `Found with both cases (lower: ${resultsLower.length}, upper: ${resultsUpper.length})`);
+        }
+
+        async function testTagsListEndpoint() {
+            const res = await fetch(`${API_BASE}/api/tags`);
+            if (!res.ok) throw new Error(`Expected 200, got ${res.status}`);
+            const data = await res.json();
+            const tags = data.tags;
+            if (typeof tags !== 'object' || tags === null) throw new Error('Tags response should contain tags object');
+            const tagNames = Object.keys(tags).map(t => t.toLowerCase());
+            const hasTag = tagNames.includes('searchtest');
+            if (!hasTag) throw new Error(`Tag "searchtest" not found in tags list. Got: ${tagNames.join(', ')}`);
+            displayTest('GET /api/tags lists all tags including test tag', 'pass', `Found "searchtest" among ${tagNames.length} tags`);
+        }
+
+        // --- Runner ---
+
+        async function runAllTests() {
+            document.getElementById('runTests').disabled = true;
+            document.getElementById('testResults').innerHTML = '';
+            passed = 0; failed = 0; total = 0;
+            updateSummary();
+
+            try {
+                await setup();
+
+                const tests = [
+                    testSearchEndpointReturns200,
+                    testSearchFindsTestNote,
+                    testSearchResultStructure,
+                    testSearchByTag,
+                    testSearchEmptyQuery,
+                    testSearchNoResults,
+                    testSearchSpecialCharacters,
+                    testSearchCaseInsensitive,
+                    testTagsListEndpoint,
+                ];
+
+                for (const test of tests) {
+                    try {
+                        await test();
+                    } catch (err) {
+                        displayTest(test.name.replace(/^test/, ''), 'fail', err.message);
+                    }
+                }
+            } finally {
+                await cleanup();
+                document.getElementById('runTests').disabled = false;
+            }
+        }
+
+        window.onload = runAllTests;
+    </script>
+</body>
+</html>

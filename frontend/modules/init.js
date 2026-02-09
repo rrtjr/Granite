@@ -35,8 +35,9 @@ export const initMixin = {
         // Load all user settings from server
         await this.loadUserSettings();
 
-        // Load favorites
+        // Load favorites and prune any stale paths (e.g. files moved outside the app)
         await this.loadFavorites();
+        await this.cleanupStaleFavorites();
 
         // Load homepage content
         await this.loadHomepageContent();
@@ -67,9 +68,16 @@ export const initMixin = {
             window.history.replaceState({ homepageFolder: '' }, '', '/');
         }
 
-        // Setup mobile pane handling
+        // Setup mobile pane handling (legacy)
         if (typeof this.setupPaneMobileHandling === 'function') {
             this.setupPaneMobileHandling();
+        }
+
+        // Initialize mobile panes (tab bar, swipe gestures)
+        console.log('[Init] Checking initMobilePanes:', typeof this.initMobilePanes);
+        if (typeof this.initMobilePanes === 'function') {
+            console.log('[Init] Calling initMobilePanes');
+            this.initMobilePanes();
         }
 
         // Listen for browser back/forward navigation
@@ -169,6 +177,18 @@ export const initMixin = {
                     // Update Tiptap with new pane's content
                     this.updateTiptapContent(newPane.content);
                 }
+            }
+
+            // Update mobile toolbar when active pane changes
+            if (typeof this._onMobilePanesChanged === 'function') {
+                this._onMobilePanesChanged();
+            }
+        });
+
+        // Watch openPanes changes to update mobile toolbar
+        this.$watch('openPanes', () => {
+            if (typeof this._onMobilePanesChanged === 'function') {
+                this._onMobilePanesChanged();
             }
         });
 

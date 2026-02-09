@@ -325,6 +325,30 @@
                 // TOC uses simple pattern
                 runBtnSelector: 'button',
                 useTestCaseCounting: true
+            },
+            {
+                id: 'search',
+                name: 'Search API',
+                url: '/tests/test_search_ui.html',
+                description: 'Search endpoint, result structure, edge cases',
+                runBtnSelector: '#runTests',
+                useTestCaseCounting: true
+            },
+            {
+                id: 'markdown',
+                name: 'Markdown Rendering',
+                url: '/tests/test_markdown_render.html',
+                description: 'Wikilinks, image embeds, frontmatter, XSS',
+                runBtnSelector: '#runTests',
+                useTestCaseCounting: true
+            },
+            {
+                id: 'accessibility',
+                name: 'Accessibility',
+                url: '/tests/test_accessibility.html',
+                description: 'ARIA attributes, skip-nav, focus trap, lazy loading',
+                runBtnSelector: '#runTests',
+                useTestCaseCounting: true
             }
         ];
 
@@ -426,10 +450,10 @@
                     failed = failEls.length;
                     total = passed + failed;
 
-                    // Get test names
+                    // Get test names (strip leading ✓/✗ symbols to avoid doubling with CSS ::before)
                     const allTests = iframeDoc.querySelectorAll('.test-case');
                     tests = Array.from(allTests).map(el => ({
-                        name: el.querySelector('.test-name')?.textContent || el.textContent.substring(0, 50),
+                        name: (el.querySelector('.test-name')?.textContent || el.textContent.substring(0, 50)).replace(/^[✓✗]\s*/, ''),
                         status: el.classList.contains('pass') ? 'pass' : 'fail'
                     }));
                 } else {
@@ -438,10 +462,10 @@
                     failed = parseInt(iframeDoc.getElementById(suite.failedId)?.textContent || '0');
                     total = parseInt(iframeDoc.getElementById(suite.totalId)?.textContent || '0');
 
-                    // Get individual test results
+                    // Get individual test results (strip leading ✓/✗ symbols to avoid doubling with CSS ::before)
                     const testEls = iframeDoc.querySelectorAll('.test-case');
                     tests = Array.from(testEls).map(el => ({
-                        name: el.querySelector('.test-name')?.textContent || 'Unknown',
+                        name: (el.querySelector('.test-name')?.textContent || 'Unknown').replace(/^[✓✗]\s*/, ''),
                         status: el.classList.contains('pass') ? 'pass' : 'fail'
                     }));
                 }

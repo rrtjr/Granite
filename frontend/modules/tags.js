@@ -2,6 +2,48 @@
 
 import { Debug } from './config.js';
 
+/**
+ * Normalize raw tag input into a clean, deduplicated, sorted array.
+ *
+ * Handles:
+ * - Comma-separated: "meta, vault" -> ["meta", "vault"]
+ * - Space-separated: "meta vault" -> ["meta", "vault"]
+ * - Hash prefixes: "#meta #vault" -> ["meta", "vault"]
+ * - Mixed: "#meta, #vault" -> ["meta", "vault"]
+ * - Hierarchical: "meta/vault" -> ["meta", "meta/vault", "vault"]
+ */
+export function normalizeTags(raw) {
+    if (Array.isArray(raw)) {
+        const all = [];
+        for (const item of raw) {
+            all.push(...normalizeTags(String(item)));
+        }
+        return [...new Set(all)].sort();
+    }
+
+    const text = String(raw).trim();
+    if (!text) return [];
+
+    const parts = text.includes(',') ? text.split(',') : text.split(/\s+/);
+
+    const tags = new Set();
+    for (const part of parts) {
+        let tag = part.trim();
+        if (tag.startsWith('#')) tag = tag.slice(1);
+        tag = tag.trim().toLowerCase();
+        if (!tag) continue;
+        tags.add(tag);
+        if (tag.includes('/')) {
+            for (const segment of tag.split('/')) {
+                const s = segment.trim();
+                if (s) tags.add(s);
+            }
+        }
+    }
+
+    return [...tags].sort();
+}
+
 export const tagsMixin = {
     // Load all tags
     async loadTags() {
@@ -86,8 +128,8 @@ export const tagsMixin = {
             if (endIdx === -1) return [];
 
             const frontmatterLines = lines.slice(1, endIdx);
-            const tags = [];
             let inTagsList = false;
+            const rawListItems = [];
 
             for (const line of frontmatterLines) {
                 const stripped = line.trim();
@@ -97,27 +139,29 @@ export const tagsMixin = {
                     if (rest.startsWith('[') && rest.endsWith(']')) {
                         const tagsStr = rest.substring(1, rest.length - 1);
                         const rawTags = tagsStr.split(',').map(t => t.trim());
-                        tags.push(...rawTags.filter(t => t).map(t => t.toLowerCase()));
-                        break;
+                        return normalizeTags(rawTags);
                     } else if (rest) {
-                        tags.push(rest.toLowerCase());
-                        break;
+                        return normalizeTags(rest);
                     } else {
                         inTagsList = true;
                     }
                 } else if (inTagsList) {
                     if (stripped.startsWith('-')) {
                         const tag = stripped.substring(1).trim();
-                        if (tag && !tag.startsWith('#')) {
-                            tags.push(tag.toLowerCase());
+                        if (tag) {
+                            rawListItems.push(tag);
                         }
-                    } else if (stripped && !stripped.startsWith('#')) {
+                    } else if (stripped) {
                         break;
                     }
                 }
             }
 
-            return [...new Set(tags)].sort();
+            if (rawListItems.length > 0) {
+                return normalizeTags(rawListItems);
+            }
+
+            return [];
         } catch (e) {
             Debug.error('Error parsing tags:', e);
             return [];

@@ -9,39 +9,80 @@ from pathlib import Path
 _tag_cache: dict[str, tuple[float, list[str]]] = {}
 
 
+def _normalize_tags(raw: "str | list[str]") -> list[str]:
+    """
+    Normalize raw tag input into a clean, deduplicated, sorted list.
+
+    Handles:
+    - Comma-separated: "meta, vault" -> ["meta", "vault"]
+    - Space-separated: "meta vault" -> ["meta", "vault"]
+    - Hash prefixes: "#meta #vault" -> ["meta", "vault"]
+    - Mixed: "#meta, #vault" -> ["meta", "vault"]
+    - Hierarchical: "meta/vault" -> ["meta", "meta/vault", "vault"]
+    """
+    if isinstance(raw, list):
+        tokens: list[str] = []
+        for item in raw:
+            tokens.extend(_normalize_tags(str(item)))
+        return sorted(set(tokens))
+
+    text = raw.strip()
+    if not text:
+        return []
+
+    # Commas take precedence over whitespace for splitting
+    if "," in text:
+        parts = text.split(",")
+    else:
+        parts = text.split()
+
+    tags: set[str] = set()
+    for part in parts:
+        tag = part.strip().lstrip("#").strip().lower()
+        if not tag:
+            continue
+        tags.add(tag)
+        # Hierarchical tag expansion: "meta/vault" -> {"meta/vault", "meta", "vault"}
+        if "/" in tag:
+            for segment in tag.split("/"):
+                segment = segment.strip()
+                if segment:
+                    tags.add(segment)
+
+    return sorted(tags)
+
+
 def parse_tags(content: str) -> list[str]:
     """
     Extract tags from YAML frontmatter in markdown content.
 
     Supported formats:
     ---
-    tags: [python, tutorial, backend]
-    ---
-
-    or
-
-    ---
+    tags: [python, tutorial, backend]     # Inline array
+    tags: python tutorial backend         # Space-separated
+    tags: python, tutorial, backend       # Comma-separated
+    tags: #python #tutorial #backend      # Hash-prefixed (# stripped)
+    tags: #python, #tutorial              # Mixed hash + comma
+    tags: #parent/child                   # Hierarchical (expands to parent/child, parent, child)
     tags:
       - python
       - tutorial
-      - backend
+      - #backend                          # Hash prefix in list items also stripped
     ---
 
     Args:
         content: Markdown content with optional YAML frontmatter
 
     Returns:
-        List of tag strings (lowercase, no duplicates)
+        List of tag strings (lowercase, no duplicates, sorted)
     """
-    tags: list[str] = []
-
     if not content.strip().startswith("---"):
-        return tags
+        return []
 
     try:
         lines = content.split("\n")
         if lines[0].strip() != "---":
-            return tags
+            return []
 
         end_idx = None
         for i in range(1, len(lines)):
@@ -50,11 +91,12 @@ def parse_tags(content: str) -> list[str]:
                 break
 
         if end_idx is None:
-            return tags
+            return []
 
         frontmatter_lines = lines[1:end_idx]
 
         in_tags_list = False
+        raw_list_items: list[str] = []
         for line in frontmatter_lines:
             stripped = line.strip()
 
@@ -63,21 +105,22 @@ def parse_tags(content: str) -> list[str]:
                 if rest.startswith("[") and rest.endswith("]"):
                     tags_str = rest[1:-1]
                     raw_tags = [t.strip() for t in tags_str.split(",")]
-                    tags.extend([t.lower() for t in raw_tags if t])
-                    break
+                    return _normalize_tags(raw_tags)
                 if rest:
-                    tags.append(rest.lower())
-                    break
+                    return _normalize_tags(rest)
                 in_tags_list = True
             elif in_tags_list:
                 if stripped.startswith("-"):
                     tag = stripped[1:].strip()
                     if tag:
-                        tags.append(tag.lower())
-                elif stripped and not stripped.startswith("#"):
+                        raw_list_items.append(tag)
+                elif stripped:
                     break
 
-        return sorted(set(tags))
+        if raw_list_items:
+            return _normalize_tags(raw_list_items)
+
+        return []
 
     except Exception as e:
         print(f"Error parsing tags: {e}")

@@ -91,7 +91,59 @@ export const CONFIG = {
     SCROLL_SYNC_RETRY_INTERVAL: 100,   // ms - Time between setupScrollSync retries
     MAX_UNDO_HISTORY: 50,              // Maximum number of undo steps to keep
     DEFAULT_SIDEBAR_WIDTH: 256,        // px - Default sidebar width (w-64 in Tailwind)
+    MOBILE_BREAKPOINT: 768,            // px - Max width for mobile layout (legacy)
+    // Responsive breakpoints
+    BREAKPOINT_PHONE: 768,             // px - Phone/small mobile (single pane)
+    BREAKPOINT_TABLET: 900,            // px - Tablet (optional split view)
+    BREAKPOINT_DESKTOP: 1024,          // px - Desktop (full multi-pane)
 };
+
+/**
+ * Check if current device is mobile (phone)
+ * Defined here to avoid circular imports between panes.js and mobile-panes.js
+ */
+export function isMobileDevice() {
+    return window.innerWidth <= CONFIG.MOBILE_BREAKPOINT;
+}
+
+/**
+ * Check if current device is a phone (≤768px)
+ */
+export function isPhoneDevice() {
+    return window.innerWidth <= CONFIG.BREAKPOINT_PHONE;
+}
+
+/**
+ * Check if current device is a tablet (769-1024px)
+ */
+export function isTabletDevice() {
+    return window.innerWidth > CONFIG.BREAKPOINT_PHONE &&
+           window.innerWidth <= CONFIG.BREAKPOINT_DESKTOP;
+}
+
+/**
+ * Check if current device is mobile or tablet (≤1024px)
+ * This is the main check for showing mobile UI components
+ */
+export function isMobileOrTablet() {
+    return window.innerWidth <= CONFIG.BREAKPOINT_DESKTOP;
+}
+
+/**
+ * Check if tablet split view should be enabled (900-1024px)
+ */
+export function isTabletSplitEnabled() {
+    return window.innerWidth >= CONFIG.BREAKPOINT_TABLET &&
+           window.innerWidth <= CONFIG.BREAKPOINT_DESKTOP;
+}
+
+/**
+ * Check if single-pane mode should be enforced (phones and phablets, <900px)
+ * Used by panes.js to determine if only one pane should be open
+ */
+export function isSinglePaneMode() {
+    return window.innerWidth < CONFIG.BREAKPOINT_TABLET;
+}
 
 // Centralized error handling
 export const ErrorHandler = {

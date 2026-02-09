@@ -218,7 +218,7 @@ export const metadataMixin = {
 
     // Get tags from metadata
     getMetadataTags() {
-        if (!this.noteMetadata || !this.noteMetadata.tags) return [];
-        return Array.isArray(this.noteMetadata.tags) ? this.noteMetadata.tags : [this.noteMetadata.tags];
+        if (!this.noteContent) return [];
+        return this.parseTagsFromContent(this.noteContent);
     },
 };

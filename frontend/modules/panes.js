@@ -1,7 +1,57 @@
 // Granite Frontend - Stacked Panes Module
 // Obsidian-style sliding panes for multi-note viewing
 
-import { CONFIG, Debug } from './config.js';
+import { CONFIG, Debug, isSinglePaneMode, isPhoneDevice } from './config.js';
+
+/**
+ * Store for non-reactive pane data (editor instances, DOM refs, timeouts).
+ * These are kept outside Alpine's reactive system to avoid circular reference errors.
+ * Alpine tries to proxy all object properties, but CodeMirror/Tiptap editors have
+ * circular internal structures that break JSON serialization.
+ */
+const _paneEditors = new Map();  // paneId -> { editorView, tiptapEditor, saveTimeout, scrollSyncHandlers }
+
+/**
+ * Get editor data for a pane (creates entry if doesn't exist)
+ */
+function getPaneEditorData(paneId) {
+    if (!_paneEditors.has(paneId)) {
+        _paneEditors.set(paneId, {
+            editorView: null,
+            tiptapEditor: null,
+            saveTimeout: null,
+            scrollSyncHandlers: null,
+        });
+    }
+    return _paneEditors.get(paneId);
+}
+
+/**
+ * Clean up editor data for a pane
+ */
+function cleanupPaneEditorData(paneId) {
+    const data = _paneEditors.get(paneId);
+    if (data) {
+        if (data.editorView) {
+            data.editorView.destroy();
+        }
+        if (data.saveTimeout) {
+            clearTimeout(data.saveTimeout);
+        }
+        _paneEditors.delete(paneId);
+    }
+}
+
+/**
+ * Request all pane CodeMirror editors to re-measure (e.g. after font CSS variable changes)
+ */
+export function refreshAllPaneEditors() {
+    for (const [, data] of _paneEditors) {
+        if (data.editorView) {
+            data.editorView.requestMeasure();
+        }
+    }
+}
 
 export const panesMixin = {
     // Generate unique pane ID
@@ -27,8 +77,20 @@ export const panesMixin = {
             return existingPane;
         }
 
-        // Enforce max panes limit
-        if (this.openPanes.length >= this.maxPanes) {
+        // Single-pane mode (phones and phablets <900px): close existing pane first
+        if (isSinglePaneMode() && this.openPanes.length > 0) {
+            const currentPane = this.openPanes[0];
+            if (currentPane.isDirty) {
+                const shouldSave = confirm(`Save changes to "${currentPane.name}"?`);
+                if (shouldSave) {
+                    await this.savePane(currentPane.id);
+                }
+            }
+            await this.closePane(currentPane.id, { save: false, prompt: false });
+        }
+
+        // Enforce max panes limit (tablets and desktop only - single-pane mode handled above)
+        if (!isSinglePaneMode() && this.openPanes.length >= this.maxPanes) {
             // Close oldest non-dirty pane
             const oldestClean = this.openPanes.find(p => !p.isDirty);
             if (oldestClean) {
@@ -52,14 +114,17 @@ export const panesMixin = {
 
             // Create new pane object
             // Panes only support 'edit' and 'split' modes (Rich Editor is a separate panel)
-            const paneViewMode = viewMode || this.defaultPaneViewMode || 'split';
+            // NOTE: editorView, tiptapEditor, saveTimeout are stored in _paneEditors Map
+            // to avoid Alpine circular reference issues with CodeMirror/Tiptap instances
+            // On phones, default to 'edit' mode since split view is too cramped
+            const defaultMode = isPhoneDevice() ? 'edit' : (this.defaultPaneViewMode || 'split');
+            const paneViewMode = viewMode || defaultMode;
+            const paneId = this.generatePaneId();
             const newPane = {
-                id: this.generatePaneId(),
+                id: paneId,
                 path: notePath,
                 content: data.content,
                 name: notePath.split('/').pop().replace('.md', ''),
-                editorView: null,
-                tiptapEditor: null,
                 scrollPos: 0,
                 previewScrollPos: 0,
                 viewMode: paneViewMode, // Only 'edit' or 'split' - 'rich' is handled by Rich Editor panel
@@ -68,9 +133,11 @@ export const panesMixin = {
                 width: width,
                 undoHistory: [data.content],
                 redoHistory: [],
-                _saveTimeout: null,
                 metadataExpanded: false, // Frontmatter panel expanded state
             };
+
+            // Initialize editor storage for this pane
+            getPaneEditorData(paneId);
 
             // Insert after active pane or at end
             const activeIndex = this.openPanes.findIndex(p => p.id === this.activePaneId);
@@ -102,6 +169,81 @@ export const panesMixin = {
         }
     },
 
+    // Open an image in a new pane (no editor, just preview)
+    async openImageInPane(imagePath) {
+        Debug.log('openImageInPane:', imagePath);
+
+        // Check if already open
+        const existingPane = this.openPanes.find(p => p.path === imagePath);
+        if (existingPane) {
+            this.focusPane(existingPane.id);
+            this.scrollPaneIntoView(existingPane.id);
+            return existingPane;
+        }
+
+        // Single-pane mode: close existing pane first
+        if (isSinglePaneMode() && this.openPanes.length > 0) {
+            const currentPane = this.openPanes[0];
+            if (currentPane.isDirty) {
+                const shouldSave = confirm(`Save changes to "${currentPane.name}"?`);
+                if (shouldSave) {
+                    await this.savePane(currentPane.id);
+                }
+            }
+            await this.closePane(currentPane.id, { save: false, prompt: false });
+        }
+
+        // Enforce max panes limit
+        if (!isSinglePaneMode() && this.openPanes.length >= this.maxPanes) {
+            const oldestClean = this.openPanes.find(p => !p.isDirty);
+            if (oldestClean) {
+                await this.closePane(oldestClean.id, { save: false, prompt: false });
+            } else {
+                this.addToast('Maximum panes reached. Close a pane first.', 'warning');
+                return null;
+            }
+        }
+
+        const paneId = this.generatePaneId();
+        const newPane = {
+            id: paneId,
+            path: imagePath,
+            content: '',
+            name: imagePath.split('/').pop(),
+            type: 'image',
+            scrollPos: 0,
+            previewScrollPos: 0,
+            viewMode: 'preview',
+            isDirty: false,
+            lastSaved: new Date(),
+            width: 500,
+            undoHistory: [],
+            redoHistory: [],
+            metadataExpanded: false,
+        };
+
+        // Insert after active pane or at end
+        const activeIndex = this.openPanes.findIndex(p => p.id === this.activePaneId);
+        const insertIndex = activeIndex !== -1 ? activeIndex + 1 : this.openPanes.length;
+        this.openPanes.splice(insertIndex, 0, newPane);
+
+        // Focus the new pane
+        this.activePaneId = newPane.id;
+
+        // Update URL
+        this.updatePanesUrl();
+
+        // Save panes state
+        this.savePanesState();
+
+        this.$nextTick(() => {
+            this.scrollPaneIntoView(newPane.id);
+        });
+
+        Debug.log('Image pane created:', newPane.id, newPane.path);
+        return newPane;
+    },
+
     // Focus a specific pane
     focusPane(paneId) {
         const paneIndex = this.openPanes.findIndex(p => p.id === paneId);
@@ -128,8 +270,9 @@ export const panesMixin = {
 
         // Restore focus to editor after DOM update
         this.$nextTick(() => {
-            if (pane.editorView) {
-                pane.editorView.focus();
+            const editorData = getPaneEditorData(paneId);
+            if (editorData.editorView) {
+                editorData.editorView.focus();
             }
             // Update Rich Editor panel content if open
             if (this.showRichEditorPanel && this.tiptapEditor) {
@@ -157,13 +300,8 @@ export const panesMixin = {
             await this.savePane(paneId);
         }
 
-        // Clear any pending save timeout
-        if (pane._saveTimeout) {
-            clearTimeout(pane._saveTimeout);
-        }
-
-        // Destroy editor instance
-        this.destroyPaneEditor(paneId);
+        // Clean up editor data (destroys editor, clears timeout)
+        cleanupPaneEditorData(paneId);
 
         // Remove from array
         const index = this.openPanes.findIndex(p => p.id === paneId);
@@ -204,8 +342,13 @@ export const panesMixin = {
         const pane = this.openPanes.find(p => p.id === paneId);
         if (!pane) return;
 
+        // No editor for image panes
+        if (pane.type === 'image') return;
+
+        const editorData = getPaneEditorData(paneId);
+
         // Skip if editor already initialized
-        if (pane.editorView) return;
+        if (editorData.editorView) return;
 
         // Note: Panes only support 'edit' and 'split' modes
         // Rich Editor is a separate panel that syncs with the active pane
@@ -261,8 +404,8 @@ export const panesMixin = {
             ]
         });
 
-        // Create editor view
-        pane.editorView = new EditorView({
+        // Create editor view and store in separate map (not in pane object)
+        editorData.editorView = new EditorView({
             state: startState,
             parent: container
         });
@@ -271,7 +414,7 @@ export const panesMixin = {
         if (this.editorThemeCompartment && this.getEditorTheme) {
             try {
                 const theme = this.getEditorTheme();
-                pane.editorView.dispatch({
+                editorData.editorView.dispatch({
                     effects: themeCompartment.reconfigure(theme)
                 });
             } catch (e) {
@@ -281,7 +424,7 @@ export const panesMixin = {
 
         // Restore scroll position
         if (pane.scrollPos > 0) {
-            pane.editorView.scrollDOM.scrollTop = pane.scrollPos;
+            editorData.editorView.scrollDOM.scrollTop = pane.scrollPos;
         }
 
         // Setup scroll sync for split mode (with delay to ensure preview is rendered)
@@ -295,7 +438,8 @@ export const panesMixin = {
     // Initialize Tiptap for a pane (Rich mode)
     initPaneTiptap(paneId) {
         const pane = this.openPanes.find(p => p.id === paneId);
-        if (!pane || pane.tiptapEditor) return;
+        const editorData = getPaneEditorData(paneId);
+        if (!pane || editorData.tiptapEditor) return;
 
         // Use the existing Tiptap initialization but target pane container
         // This will be handled by tiptap.js integration
@@ -304,19 +448,19 @@ export const panesMixin = {
 
     // Destroy editor for a pane
     destroyPaneEditor(paneId) {
-        const pane = this.openPanes.find(p => p.id === paneId);
-        if (!pane) return;
-
         // Clean up scroll sync handlers
         this.cleanupPaneScrollSync(paneId);
 
-        if (pane.editorView) {
-            pane.editorView.destroy();
-            pane.editorView = null;
-        }
-        if (pane.tiptapEditor) {
-            pane.tiptapEditor.destroy();
-            pane.tiptapEditor = null;
+        const editorData = _paneEditors.get(paneId);
+        if (editorData) {
+            if (editorData.editorView) {
+                editorData.editorView.destroy();
+                editorData.editorView = null;
+            }
+            if (editorData.tiptapEditor) {
+                editorData.tiptapEditor.destroy();
+                editorData.tiptapEditor = null;
+            }
         }
 
         Debug.log('Destroyed editor for pane:', paneId);
@@ -325,12 +469,13 @@ export const panesMixin = {
     // Setup scroll sync between editor and preview for a pane
     setupPaneScrollSync(paneId) {
         const pane = this.openPanes.find(p => p.id === paneId);
-        if (!pane || !pane.editorView || pane.viewMode !== 'split') return;
+        const editorData = getPaneEditorData(paneId);
+        if (!pane || !editorData.editorView || pane.viewMode !== 'split') return;
 
         // Clean up any existing handlers first
         this.cleanupPaneScrollSync(paneId);
 
-        const editorScroller = pane.editorView.scrollDOM;
+        const editorScroller = editorData.editorView.scrollDOM;
         const previewEl = document.querySelector(`[data-pane-id="${paneId}"] .pane-preview`);
 
         if (!editorScroller || !previewEl) {
@@ -383,8 +528,8 @@ export const panesMixin = {
         editorScroller.addEventListener('scroll', editorScrollHandler);
         previewEl.addEventListener('scroll', previewScrollHandler);
 
-        // Store handlers on pane for cleanup
-        pane._scrollSyncHandlers = {
+        // Store handlers in editor data for cleanup
+        editorData.scrollSyncHandlers = {
             editor: editorScrollHandler,
             preview: previewScrollHandler,
             editorEl: editorScroller,
@@ -396,10 +541,10 @@ export const panesMixin = {
 
     // Cleanup scroll sync handlers for a pane
     cleanupPaneScrollSync(paneId) {
-        const pane = this.openPanes.find(p => p.id === paneId);
-        if (!pane || !pane._scrollSyncHandlers) return;
+        const editorData = _paneEditors.get(paneId);
+        if (!editorData || !editorData.scrollSyncHandlers) return;
 
-        const { editor, preview, editorEl, previewEl } = pane._scrollSyncHandlers;
+        const { editor, preview, editorEl, previewEl } = editorData.scrollSyncHandlers;
 
         if (editorEl && editor) {
             editorEl.removeEventListener('scroll', editor);
@@ -408,24 +553,24 @@ export const panesMixin = {
             previewEl.removeEventListener('scroll', preview);
         }
 
-        pane._scrollSyncHandlers = null;
+        editorData.scrollSyncHandlers = null;
         Debug.log('Scroll sync cleaned up for pane:', paneId);
     },
 
     // Update pane's CodeMirror editor content (from external source like Tiptap)
     updatePaneEditorContent(paneId, content) {
         const pane = this.openPanes.find(p => p.id === paneId);
-        if (!pane || !pane.editorView) return;
+        const editorData = getPaneEditorData(paneId);
+        if (!pane || !editorData.editorView) return;
 
-        const currentContent = pane.editorView.state.doc.toString();
+        const currentContent = editorData.editorView.state.doc.toString();
         if (currentContent === content) return; // No change needed
 
         // Update editor without triggering the change listener
-        const { EditorView } = window.CodeMirror;
-        pane.editorView.dispatch({
+        editorData.editorView.dispatch({
             changes: {
                 from: 0,
-                to: pane.editorView.state.doc.length,
+                to: editorData.editorView.state.doc.length,
                 insert: content
             }
         });
@@ -438,8 +583,9 @@ export const panesMixin = {
         const pane = this.openPanes.find(p => p.id === paneId);
         if (!pane) return;
 
-        if (pane.editorView) {
-            pane.scrollPos = pane.editorView.scrollDOM.scrollTop;
+        const editorData = _paneEditors.get(paneId);
+        if (editorData && editorData.editorView) {
+            pane.scrollPos = editorData.editorView.scrollDOM.scrollTop;
         }
 
         // Also save preview scroll if in split mode
@@ -460,13 +606,14 @@ export const panesMixin = {
     // Auto-save a specific pane (debounced)
     autoSavePane(paneId) {
         const pane = this.openPanes.find(p => p.id === paneId);
-        if (!pane) return;
+        if (!pane || pane.type === 'image') return;
 
-        if (pane._saveTimeout) {
-            clearTimeout(pane._saveTimeout);
+        const editorData = getPaneEditorData(paneId);
+        if (editorData.saveTimeout) {
+            clearTimeout(editorData.saveTimeout);
         }
 
-        pane._saveTimeout = setTimeout(() => {
+        editorData.saveTimeout = setTimeout(() => {
             this.savePane(paneId);
         }, this.performanceSettings.autosaveDelay);
     },
@@ -474,7 +621,7 @@ export const panesMixin = {
     // Save a specific pane
     async savePane(paneId) {
         const pane = this.openPanes.find(p => p.id === paneId);
-        if (!pane || !pane.isDirty) return;
+        if (!pane || !pane.isDirty || pane.type === 'image') return;
 
         try {
             const response = await fetch(`/api/notes/${pane.path}`, {
@@ -503,7 +650,8 @@ export const panesMixin = {
     // Update URL to reflect active pane
     updatePanesUrl() {
         if (this.activePane) {
-            const pathWithoutExtension = this.activePane.path.replace('.md', '');
+            const isImage = this.activePane.type === 'image';
+            const pathWithoutExtension = isImage ? this.activePane.path : this.activePane.path.replace('.md', '');
             const encodedPath = pathWithoutExtension.split('/').map(segment => encodeURIComponent(segment)).join('/');
 
             window.history.pushState(
@@ -527,6 +675,7 @@ export const panesMixin = {
                     path: p.path,
                     viewMode: p.viewMode,
                     width: p.width,
+                    type: p.type || 'note',
                 })),
                 activePaneId: this.activePaneId,
             };
@@ -548,15 +697,19 @@ export const panesMixin = {
             Debug.log('Restoring panes state:', state);
 
             for (const paneData of state.panes) {
-                // Ensure viewMode is only 'edit' or 'split' (not 'rich')
-                const restoredMode = paneData.viewMode;
-                const finalViewMode = (restoredMode === 'edit' || restoredMode === 'split') ? restoredMode : (this.defaultPaneViewMode || 'split');
+                if (paneData.type === 'image') {
+                    await this.openImageInPane(paneData.path);
+                } else {
+                    // Ensure viewMode is only 'edit' or 'split' (not 'rich')
+                    const restoredMode = paneData.viewMode;
+                    const finalViewMode = (restoredMode === 'edit' || restoredMode === 'split') ? restoredMode : (this.defaultPaneViewMode || 'split');
 
-                await this.openInPane(paneData.path, {
-                    focusExisting: false,
-                    width: paneData.width || 500,
-                    viewMode: finalViewMode
-                });
+                    await this.openInPane(paneData.path, {
+                        focusExisting: false,
+                        width: paneData.width || 500,
+                        viewMode: finalViewMode
+                    });
+                }
             }
 
             // Restore active pane
@@ -642,18 +795,19 @@ export const panesMixin = {
         }
 
         // Handle editor transitions
+        const editorData = _paneEditors.get(paneId);
         if (oldMode === 'rich' && mode !== 'rich') {
             // Destroy Tiptap, init CodeMirror
-            if (pane.tiptapEditor) {
-                pane.tiptapEditor.destroy();
-                pane.tiptapEditor = null;
+            if (editorData && editorData.tiptapEditor) {
+                editorData.tiptapEditor.destroy();
+                editorData.tiptapEditor = null;
             }
             this.$nextTick(() => this.initPaneEditor(paneId));
         } else if (oldMode !== 'rich' && mode === 'rich') {
             // Destroy CodeMirror, init Tiptap
-            if (pane.editorView) {
-                pane.editorView.destroy();
-                pane.editorView = null;
+            if (editorData && editorData.editorView) {
+                editorData.editorView.destroy();
+                editorData.editorView = null;
             }
             this.$nextTick(() => this.initPaneTiptap(paneId));
         }
@@ -937,11 +1091,28 @@ export const panesMixin = {
 
         const yamlContent = content.slice(4, endIndex).trim();
         try {
-            // Simple YAML parsing for common cases
             const metadata = {};
             const lines = yamlContent.split('\n');
+            let currentListKey = null;
+            let currentListItems = [];
 
             for (const line of lines) {
+                // Check if this is a YAML list item (indented with "- ")
+                if (currentListKey && line.match(/^\s+-\s/)) {
+                    const item = line.replace(/^\s+-\s*/, '').trim();
+                    if (item) {
+                        currentListItems.push(item);
+                    }
+                    continue;
+                }
+
+                // Flush any pending list
+                if (currentListKey) {
+                    metadata[currentListKey] = currentListItems;
+                    currentListKey = null;
+                    currentListItems = [];
+                }
+
                 const colonIndex = line.indexOf(':');
                 if (colonIndex === -1) continue;
 
@@ -951,6 +1122,11 @@ export const panesMixin = {
                 // Handle arrays (simple single-line format)
                 if (value.startsWith('[') && value.endsWith(']')) {
                     value = value.slice(1, -1).split(',').map(v => v.trim().replace(/^["']|["']$/g, ''));
+                } else if (value === '') {
+                    // Empty value - could be start of YAML list
+                    currentListKey = key;
+                    currentListItems = [];
+                    continue;
                 } else if (value.startsWith('"') && value.endsWith('"')) {
                     value = value.slice(1, -1);
                 } else if (value.startsWith("'") && value.endsWith("'")) {
@@ -958,6 +1134,11 @@ export const panesMixin = {
                 }
 
                 metadata[key] = value;
+            }
+
+            // Flush any trailing list
+            if (currentListKey) {
+                metadata[currentListKey] = currentListItems;
             }
 
             return Object.keys(metadata).length > 0 ? metadata : null;
@@ -974,9 +1155,8 @@ export const panesMixin = {
 
     // Get tags from pane frontmatter
     getPaneTags(pane) {
-        const metadata = this.getPaneFrontmatter(pane);
-        if (!metadata || !metadata.tags) return [];
-        return Array.isArray(metadata.tags) ? metadata.tags : [metadata.tags];
+        if (!pane || !pane.content) return [];
+        return this.parseTagsFromContent(pane.content);
     },
 
     // Get priority fields from pane frontmatter

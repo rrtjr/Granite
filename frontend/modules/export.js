@@ -203,6 +203,157 @@ export const exportMixin = {
         }
     },
 
+    // Extract text from an HTML element, preserving line breaks from <br> tags
+    // and block elements. Plain .textContent ignores <br> tags entirely.
+    _extractTextWithBreaks(element) {
+        let text = '';
+        for (const node of element.childNodes) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                text += node.textContent;
+            } else if (node.nodeName.toLowerCase() === 'br') {
+                text += '\n';
+            } else if (['p', 'div'].includes(node.nodeName.toLowerCase())) {
+                if (text && !text.endsWith('\n')) text += '\n';
+                text += this._extractTextWithBreaks(node);
+            } else {
+                text += this._extractTextWithBreaks(node);
+            }
+        }
+        return text;
+    },
+
+    // Replace <foreignObject> elements in an SVG string with native <text> elements.
+    // CairoSVG (used by WeasyPrint) doesn't support foreignObject, so we convert
+    // the HTML labels to plain SVG text for PDF-compatible output.
+    _convertForeignObjectsToText(svgString) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgString, 'image/svg+xml');
+        const svg = doc.documentElement;
+        const ns = 'http://www.w3.org/2000/svg';
+
+        const foreignObjects = svg.querySelectorAll('foreignObject');
+        for (const fo of foreignObjects) {
+            const width = parseFloat(fo.getAttribute('width') || '0');
+            const height = parseFloat(fo.getAttribute('height') || '0');
+
+            // Extract text preserving <br> line breaks
+            const label = fo.querySelector('.nodeLabel, .edgeLabel, .label');
+            const rawText = this._extractTextWithBreaks(label || fo);
+            // Also handle literal \n escape sequences from mermaid source
+            const textContent = rawText.replace(/\\n/g, '\n').trim();
+            if (!textContent) {
+                fo.parentNode.removeChild(fo);
+                continue;
+            }
+
+            // Detect font size from the HTML content's style
+            const styledEl = fo.querySelector('[style]');
+            let fontSize = 14;
+            if (styledEl) {
+                const match = styledEl.getAttribute('style').match(/font-size:\s*([\d.]+)/);
+                if (match) fontSize = parseFloat(match[1]);
+            }
+
+            const text = doc.createElementNS(ns, 'text');
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('dominant-baseline', 'central');
+            text.setAttribute('font-size', String(fontSize));
+            text.setAttribute('font-family', 'sans-serif');
+            text.setAttribute('fill', '#333');
+
+            const lines = textContent.split('\n');
+            const lineHeight = fontSize * 1.2;
+
+            if (lines.length === 1) {
+                text.setAttribute('x', String(width / 2));
+                text.setAttribute('y', String(height / 2));
+                text.textContent = textContent;
+            } else {
+                const totalHeight = lines.length * lineHeight;
+                const startY = (height - totalHeight) / 2 + lineHeight / 2;
+                for (let j = 0; j < lines.length; j++) {
+                    const tspan = doc.createElementNS(ns, 'tspan');
+                    tspan.setAttribute('x', String(width / 2));
+                    tspan.setAttribute('y', String(startY + j * lineHeight));
+                    tspan.textContent = lines[j];
+                    text.appendChild(tspan);
+                }
+            }
+
+            fo.parentNode.replaceChild(text, fo);
+        }
+
+        return new XMLSerializer().serializeToString(svg);
+    },
+
+    // Pre-render mermaid code blocks to SVG for PDF export.
+    // Returns { content, mermaidSvgs } where content has placeholders and
+    // mermaidSvgs is an array of SVG strings to be injected server-side.
+    async _renderMermaidForPdf(content) {
+        if (typeof window.mermaid === 'undefined') {
+            Debug.warn('Mermaid not loaded, skipping diagram rendering for PDF');
+            return { content, mermaidSvgs: [] };
+        }
+
+        const mermaidBlockRegex = /```mermaid\r?\n([\s\S]*?)```/g;
+        const matches = [...content.matchAll(mermaidBlockRegex)];
+        if (matches.length === 0) {
+            Debug.info('No mermaid blocks found in content for PDF export');
+            return { content, mermaidSvgs: [] };
+        }
+        Debug.info(`Found ${matches.length} mermaid block(s) to render for PDF export`);
+
+        // Initialize mermaid with light theme for PDF (white background)
+        window.mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'strict',
+            fontFamily: 'sans-serif',
+            flowchart: { useMaxWidth: true, htmlLabels: false },
+            sequence: { useMaxWidth: true },
+            gantt: { useMaxWidth: true },
+            journey: { useMaxWidth: true },
+            timeline: { useMaxWidth: true },
+            class: { useMaxWidth: true },
+            state: { useMaxWidth: true },
+            er: { useMaxWidth: true },
+            pie: { useMaxWidth: true },
+            quadrantChart: { useMaxWidth: true },
+            requirement: { useMaxWidth: true },
+            mindmap: { useMaxWidth: true },
+            gitGraph: { useMaxWidth: true },
+        });
+
+        let result = content;
+        const mermaidSvgs = [];
+        for (let i = 0; i < matches.length; i++) {
+            const match = matches[i];
+            const code = match[1].trim();
+            try {
+                const id = `pdf-mermaid-${Date.now()}-${i}`;
+                const { svg } = await window.mermaid.render(id, code);
+                // Post-process: replace <foreignObject> with <text> for CairoSVG compat
+                const pdfSvg = this._convertForeignObjectsToText(svg);
+                result = result.replace(match[0], `\n\n<!-- MERMAID_PLACEHOLDER_${mermaidSvgs.length} -->\n\n`);
+                mermaidSvgs.push(pdfSvg);
+                Debug.info(`Rendered mermaid block ${i + 1}/${matches.length} for PDF`);
+            } catch (error) {
+                Debug.error(`Mermaid PDF rendering error (block ${i + 1}):`, error);
+            }
+        }
+
+        // Restore mermaid theme for live preview
+        const themeType = this.getThemeType ? this.getThemeType() : 'light';
+        window.mermaid.initialize({
+            startOnLoad: false,
+            theme: themeType === 'light' ? 'default' : 'dark',
+            securityLevel: 'strict',
+            fontFamily: 'inherit',
+        });
+
+        return { content: result, mermaidSvgs };
+    },
+
     // Export current note as PDF
     async exportToPDF() {
         if (!this.currentNote || !this.noteContent) {
@@ -219,13 +370,23 @@ export const exportMixin = {
 
             const noteName = this.currentNoteName || 'note';
 
+            // Pre-render mermaid diagrams if enabled
+            let content = this.noteContent;
+            let mermaidSvgs = [];
+            if (this.pdfExportSettings.render_mermaid !== false) {
+                const rendered = await this._renderMermaidForPdf(content);
+                content = rendered.content;
+                mermaidSvgs = rendered.mermaidSvgs;
+            }
+
             const response = await fetch('/api/plugins/pdf_export/export', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     note_path: this.currentNote,
-                    content: this.noteContent,
-                    output_filename: `${noteName}.pdf`
+                    content: content,
+                    output_filename: `${noteName}.pdf`,
+                    mermaid_svgs: mermaidSvgs,
                 })
             });
 

@@ -66,6 +66,7 @@ export const templatesMixin = {
             this.showTemplateModal = false;
             this.selectedTemplate = '';
             this.newTemplateNoteName = '';
+            this.releaseFocus();
 
             // Reload notes and open the new note
             await this.loadNotes();

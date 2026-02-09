@@ -17,6 +17,63 @@ export const uiMixin = {
         this.toasts = this.toasts.filter(t => t.id !== id);
     },
 
+    // Modal focus trap management
+    _focusTrapCleanup: null,
+    _previouslyFocusedElement: null,
+
+    trapFocus(modalElement) {
+        if (!modalElement) return;
+        this._previouslyFocusedElement = document.activeElement;
+
+        const focusableSelectors = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+        const focusFirst = () => {
+            const focusable = modalElement.querySelectorAll(focusableSelectors);
+            if (focusable.length > 0) {
+                focusable[0].focus();
+            }
+        };
+
+        // Small delay to allow Alpine to render modal content
+        setTimeout(focusFirst, 50);
+
+        const handler = (e) => {
+            if (e.key !== 'Tab') return;
+
+            const focusable = [...modalElement.querySelectorAll(focusableSelectors)];
+            if (focusable.length === 0) return;
+
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+
+            if (e.shiftKey) {
+                if (document.activeElement === first) {
+                    e.preventDefault();
+                    last.focus();
+                }
+            } else {
+                if (document.activeElement === last) {
+                    e.preventDefault();
+                    first.focus();
+                }
+            }
+        };
+
+        modalElement.addEventListener('keydown', handler);
+        this._focusTrapCleanup = () => modalElement.removeEventListener('keydown', handler);
+    },
+
+    releaseFocus() {
+        if (this._focusTrapCleanup) {
+            this._focusTrapCleanup();
+            this._focusTrapCleanup = null;
+        }
+        if (this._previouslyFocusedElement && typeof this._previouslyFocusedElement.focus === 'function') {
+            this._previouslyFocusedElement.focus();
+            this._previouslyFocusedElement = null;
+        }
+    },
+
     // Setup scroll synchronization for Split view
     setupScrollSync() {
         const editorScroller = this.editorView?.scrollDOM;

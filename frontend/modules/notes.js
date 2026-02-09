@@ -56,7 +56,7 @@ export const notesMixin = {
         const matchedItem = this.notes.find(n => n.path === decodedPath);
 
         if (matchedItem && matchedItem.type === 'image') {
-            this.viewImage(decodedPath, false);
+            this.openImageInPane(decodedPath);
         } else {
             const notePath = decodedPath + '.md';
             const urlParams = new URLSearchParams(window.location.search);
@@ -238,6 +238,10 @@ export const notesMixin = {
 
             if (response.ok) {
                 await fetch(`/api/notes/${oldPath}`, { method: 'DELETE' });
+                // Update favorites if this note was favorited
+                if (typeof this.updateFavoritePath === 'function') {
+                    await this.updateFavoritePath(oldPath, newPath);
+                }
                 this.currentNote = newPath;
                 await this.loadNotes();
             } else {
@@ -262,6 +266,10 @@ export const notesMixin = {
             });
 
             if (response.ok) {
+                // Remove from favorites if it was favorited
+                if (typeof this.removeFavorite === 'function') {
+                    await this.removeFavorite(notePath);
+                }
                 if (this.currentNote === notePath) {
                     this.currentNote = '';
                     this.noteContent = '';
