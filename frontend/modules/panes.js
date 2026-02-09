@@ -2,6 +2,7 @@
 // Obsidian-style sliding panes for multi-note viewing
 
 import { CONFIG, Debug, isSinglePaneMode, isPhoneDevice } from './config.js';
+import { normalizeTags } from './tags.js';
 
 /**
  * Store for non-reactive pane data (editor instances, DOM refs, timeouts).
@@ -1080,11 +1081,28 @@ export const panesMixin = {
 
         const yamlContent = content.slice(4, endIndex).trim();
         try {
-            // Simple YAML parsing for common cases
             const metadata = {};
             const lines = yamlContent.split('\n');
+            let currentListKey = null;
+            let currentListItems = [];
 
             for (const line of lines) {
+                // Check if this is a YAML list item (indented with "- ")
+                if (currentListKey && line.match(/^\s+-\s/)) {
+                    const item = line.replace(/^\s+-\s*/, '').trim();
+                    if (item) {
+                        currentListItems.push(item);
+                    }
+                    continue;
+                }
+
+                // Flush any pending list
+                if (currentListKey) {
+                    metadata[currentListKey] = currentListItems;
+                    currentListKey = null;
+                    currentListItems = [];
+                }
+
                 const colonIndex = line.indexOf(':');
                 if (colonIndex === -1) continue;
 
@@ -1094,6 +1112,11 @@ export const panesMixin = {
                 // Handle arrays (simple single-line format)
                 if (value.startsWith('[') && value.endsWith(']')) {
                     value = value.slice(1, -1).split(',').map(v => v.trim().replace(/^["']|["']$/g, ''));
+                } else if (value === '') {
+                    // Empty value - could be start of YAML list
+                    currentListKey = key;
+                    currentListItems = [];
+                    continue;
                 } else if (value.startsWith('"') && value.endsWith('"')) {
                     value = value.slice(1, -1);
                 } else if (value.startsWith("'") && value.endsWith("'")) {
@@ -1101,6 +1124,11 @@ export const panesMixin = {
                 }
 
                 metadata[key] = value;
+            }
+
+            // Flush any trailing list
+            if (currentListKey) {
+                metadata[currentListKey] = currentListItems;
             }
 
             return Object.keys(metadata).length > 0 ? metadata : null;
@@ -1119,7 +1147,7 @@ export const panesMixin = {
     getPaneTags(pane) {
         const metadata = this.getPaneFrontmatter(pane);
         if (!metadata || !metadata.tags) return [];
-        return Array.isArray(metadata.tags) ? metadata.tags : [metadata.tags];
+        return normalizeTags(metadata.tags);
     },
 
     // Get priority fields from pane frontmatter

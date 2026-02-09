@@ -1,6 +1,7 @@
 // Granite Frontend - Metadata (Frontmatter) Module
 
 import { Debug } from './config.js';
+import { normalizeTags } from './tags.js';
 
 export const metadataMixin = {
     // Parse YAML frontmatter metadata from note content
@@ -219,6 +220,6 @@ export const metadataMixin = {
     // Get tags from metadata
     getMetadataTags() {
         if (!this.noteMetadata || !this.noteMetadata.tags) return [];
-        return Array.isArray(this.noteMetadata.tags) ? this.noteMetadata.tags : [this.noteMetadata.tags];
+        return normalizeTags(this.noteMetadata.tags);
     },
 };
