@@ -4786,15 +4786,6 @@
                                                     <span class="text-xs" style="color: var(--text-tertiary);">+<span x-text="getPaneTags(pane).length - 4"></span></span>
                                                 </template>
 
-                                                <!-- Priority fields (date, author, etc.) -->
-                                                <template x-for="field in getPanePriorityFields(pane)" :key="field.key">
-                                                    <span class="text-xs flex items-center gap-1" style="color: var(--text-secondary);">
-                                                        <span class="opacity-50">·</span>
-                                                        <span class="capitalize" x-text="field.key + ':'"></span>
-                                                        <span style="color: var(--text-primary);" x-text="field.value"></span>
-                                                    </span>
-                                                </template>
-
                                                 <!-- Expand hint -->
                                                 <span class="ml-auto text-xs opacity-40">▼</span>
                                             </div>

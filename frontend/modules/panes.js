@@ -2,7 +2,6 @@
 // Obsidian-style sliding panes for multi-note viewing
 
 import { CONFIG, Debug, isSinglePaneMode, isPhoneDevice } from './config.js';
-import { normalizeTags } from './tags.js';
 
 /**
  * Store for non-reactive pane data (editor instances, DOM refs, timeouts).
@@ -1145,9 +1144,8 @@ export const panesMixin = {
 
     // Get tags from pane frontmatter
     getPaneTags(pane) {
-        const metadata = this.getPaneFrontmatter(pane);
-        if (!metadata || !metadata.tags) return [];
-        return normalizeTags(metadata.tags);
+        if (!pane || !pane.content) return [];
+        return this.parseTagsFromContent(pane.content);
     },
 
     // Get priority fields from pane frontmatter

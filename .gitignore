@@ -79,6 +79,7 @@ frontend/@eaDir/
 
 # LLM specific settings
 .claude/
+CLAUDE.md
 
 # Dev files
 *.backup
